@@ -9,14 +9,18 @@ def create_test_structure():
                     'storage_service_unit_test.dart',
                     'tile_service_unit_test.dart',
                     'map_service_unit_test.dart',
-                    'cache_service_unit_test.dart'
+                    'cache_service_unit_test.dart',
+                    'permission_service_unit_test.dart',
+                    'notification_service_unit_test.dart'
                 ],
                 'utils': [
                     'app_utils_unit_test.dart',
-                    'map_utils_unit_test.dart'
+                    'map_utils_unit_test.dart',
+                    'error_manager_unit_test.dart'
                 ],
                 'performance': [
-                    'app_resource_optimizer_unit_test.dart'
+                    'app_resource_optimizer_unit_test.dart',
+                    'performance_monitor_unit_test.dart'
                 ]
             },
             'features': {
@@ -32,19 +36,29 @@ def create_test_structure():
                         'settings_screen_widget_test.dart'
                     ],
                     'widgets': [
-                        'region_item_widget_test.dart'
+                        'region_item_widget_test.dart',
+                        'theme_picker_widget_test.dart'
                     ]
-                }
+                },
+                'offline_map': [
+                    'offline_map_repository_unit_test.dart',
+                    'offline_map_viewmodel_unit_test.dart',
+                    'offline_map_screen_widget_test.dart'
+                ]
             },
             'shared': {
                 'widgets': [
                     'custom_error_widget_test.dart',
                     'loading_overlay_widget_test.dart',
-                    'theme_picker_widget_test.dart'
+                    'theme_picker_widget_test.dart',
+                    'map_controls_unit_test.dart',
+                    'map_widget_unit_test.dart',
+                    'offline_banner_unit_test.dart'
                 ]
             },
             'integration': [
-                'map_integration_test.dart'
+                'map_integration_test.dart',
+                'core_integration_test.dart'
             ],
             'e2e': [
                 'app_e2e_test.dart'

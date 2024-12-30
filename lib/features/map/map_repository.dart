@@ -79,19 +79,20 @@ class MapRepository {
         }
         return [];
       }
-    } on DioException catch (e, stackTrace) {
-        final cached = await _storage.getMarkers();
+      }
+    on DioException catch (e, stackTrace) {
+            final cached = await _storage.getMarkers();
       if (cached.isNotEmpty) {
         if (kDebugMode) {
           print('Returning markers from Cache');
         }
-        throw MapRepositoryException(
+         throw MapRepositoryException(
               'Error getting markers from API, loading from cache',
               e,
               stackTrace,
             );
       }
-         if (kDebugMode) {
+      if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
           throw MapRepositoryException(
@@ -100,27 +101,27 @@ class MapRepository {
               stackTrace,
             );
     }
-        on Exception catch (e, stackTrace) {
-        final cached = await _storage.getMarkers();
+    on Exception catch (e, stackTrace) {
+          final cached = await _storage.getMarkers();
       if (cached.isNotEmpty) {
-        if (kDebugMode) {
-          print('Returning markers from Cache');
-        }
-        throw MapRepositoryException(
+          if (kDebugMode) {
+              print('Returning markers from Cache');
+            }
+         throw MapRepositoryException(
               'Error getting markers from API, loading from cache',
               e,
               stackTrace,
             );
-      }
-         if (kDebugMode) {
-        print('Error getting markers: $e, StackTrace: $stackTrace');
-      }
-          throw MapRepositoryException(
-              'Error getting markers from API',
-              e,
-              stackTrace,
-            );
         }
+       if (kDebugMode) {
+          print('Error getting markers: $e, StackTrace: $stackTrace');
+        }
+          throw MapRepositoryException(
+            'Error getting markers from API',
+            e,
+             stackTrace,
+            );
+      }
   }
 
   MapMarker _parseMapMarker(Map<String, dynamic> json) {
@@ -193,7 +194,7 @@ class MapRepositoryException implements Exception {
   MapRepositoryException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-  final StackTrace? stackTrace;
+   final StackTrace? stackTrace;
   @override
   String toString() =>
       'MapRepositoryException: $message, $error, stackTrace: $stackTrace';

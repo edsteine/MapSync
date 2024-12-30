@@ -18,7 +18,7 @@ class CustomMapWidget extends StatelessWidget {
         styleUri: styleUri,
         cameraOptions: cameraOptions,
         onMapCreated: onMapCreated,
-
+        androidHostingMode: AndroidPlatformViewHostingMode.TLHC_HC,
       );
 
       

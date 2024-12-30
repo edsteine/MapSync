@@ -27,7 +27,7 @@ class OfflineMapState {
     this.error,
     this.downloadStatus = DownloadStatus.idle,
     this.isLocationLoading = false,
-    this.message,
+      this.message,
      this.downloadProgress = 0,
          this.stylePackProgress = 0,
   });
@@ -146,8 +146,8 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     } finally {
-       _stylePackSubscription?.cancel();
-       _tileRegionSubscription?.cancel();
+       await _stylePackSubscription?.cancel();
+       await _tileRegionSubscription?.cancel();
     }
   }
 

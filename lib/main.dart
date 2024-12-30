@@ -62,6 +62,7 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
   if (storage == null) {
     return ThemeMode.light;
   }
-  final themeString = storage.getString(AppConstants.themeModeKey);
+  final themeString =  storage.getString(AppConstants.themeModeKey);
+  // ignore: unrelated_type_equality_checks
   return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
 });

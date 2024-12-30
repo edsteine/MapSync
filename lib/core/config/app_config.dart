@@ -23,7 +23,7 @@ class AppConfig {
 
   // Locations Paths
   static String get locationsPath =>
-      '${apiBaseUrl}locations/?page=1&page_size=150';
+      '${apiBaseUrl}locatiodns/?page=1&page_size=150';
   static String get locationsNearbyPath => '${apiBaseUrl}nearby/';
   static String get locationsStatistics => '${apiBaseUrl}statistics/';
 

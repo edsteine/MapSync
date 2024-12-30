@@ -28,12 +28,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   mb.MapboxMap? _mapboxMap;
   mb.PointAnnotationManager? _pointAnnotationManager;
   mb.PolylineAnnotationManager? _polylineAnnotationManager;
-  mb.PolygoneAnnotationManager? _PolygoneAnnotationManager;
+  mb.PolygonAnnotationManager? _fillAnnotationManager;
   late mb.CameraOptions _initialCameraOptions;
   final String mapStyle = AppConstants.mapboxStreets;
   final List<mb.PointAnnotation> _pointAnnotations = [];
   final List<mb.PolylineAnnotation> _polylineAnnotations = [];
-    final List<mb.PolygoneAnnotation> _PolygoneAnnotations = [];
+    final List<mb.PolygonAnnotation> _fillAnnotations = [];
   StreamSubscription<bool>? _connectivitySubscription;
     late final mb.OnPointAnnotationClickListener _pointAnnotationClickListener;
       bool _areAnnotationsAdded = false;
@@ -58,7 +58,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
-    _pointAnnotationManager?.removeClickListener(_pointAnnotationClickListener);
+    // _pointAnnotationManager?.removeClickListener(_pointAnnotationClickListener);
     super.dispose();
   }
 
@@ -144,14 +144,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         await mapboxMap.annotations.createPointAnnotationManager();
     _polylineAnnotationManager =
         await mapboxMap.annotations.createPolylineAnnotationManager();
-       _PolygoneAnnotationManager =
-        await mapboxMap.annotations.createPolygoneAnnotationManager();
+       _fillAnnotationManager =
+        await mapboxMap.annotations.createPolygonAnnotationManager();
         _pointAnnotationManager?.addOnPointAnnotationClickListener(_pointAnnotationClickListener);
     await _addMarkers();
   }
 
   Future<void> _addMarkers() async {
-       if (_pointAnnotationManager == null || _mapboxMap == null || _polylineAnnotationManager == null || _PolygoneAnnotationManager == null) {
+       if (_pointAnnotationManager == null || _mapboxMap == null || _polylineAnnotationManager == null || _fillAnnotationManager == null) {
          return;
         }
     final state = ref.read(mapViewModelProvider);
@@ -169,11 +169,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                }
                _polylineAnnotations.clear();
             }
-           if (_PolygoneAnnotations.isNotEmpty) {
-               for (final annotation in _PolygoneAnnotations) {
-                   await _PolygoneAnnotationManager?.delete(annotation);
+           if (_fillAnnotations.isNotEmpty) {
+               for (final annotation in _fillAnnotations) {
+                   await _fillAnnotationManager?.delete(annotation);
                 }
-                _PolygoneAnnotations.clear();
+                _fillAnnotations.clear();
             }
         }
     for (final marker in state.markers) {
@@ -182,12 +182,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           await _addPointAnnotation(marker);
           break;
          case map_marker.GeometryType.lineString:
-            await _addLineAnnotation(marker);
+           await _addLineAnnotation(marker);
           break;
            case map_marker.GeometryType.polygon:
            await _addPolygonAnnotation(marker);
-        break;
-         default:
            break;
       }
     }
@@ -241,22 +239,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   }
    Future<void> _addPolygonAnnotation(map_marker.MapMarker marker) async {
-       if (_PolygoneAnnotationManager == null) {
+       if (_fillAnnotationManager == null) {
         return;
       }
     if (marker.geometry.coordinates.isNotEmpty) {
           final coordinates = marker.geometry.coordinates
               .map((polygon) => (polygon as List)
-              .map((coord) =>  mb.Position(coord[0], coord[1])).toList())
+              .map((coord) =>  mb.Position(coord[0], coord[1])).toList(),)
               .toList();
 
-        final annotation = mb.PolygoneAnnotationOptions(
+        final annotation = mb.PolygonAnnotationOptions(
           geometry: mb.Polygon(coordinates: coordinates),
-          PolygoneColor: Colors.green.withOpacity(0.3).value,
+          fillColor: Colors.green.withOpacity(0.3).value,
         );
-        final createdAnnotation = await _PolygoneAnnotationManager?.create(annotation);
+        final createdAnnotation = await _fillAnnotationManager?.create(annotation);
          if (createdAnnotation != null) {
-            _PolygoneAnnotations.add(createdAnnotation);
+            _fillAnnotations.add(createdAnnotation);
          }
       }
   }

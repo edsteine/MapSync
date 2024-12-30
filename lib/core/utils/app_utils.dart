@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/context_provider.dart';
 import 'package:mobile/core/utils/error_manager.dart';
 
@@ -31,7 +30,6 @@ class AppUtils {
     }
     final newState = (state as dynamic).copyWith(
       isLoading: false,
-      downloadStatus: DownloadStatus.idle,
       error: errorMessage,
     );
 
