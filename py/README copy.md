@@ -1114,3 +1114,45 @@ IDE is Important: Take advantage of your IDE's features for fixing lint issues, 
 Keep Checking Often: Make running flutter analyze a frequent part of your workflow.
 
 By following this step-by-step guide and making full use of your IDE's features you can resolve your project's lint issues effectively. Let me know if you have any further questions or want to dive into specific lint rules.
+
+
+
+is this good
+test/
+  core/
+    services/
+      network_service_unit_test.dart
+      storage_service_unit_test.dart
+      tile_service_unit_test.dart
+      map_service_unit_test.dart
+      cache_service_unit_test.dart
+    utils/
+      app_utils_unit_test.dart
+      map_utils_unit_test.dart
+    performance/
+      app_resource_optimizer_unit_test.dart
+  features/
+    map/
+      map_repository_unit_test.dart
+      map_viewmodel_unit_test.dart
+      map_screen_widget_test.dart
+    settings/
+      settings_repository_unit_test.dart
+      settings_viewmodel_unit_test.dart
+      settings_screen_widget_test.dart
+    settings/widgets/
+      region_item_widget_test.dart
+  shared/
+    widgets/
+      custom_error_widget_test.dart
+      loading_overlay_widget_test.dart
+      theme_picker_widget_test.dart
+  integration/
+      map_integration_test.dart
+  e2e/
+      app_e2e_test.dart
+    performance/
+        memory_leak_performance_test.dart
+        frame_rate_performance_test.dart
+        load_time_performance_test.dart
+if yes write python code to create those files folders in test folder

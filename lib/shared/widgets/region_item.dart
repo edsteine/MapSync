@@ -1,5 +1,6 @@
-// lib/features/settings/widgets/region_item.dart
+// lib/features/offline_map/widgets/region_item.dart
 import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class RegionItem extends StatelessWidget {
   const RegionItem({
@@ -7,15 +8,15 @@ class RegionItem extends StatelessWidget {
     required this.deleteRegion,
     super.key,
   });
-  final String region;
+  final TileRegion region;
   final Function(String) deleteRegion;
 
   @override
   Widget build(BuildContext context) => ListTile(
-        title: Text(region),
+        title: Text(region.id),
         trailing: IconButton(
           onPressed: () {
-            deleteRegion(region);
+            deleteRegion(region.id);
           },
           icon: const Icon(Icons.delete),
         ),

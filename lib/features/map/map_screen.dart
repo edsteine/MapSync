@@ -1,18 +1,21 @@
 // lib/features/map/map_screen.dart
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mb;
 import 'package:mobile/core/config/app_routes.dart';
 import 'package:mobile/core/utils/app_constants.dart';
+import 'package:mobile/core/utils/error_manager.dart';
 import 'package:mobile/features/map/map_viewmodel.dart';
-import 'package:mobile/features/map/models/map_marker.dart' as map_marker;
-import 'package:mobile/features/map/widgets/map_controls.dart';
-import 'package:mobile/features/map/widgets/offline_banner.dart';
+import 'package:mobile/shared/models/map_marker.dart' as map_marker;
 import 'package:mobile/shared/widgets/custom_error_widget.dart';
 import 'package:mobile/shared/widgets/loading_overlay.dart';
+import 'package:mobile/shared/widgets/map_controls.dart';
+import 'package:mobile/shared/widgets/map_widget.dart' as mapwidget;
+import 'package:mobile/shared/widgets/offline_banner.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -24,17 +27,16 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   mb.MapboxMap? _mapboxMap;
   mb.PointAnnotationManager? _pointAnnotationManager;
-  mb.PolylineAnnotationManager? _lineAnnotationManager;
-  mb.PolygonAnnotationManager? _polygonAnnotationManager;
+  mb.PolylineAnnotationManager? _polylineAnnotationManager;
+  mb.PolygoneAnnotationManager? _PolygoneAnnotationManager;
   late mb.CameraOptions _initialCameraOptions;
-  final String mapStyle =
-      AppConstants.mapboxStreets;
+  final String mapStyle = AppConstants.mapboxStreets;
   final List<mb.PointAnnotation> _pointAnnotations = [];
-  final List<mb.PolylineAnnotation> _lineAnnotations = [];
-  final List<mb.PolygonAnnotation> _polygonAnnotations = [];
-  bool _mapReady = false;
+  final List<mb.PolylineAnnotation> _polylineAnnotations = [];
+    final List<mb.PolygoneAnnotation> _PolygoneAnnotations = [];
   StreamSubscription<bool>? _connectivitySubscription;
-   final _errorKey = GlobalKey();
+    late final mb.OnPointAnnotationClickListener _pointAnnotationClickListener;
+      bool _areAnnotationsAdded = false;
 
   @override
   void initState() {
@@ -49,14 +51,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       zoom: AppConstants.defaultZoom,
     );
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   ref.read(mapViewModelProvider.notifier).loadMarkers();
-    // });
+        _pointAnnotationClickListener =
+        _PointAnnotationClickListener(this);
   }
 
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
+    _pointAnnotationManager?.removeClickListener(_pointAnnotationClickListener);
     super.dispose();
   }
 
@@ -66,9 +68,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           title: const Text('Offline Maps'),
           actions: [
             IconButton(
+              icon: const Icon(Icons.clear_all),
+              onPressed: () {
+                ref.read(mapViewModelProvider.notifier).clearMarkers();
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
                 Navigator.of(context).pushNamed(AppRoutes.settings);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.offline_bolt),
+              onPressed: () {
+                Navigator.of(context).pushNamed(AppRoutes.offlineMap);
               },
             ),
             IconButton(
@@ -82,25 +96,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         body: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             final state = ref.watch(mapViewModelProvider);
-            ref.listen(mapViewModelProvider, (previous, next) {
+            final errorState = ref.watch(errorProvider);
+             ref.listen(mapViewModelProvider, (previous, next) {
               if (next.message != null && next.message!.isNotEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(next.message!)),
                 );
               }
-              if (next.error != null && _errorKey.currentState == null) {
-                showDialog(
-                  context: context,
-                   builder: (context) => CustomErrorWidget(
-                      key: _errorKey,
-                      error: next.error!,
-                   ),
-                );
+              if (previous?.markers != next.markers) {
+                _addMarkers();
               }
             });
             return Stack(
               children: [
-                mb.MapWidget(
+                mapwidget.CustomMapWidget(
                   styleUri: mapStyle,
                   cameraOptions: _initialCameraOptions,
                   onMapCreated: _onMapCreated,
@@ -108,17 +117,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 OfflineBanner(
                   isOffline: state.isOffline,
                 ),
-                MapControls(
-                  onDownloadRegion: _downloadCurrentRegion,
-                  isDownloading: state.isDownloadingRegion,
-                  downloadProgress: state.downloadProgress ?? 0.0,
+                  MapControls(
                   onZoomIn: _zoomIn,
                   onZoomOut: _zoomOut,
                   onMoveToCurrentLocation: _moveToCurrentLocation,
                   isLocationLoading: state.isLocationLoading,
-                  regionSize: state.regionSize,
                 ),
-                if (state.isLoading && !state.isDownloadingRegion)
+                if (errorState.message != null)
+                  CustomErrorWidget(
+                    error: errorState.message!,
+                    onClose: () =>
+                        ref.read(errorProvider.notifier).clearError(),
+                  ),
+                if (state.isLoading)
                   const LoadingOverlay(message: 'Loading Markers...'),
               ],
             );
@@ -131,124 +142,179 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref.read(mapViewModelProvider.notifier).setMap(mapboxMap);
     _pointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
-    _lineAnnotationManager =
+    _polylineAnnotationManager =
         await mapboxMap.annotations.createPolylineAnnotationManager();
-    _polygonAnnotationManager =
-        await mapboxMap.annotations.createPolygonAnnotationManager();
+       _PolygoneAnnotationManager =
+        await mapboxMap.annotations.createPolygoneAnnotationManager();
+        _pointAnnotationManager?.addOnPointAnnotationClickListener(_pointAnnotationClickListener);
     await _addMarkers();
-    setState(() {
-      _mapReady = true;
-    });
   }
 
-   Future<void> _addMarkers() async {
-    if (_pointAnnotationManager == null ||
-        _mapboxMap == null ||
-        _lineAnnotationManager == null ||
-        _polygonAnnotationManager == null) {
-      return;
-    }
-
+  Future<void> _addMarkers() async {
+       if (_pointAnnotationManager == null || _mapboxMap == null || _polylineAnnotationManager == null || _PolygoneAnnotationManager == null) {
+         return;
+        }
     final state = ref.read(mapViewModelProvider);
 
-    // Clear existing annotations
-     if (_pointAnnotations.isNotEmpty) {
-      for (final annotation in _pointAnnotations) {
-        await _pointAnnotationManager?.delete(annotation);
-      }
-      _pointAnnotations.clear();
-    }
-    if (_lineAnnotations.isNotEmpty) {
-      for (final annotation in _lineAnnotations) {
-        await _lineAnnotationManager?.delete(annotation);
-      }
-      _lineAnnotations.clear();
-    }
-    if (_polygonAnnotations.isNotEmpty) {
-      for (final annotation in _polygonAnnotations) {
-        await _polygonAnnotationManager?.delete(annotation);
-      }
-      _polygonAnnotations.clear();
-    }
-
-
+        if (_areAnnotationsAdded) {
+           if (_pointAnnotations.isNotEmpty) {
+              for (final annotation in _pointAnnotations) {
+                await _pointAnnotationManager?.delete(annotation);
+              }
+              _pointAnnotations.clear();
+           }
+           if (_polylineAnnotations.isNotEmpty) {
+               for (final annotation in _polylineAnnotations) {
+                 await _polylineAnnotationManager?.delete(annotation);
+               }
+               _polylineAnnotations.clear();
+            }
+           if (_PolygoneAnnotations.isNotEmpty) {
+               for (final annotation in _PolygoneAnnotations) {
+                   await _PolygoneAnnotationManager?.delete(annotation);
+                }
+                _PolygoneAnnotations.clear();
+            }
+        }
     for (final marker in state.markers) {
       switch (marker.geometry.type) {
         case map_marker.GeometryType.point:
-          final annotation = mb.PointAnnotationOptions(
-            geometry: mb.Point(
-              coordinates: mb.Position(
-                  marker.geometry.coordinates[0], marker.geometry.coordinates[1],),
-            ),
-            textField: marker.title,
-            textOffset: const [0.0, 2.0],
-          );
-          final createdAnnotation = await _pointAnnotationManager?.create(annotation);
-             if(createdAnnotation != null){
-               _pointAnnotations.add(createdAnnotation);
-             }
-
+          await _addPointAnnotation(marker);
           break;
-        case map_marker.GeometryType.lineString:
+         case map_marker.GeometryType.lineString:
+            await _addLineAnnotation(marker);
+          break;
+           case map_marker.GeometryType.polygon:
+           await _addPolygonAnnotation(marker);
+        break;
+         default:
+           break;
+      }
+    }
+     if(_mapboxMap != null){
+           await addCustomCircleImage();
+      }
+    _areAnnotationsAdded = true;
+  }
+
+    Future<void> _addPointAnnotation(map_marker.MapMarker marker) async {
+    if (_pointAnnotationManager == null) {
+      return;
+    }
+    final annotation = mb.PointAnnotationOptions(
+      geometry: mb.Point(
+        coordinates: mb.Position(
+          marker.geometry.coordinates[0],
+          marker.geometry.coordinates[1],
+        ),
+      ),
+      iconImage: 'circle',
+       iconColor: Colors.red.value,
+    );
+    final createdAnnotation =
+        await _pointAnnotationManager?.create(annotation);
+    if (createdAnnotation != null) {
+      createdAnnotation.id = marker.id;
+      _pointAnnotations.add(createdAnnotation);
+    }
+  }
+ Future<void> _addLineAnnotation(map_marker.MapMarker marker) async {
+     if (_polylineAnnotationManager == null) {
+        return;
+      }
+       if (marker.geometry.coordinates.isNotEmpty) {
           final coordinates = marker.geometry.coordinates
               .map((coord) => mb.Position(coord[0], coord[1]))
               .toList();
-          final lineAnnotationOptions = mb.PolylineAnnotationOptions(
+
+          final annotation = mb.PolylineAnnotationOptions(
             geometry: mb.LineString(coordinates: coordinates),
-            lineColor: Colors.red.value,
+            lineColor: Colors.blue.value,
             lineWidth: 3,
           );
-           final createdAnnotation = await _lineAnnotationManager?.create(lineAnnotationOptions);
-           if(createdAnnotation != null){
-            _lineAnnotations.add(createdAnnotation);
-          }
-          break;
-        case map_marker.GeometryType.polygon:
-          final coordinates = marker.geometry.coordinates[0]
-              .map((coord) => mb.Position(coord[0], coord[1]))
+             final createdAnnotation =
+        await _polylineAnnotationManager?.create(annotation);
+    if (createdAnnotation != null) {
+      _polylineAnnotations.add(createdAnnotation);
+    }
+      }
+
+  }
+   Future<void> _addPolygonAnnotation(map_marker.MapMarker marker) async {
+       if (_PolygoneAnnotationManager == null) {
+        return;
+      }
+    if (marker.geometry.coordinates.isNotEmpty) {
+          final coordinates = marker.geometry.coordinates
+              .map((polygon) => (polygon as List)
+              .map((coord) =>  mb.Position(coord[0], coord[1])).toList())
               .toList();
-          final polygonAnnotationOptions = mb.PolygonAnnotationOptions(
-            geometry: mb.Polygon(coordinates: [coordinates]),
-             fillColor: Colors.blue.withOpacity(0.3).value,
-          );
-           final createdAnnotation = await _polygonAnnotationManager?.create(polygonAnnotationOptions);
-         if(createdAnnotation != null){
-           _polygonAnnotations.add(createdAnnotation);
+
+        final annotation = mb.PolygoneAnnotationOptions(
+          geometry: mb.Polygon(coordinates: coordinates),
+          PolygoneColor: Colors.green.withOpacity(0.3).value,
+        );
+        final createdAnnotation = await _PolygoneAnnotationManager?.create(annotation);
+         if (createdAnnotation != null) {
+            _PolygoneAnnotations.add(createdAnnotation);
          }
-          break;
       }
-    }
   }
-  Future<void> _downloadCurrentRegion() async {
-    if (_mapboxMap == null || !_mapReady) {
-      return;
-    }
 
-    try {
-      final cameraState = await _mapboxMap!.getCameraState();
 
-      final bounds = await _mapboxMap!.coordinateBoundsForCamera(
-        mb.CameraOptions(
-          center: cameraState.center,
-          zoom: cameraState.zoom,
-          bearing: cameraState.bearing,
-          pitch: cameraState.pitch,
-        ),
-      );
+Future<void> addCustomCircleImage() async {
+  final imageBytes = await _createCircleIcon(Colors.red);
 
-      if (kDebugMode) {
-        print('Southwest: ${bounds.southwest.coordinates}');
-        print('Northeast: ${bounds.northeast.coordinates}');
-      }
+  // Create MbxImage from bytes
+  final mbxImage = mb.MbxImage(
+    width: 20, // Diameter of the circle (10 radius x 2)
+    height: 20,
+    data: imageBytes,
+  );
 
-      await ref.read(mapViewModelProvider.notifier).getRegionSize(bounds);
-      await ref.read(mapViewModelProvider.notifier).downloadRegion(bounds);
-    } on Exception catch (e) {
-      if (kDebugMode) {
-        print('Error fetching bounds or download region: $e');
-      }
-    }
+  // Add style image to the Mapbox style
+  await _mapboxMap!.style.addStyleImage(
+    'circle', // Unique ID
+    1, // Scale factor
+    mbxImage, // MbxImage created above
+    false, // Not using SDF
+    [], // No stretchX
+    [], // No stretchY
+    null, // Full image content
+  );
+}
+
+
+  
+  Future<Uint8List> _createCircleIcon(Color color) async {
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = color;
+    const radius = 10.0;
+    canvas.drawCircle(const Offset(radius, radius), radius, paint);
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(radius.toInt() * 2, radius.toInt() * 2);
+    final bytes = await image.toByteData(format: ImageByteFormat.png);
+      return bytes!.buffer.asUint8List();
   }
+    void _showMarkerInfo(BuildContext context, map_marker.MapMarker marker) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: Text(marker.title),
+            content: Text(marker.description),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+    }
+
 
   Future<void> _zoomIn() async {
     if (_mapboxMap == null) {
@@ -281,5 +347,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await ref
         .read(mapViewModelProvider.notifier)
         .moveToCurrentLocation(_mapboxMap!);
+  }
+}
+ class _PointAnnotationClickListener
+    extends mb.OnPointAnnotationClickListener {
+        _PointAnnotationClickListener(this._state);
+         final _MapScreenState _state;
+  @override
+  void onPointAnnotationClick(mb.PointAnnotation annotation) {
+     if (annotation.id.isNotEmpty){
+        final marker =  _state.ref.read(mapViewModelProvider).markers.firstWhere((element) => element.id == annotation.id);
+        _state._showMarkerInfo(_state.context, marker);
+      }
   }
 }

@@ -1,10 +1,12 @@
 // lib/core/config/app_config.dart
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // ignore: avoid_classes_with_only_static_members
 class AppConfig {
-  static String get mapboxAccessToken => dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? 'pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg'
-;
+  static String get mapboxAccessToken =>
+      dotenv.env['MAPBOX_ACCESS_TOKEN'] ??
+      'pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg';
   static const String apiBaseUrl =
       'https://w-project-u75x.onrender.com/api/v1/';
   static const String appVersion = '1.0.0';
@@ -20,7 +22,8 @@ class AppConfig {
   static String get userResetPassword => '${userPath}reset_password/';
 
   // Locations Paths
-  static String get locationsPath => '${apiBaseUrl}locations/?page=1&page_size=150';
+  static String get locationsPath =>
+      '${apiBaseUrl}locations/?page=1&page_size=150';
   static String get locationsNearbyPath => '${apiBaseUrl}nearby/';
   static String get locationsStatistics => '${apiBaseUrl}statistics/';
 
@@ -32,7 +35,7 @@ class AppConfig {
     'maxZoom': 22.0,
   };
 
-    static Map<String, int> offlineMapSettings = {
+  static Map<String, int> offlineMapSettings = {
     'maxTiles': 10000,
     'minZoom': 10,
     'maxZoom': 15,

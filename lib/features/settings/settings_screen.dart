@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/settings/settings_viewmodel.dart';
-import 'package:mobile/features/settings/widgets/region_item.dart';
 import 'package:mobile/shared/widgets/theme_picker.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -46,8 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ListTile(
               title: const Text('Clear Data'),
               onTap: () {
-                 settingsViewModel.clearData(context);
-
+                settingsViewModel.clearData(context);
               },
             ),
             // ListTile(
@@ -61,22 +59,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'Downloaded Regions',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Expanded(
-              child: Consumer(
-                builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                  final state = ref.watch(settingsViewModelProvider);
-                  return state.isLoading ? const Center(child: CircularProgressIndicator()) : ListView.builder(
-                    itemCount: state.regions.length,
-                    itemBuilder: (context, index) => RegionItem(
-                      region: state.regions[index],
-                      deleteRegion: (regionId) {
-                        settingsViewModel.deleteRegion(regionId);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+            // Expanded(
+            //   child: Consumer(
+            //     builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            //       final state = ref.watch(settingsViewModelProvider);
+            //       return state.isLoading ? const Center(child: CircularProgressIndicator()) : ListView.builder(
+            //         itemCount: state.regions.length,
+            //         itemBuilder: (context, index) => RegionItem(
+            //           region: state.regions[index],
+            //           deleteRegion: (regionId) {
+            //             settingsViewModel.deleteRegion(regionId);
+            //           },
+            //         ),
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),

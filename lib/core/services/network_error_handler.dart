@@ -7,10 +7,13 @@ import 'package:mobile/core/utils/app_constants.dart';
 // Custom exception for Network errors
 // ignore: avoid_classes_with_only_static_members
 class NetworkErrorHandler {
-  static NetworkServiceException handle(DioException error, [StackTrace? stackTrace]) {
-      if (kDebugMode) {
-        print('Network Error: ${error.message} StackTrace: $stackTrace');
-      }
+  static NetworkServiceException handle(
+    DioException error, [
+    StackTrace? stackTrace,
+  ]) {
+    if (kDebugMode) {
+      print('Network Error: ${error.message} StackTrace: $stackTrace');
+    }
 
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -25,21 +28,24 @@ class NetworkErrorHandler {
           error,
           stackTrace,
         );
-        case DioExceptionType.connectionError:
+      case DioExceptionType.connectionError:
         return NetworkServiceException(
           AppConstants.networkError,
           error,
           stackTrace,
         );
-       case DioExceptionType.badResponse:
-         return NetworkServiceException(
-            'Server error: ${error.response?.statusCode}',
-            error,
-             stackTrace,
+      case DioExceptionType.badResponse:
+        return NetworkServiceException(
+          'Server error: ${error.response?.statusCode}',
+          error,
+          stackTrace,
         );
       default:
-        return NetworkServiceException('Unexpected error occurred', error, stackTrace);
+        return NetworkServiceException(
+          'Unexpected error occurred',
+          error,
+          stackTrace,
+        );
     }
   }
-
 }

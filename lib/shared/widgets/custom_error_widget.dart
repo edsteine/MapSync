@@ -7,10 +7,12 @@ class CustomErrorWidget extends StatelessWidget {
     super.key,
     this.backgroundColor,
     this.textColor,
+    this.onClose,
   });
   final String error;
   final Color? backgroundColor;
   final Color? textColor;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) => Positioned(
@@ -28,23 +30,21 @@ class CustomErrorWidget extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                   Expanded(
-                     child: SingleChildScrollView(
-                        child: Text(
-                            error,
-                           style: TextStyle(color: textColor ?? Colors.red[900]),
-                         ),
-                      ),
-                   ),
-                  Align(
-                      alignment: Alignment.bottomRight,
-                      child: TextButton(
-                        onPressed: () {
-                            Navigator.of(context).pop();
-                        },
-                        child: const Text('Close'),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Text(
+                        error,
+                        style: TextStyle(color: textColor ?? Colors.red[900]),
                       ),
                     ),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: TextButton(
+                      onPressed: onClose ?? () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
                 ],
               ),
             ),

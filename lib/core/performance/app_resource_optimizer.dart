@@ -8,14 +8,14 @@ import 'package:path_provider/path_provider.dart';
 
 // ignore: avoid_classes_with_only_static_members
 class AppResourceOptimizer {
- static Future<Uint8List?> compressImage(Uint8List list) async =>
+  static Future<Uint8List?> compressImage(Uint8List list) async =>
       compute(_compressImage, list);
 
   static Future<Uint8List?> _compressImage(Uint8List list) async {
     if (list.isEmpty) {
       return null;
     }
-     final compressedImage = await FlutterImageCompress.compressWithList(
+    final compressedImage = await FlutterImageCompress.compressWithList(
       list,
       minHeight: AppConfig.compressImageMinHeight,
       minWidth: AppConfig.compressImageMinWidth,
@@ -29,18 +29,17 @@ class AppResourceOptimizer {
     return compressedImage;
   }
 
-
   static Future<void> clearTempFiles() async {
     final tempDir = await getTemporaryDirectory();
     final files = tempDir.listSync();
     for (final file in files) {
       if (file is File) {
-        try{
-           await file.delete();
+        try {
+          await file.delete();
         } on Exception catch (e) {
-            if(kDebugMode){
-              print('Error deleting file: $e');
-            }
+          if (kDebugMode) {
+            print('Error deleting file: $e');
+          }
         }
       }
     }

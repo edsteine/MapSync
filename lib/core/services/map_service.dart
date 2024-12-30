@@ -15,9 +15,10 @@ class MapServiceException implements Exception {
   MapServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-    final StackTrace? stackTrace;
+  final StackTrace? stackTrace;
   @override
-  String toString() => 'MapServiceException: $message, $error, stackTrace: $stackTrace';
+  String toString() =>
+      'MapServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapService {
@@ -25,9 +26,12 @@ class MapService {
   final TileService _tileManagerService;
   TileStore? _tileStore;
   OfflineManager? _offlineManager;
-  final StreamController<double> _progressController =
+  final StreamController<double> _stylePackProgress =
       StreamController<double>.broadcast();
-  Stream<double> get downloadProgress => _progressController.stream;
+    Stream<double> get stylePackProgress => _stylePackProgress.stream;
+  final StreamController<double> _tileRegionLoadProgress =
+      StreamController<double>.broadcast();
+     Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
 
   Future<void> init() async {
     try {
@@ -39,7 +43,11 @@ class MapService {
       if (kDebugMode) {
         print('Error initializing Map Service: $e, StackTrace: $stackTrace');
       }
-      throw MapServiceException('Error initializing Map Service', e, stackTrace);
+      throw MapServiceException(
+        'Error initializing Map Service',
+        e,
+        stackTrace,
+      );
     }
   }
 
@@ -76,8 +84,7 @@ class MapService {
       if (kDebugMode) {
         print('Error getting region size: $e, StackTrace: $stackTrace');
       }
-        throw MapServiceException('Error getting region size', e, stackTrace);
-
+      throw MapServiceException('Error getting region size', e, stackTrace);
     }
   }
 
@@ -87,7 +94,7 @@ class MapService {
     required void Function(double) onProgress,
     required void Function() onComplete,
     required void Function(dynamic) onError,
-     int? maxZoom,
+    int? maxZoom,
     int? minZoom,
   }) async {
     try {
@@ -102,8 +109,9 @@ class MapService {
       final tileCount = calculateTileCount(bounds, minZoomLevel, maxZoomLevel);
       if (tileCount > 7122999999999250) {
         throw MapServiceException(
-            'Selected area would require too many tiles. Please zoom in or select a smaller region. The selected area would require: $tileCount tiles',
-            'Tile count too high',);
+          'Selected area would require too many tiles. Please zoom in or select a smaller region. The selected area would require: $tileCount tiles',
+          'Tile count too high',
+        );
       }
       if (kDebugMode) {
         print('Initializing download for region: $regionName');
@@ -111,7 +119,10 @@ class MapService {
       await init();
 
       if (_tileStore == null) {
-        throw MapServiceException('TileStore is null after initialization', 'TileStore is null');
+        throw MapServiceException(
+          'TileStore is null after initialization',
+          'TileStore is null',
+        );
       }
 
       // Validate coordinates are within valid ranges
@@ -124,8 +135,9 @@ class MapService {
           bounds.southwest.coordinates.lng > 180 ||
           bounds.southwest.coordinates.lng < -180) {
         throw MapServiceException(
-            'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',
-            'Invalid Coordinates',);
+          'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',
+          'Invalid Coordinates',
+        );
       }
       if (kDebugMode) {
         print('Starting download for region $regionName');
@@ -133,6 +145,22 @@ class MapService {
         print('Northeast: ${bounds.northeast.coordinates}');
         print('Zoom levels: min=$minZoomLevel, max=$maxZoomLevel');
       }
+
+       final stylePackLoadOptions = StylePackLoadOptions(
+        glyphsRasterizationMode:
+            GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
+        metadata: {'tag': regionName},
+        acceptExpired: true,);
+       await _offlineManager?.loadStylePack(AppConstants.mapboxStreets, stylePackLoadOptions,
+        (progress) {
+              final percentage = progress.completedResourceCount / progress.requiredResourceCount;
+                if (!_stylePackProgress.isClosed) {
+                  _stylePackProgress.sink.add(percentage);
+                }
+        }).then((value) {
+            _stylePackProgress.sink.add(1);
+            _stylePackProgress.sink.close();
+         });
 
       final geometry = {
         'type': 'Polygon',
@@ -166,52 +194,50 @@ class MapService {
         print('Geometry created: $geometry');
       }
       await NotificationService.showProgressNotification(
-          title: 'Downloading region', progress: 0, id: 1, indeterminate: true,);
+        title: 'Downloading region',
+        progress: 0,
+        id: 1,
+        indeterminate: true,
+      );
 
       final tileRegionLoadOptions = TileRegionLoadOptions(
-          geometry: geometry,
-          descriptorsOptions: [
-            TilesetDescriptorOptions(
-                styleURI: AppConstants.mapboxStreets,
-                minZoom: minZoomLevel,
-                maxZoom: maxZoomLevel,),
-          ],
-          acceptExpired: true,
-          networkRestriction: NetworkRestriction.NONE,);
+        geometry: geometry,
+        descriptorsOptions: [
+          TilesetDescriptorOptions(
+            styleURI: AppConstants.mapboxStreets,
+            minZoom: minZoomLevel,
+            maxZoom: maxZoomLevel,
+          ),
+        ],
+        acceptExpired: true,
+        networkRestriction: NetworkRestriction.NONE,
+      );
 
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-      var lastProgress = 0;
-      await _tileStore?.loadTileRegion(
+     
+        await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
         (progress) {
+           final percentage = progress.completedResourceCount / progress.requiredResourceCount;
+            if (!_tileRegionLoadProgress.isClosed) {
+               _tileRegionLoadProgress.sink.add(percentage);
+           }
           if (kDebugMode) {
-            print('progress.completedResourceCount');
+             print('progress.completedResourceCount');
             print(progress.completedResourceCount);
             print(progress.completedResourceSize);
             print(progress.erroredResourceCount);
             print(progress.loadedResourceCount);
             print(progress.loadedResourceSize);
           }
-          final totalResources =
-              progress.completedResourceCount + progress.erroredResourceCount;
-          var currentProgress = 0;
-          if (totalResources > 0) {
-            currentProgress =
-                (progress.completedResourceCount / totalResources).toInt();
-            if ((currentProgress - lastProgress).abs() > 0.01) {
-              _progressController.add(currentProgress.toDouble());
-              lastProgress = currentProgress;
-              NotificationService.showProgressNotification(
-                title: 'Downloading region',
-                progress: (currentProgress * 100).toInt(),
-                id: 1,
-              );
-            }
-          }
+         
         },
-      );
+      ).then((value){
+           _tileRegionLoadProgress.sink.add(1);
+          _tileRegionLoadProgress.sink.close();
+      });
 
       if (kDebugMode) {
         print('Download complete for region: $regionName');
@@ -224,54 +250,73 @@ class MapService {
       }
       onError(e);
       await NotificationService.showNotification(
-        title: 'Download failed', body: e.toString(), id: 1,);
+        title: 'Download failed',
+        body: e.toString(),
+        id: 1,
+      );
       await NotificationService.cancelNotification(1);
-        throw MapServiceException('Download failed', e, stackTrace);
+      throw MapServiceException('Download failed', e, stackTrace);
     }
   }
 
   Future<void> removeTileRegionAndStylePack(
-      String tileRegionId, String styleUri,) async {
+    String tileRegionId,
+    String styleUri,
+  ) async {
     try {
-        final tileRegion = await _tileManagerService.getTileRegion(tileRegionId);
+      final tileRegion = await _tileManagerService.getTileRegion(tileRegionId);
       if (tileRegion == null) {
-         if (kDebugMode) {
-            print(
-                'Tile region with id $tileRegionId does not exist, cannot remove style pack.',
-            );
-            }
-          return;
+        if (kDebugMode) {
+          print(
+            'Tile region with id $tileRegionId does not exist, cannot remove style pack.',
+          );
+        }
+        return;
       }
       if (kDebugMode) {
         print('Removing tile region and style pack: $tileRegionId, $styleUri');
       }
       await _tileManagerService.removeTileRegion(tileRegionId);
       _tileManagerService.tileStore?.setDiskQuota(0);
-       await _offlineManager?.removeStylePack(styleUri);
+      await _offlineManager?.removeStylePack(styleUri);
     } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region and style pack: $e, StackTrace: $stackTrace');
+        print(
+          'Error removing tile region and style pack: $e, StackTrace: $stackTrace',
+        );
       }
-         throw MapServiceException('Error removing tile region and style pack', e, stackTrace);
+      throw MapServiceException(
+        'Error removing tile region and style pack',
+        e,
+        stackTrace,
+      );
     }
   }
 
-    Future<void> removeAllTileRegions() async {
+  Future<void> removeAllTileRegions() async {
     try {
-        final regions = await _tileManagerService.getAllTileRegions();
-        for (final region in regions) {
-            await removeTileRegionAndStylePack(region.id, AppConstants.mapboxStreets);
-        }
+      final regions = await _tileManagerService.getAllTileRegions();
+      for (final region in regions) {
+        await removeTileRegionAndStylePack(
+          region.id,
+          AppConstants.mapboxStreets,
+        );
+      }
     } catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error removing all tile regions: $e, StackTrace: $stackTrace');
       }
-         throw MapServiceException('Error removing all tile regions', e, stackTrace);
+      throw MapServiceException(
+        'Error removing all tile regions',
+        e,
+        stackTrace,
+      );
     }
   }
 
   void dispose() {
-    _progressController.close();
+    _tileRegionLoadProgress.close();
+        _stylePackProgress.close();
   }
 }
 

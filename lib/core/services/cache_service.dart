@@ -13,7 +13,8 @@ class CacheServiceException implements Exception {
   final StackTrace? stackTrace;
 
   @override
-  String toString() => 'CacheServiceException: $message, $error, stackTrace: $stackTrace';
+  String toString() =>
+      'CacheServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class CacheService {
@@ -31,10 +32,10 @@ class CacheService {
     try {
       await AppResourceOptimizer.clearTempFiles();
     } on Exception catch (e, stackTrace) {
-        if (kDebugMode) {
+      if (kDebugMode) {
         print('Error clearing temporaries: $e, StackTrace: $stackTrace');
       }
-         throw CacheServiceException('Error clearing temporaries', e, stackTrace);
+      throw CacheServiceException('Error clearing temporaries', e, stackTrace);
     }
 
     // clear map data
@@ -44,12 +45,12 @@ class CacheService {
     // Remove region and style pack for all tiles
     try {
       await mapService.removeAllTileRegions();
-       await tileManagerService.clearOldTiles();
+      await tileManagerService.clearOldTiles();
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
+      if (kDebugMode) {
         print('Error clearing map data: $e, StackTrace: $stackTrace');
       }
-          throw CacheServiceException('Error clearing map data', e, stackTrace);
+      throw CacheServiceException('Error clearing map data', e, stackTrace);
     }
 
     // Clear application cache (example)
@@ -59,7 +60,7 @@ class CacheService {
         print('Cache has been cleared');
       }
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
+      if (kDebugMode) {
         print('Error clearing storage: $e, StackTrace: $stackTrace');
       }
       throw CacheServiceException('Error clearing storage', e, stackTrace);
@@ -71,7 +72,11 @@ final cacheManagerProvider = Provider<CacheService>(
   (ref) => CacheService(
     ref.watch(storageProvider).when(
           data: (data) => data,
-          error: (error, stack) => throw CacheServiceException('Storage Error: $error', error, stack),
+          error: (error, stack) => throw CacheServiceException(
+            'Storage Error: $error',
+            error,
+            stack,
+          ),
           loading: Storage.new,
         ),
     ref.watch(mapServiceProvider),

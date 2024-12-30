@@ -5,16 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/config/app_config.dart';
 import 'package:mobile/core/services/network_error_handler.dart';
 
-
 // Custom Exception for Network Service errors
 class NetworkServiceException implements Exception {
   NetworkServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-    final StackTrace? stackTrace;
+  final StackTrace? stackTrace;
 
   @override
-  String toString() => 'NetworkServiceException: $message, $error, stackTrace: $stackTrace';
+  String toString() =>
+      'NetworkServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class NetworkService {
@@ -48,11 +48,11 @@ class NetworkService {
           }
           return handler.next(response);
         },
-         onError: (error, handler) {
+        onError: (error, handler) {
           if (kDebugMode) {
             print('Error: ${error.message} ${error.requestOptions.uri}');
           }
-           return handler.next(_handleError(error, error.stackTrace));
+          return handler.next(_handleError(error, error.stackTrace));
         },
       ),
     );
@@ -81,7 +81,7 @@ class NetworkService {
       };
       return await _dio.get(path, queryParameters: queryParameters);
     } on DioException catch (e, stackTrace) {
-       throw _handleError(e, stackTrace);
+      throw _handleError(e, stackTrace);
     }
   }
 
@@ -89,7 +89,7 @@ class NetworkService {
     try {
       return await _dio.post(path, data: data);
     } on DioException catch (e, stackTrace) {
-       throw _handleError(e, stackTrace);
+      throw _handleError(e, stackTrace);
     }
   }
 
@@ -105,16 +105,13 @@ class NetworkService {
     try {
       return await _dio.delete(path, data: data);
     } on DioException catch (e, stackTrace) {
-     throw _handleError(e, stackTrace);
+      throw _handleError(e, stackTrace);
     }
   }
 
-
-     DioException _handleError(DioException error, StackTrace? stackTrace) {
-         throw NetworkErrorHandler.handle(error, stackTrace);
-     }
-
-
+  DioException _handleError(DioException error, StackTrace? stackTrace) {
+    throw NetworkErrorHandler.handle(error, stackTrace);
+  }
 }
 
 final networkServiceProvider =

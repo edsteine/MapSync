@@ -31,7 +31,7 @@ class SettingsState {
   final ThemeMode themeMode;
   final List<String> regions;
   final bool isLoading;
-    final String? message; // Add message for callbacks
+  final String? message; // Add message for callbacks
 
   SettingsState copyWith({
     ThemeMode? themeMode,
@@ -113,47 +113,46 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       print('Loading Regions');
     }
     try {
-        final regions = await _repository.getDownloadedRegions();
-        if (kDebugMode) {
-          print('Loaded regions: $regions');
-        }
-         if (!mounted) {
-            return;
-        }
-        state = state.copyWith(regions: regions);
-    } on Exception catch (e) {
-      if(kDebugMode) {
-         print('Error loading regions: $e');
+      final regions = await _repository.getDownloadedRegions();
+      if (kDebugMode) {
+        print('Loaded regions: $regions');
       }
-       throw SettingsViewModelException('Error loading regions', e);
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(regions: regions);
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Error loading regions: $e');
+      }
+      throw SettingsViewModelException('Error loading regions', e);
     }
-
   }
 
   Future<void> clearData(BuildContext context) async {
     if (!mounted) {
       return;
     }
-      state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true);
 
     if (kDebugMode) {
       print('Clearing cache');
     }
     try {
-        await _repository.clearCache();
-        await loadRegions();
-         if (!mounted) {
-          return;
-        }
-        state = state.copyWith(isLoading: false, message: 'Data cleared!');
+      await _repository.clearCache();
+      await loadRegions();
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(isLoading: false, message: 'Data cleared!');
     } on Exception catch (e) {
-        if (kDebugMode) {
-            print('Error clearing data: $e');
-        }
-         state = state.copyWith(isLoading: false, message: 'Error clearing data: $e');
-           throw SettingsViewModelException('Error clearing data', e);
+      if (kDebugMode) {
+        print('Error clearing data: $e');
+      }
+      state =
+          state.copyWith(isLoading: false, message: 'Error clearing data: $e');
+      throw SettingsViewModelException('Error clearing data', e);
     }
-
   }
 
   Future<void> clearSystemCache(BuildContext context) async {
@@ -168,19 +167,19 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   }
 
   Future<void> _openAppSettings() async {
-     try {
-        final intent = AndroidIntent(
-          action: 'action_application_details_settings',
-          data: Uri(scheme: 'package', path: 'YOUR_PACKAGE_NAME').toString(),
-          flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
-        );
-        await intent.launch();
-      } on Exception catch (e) {
-        if (kDebugMode) {
-          print('Could not open settings using AndroidIntent: $e');
-        }
-        await geo.Geolocator.openAppSettings();
+    try {
+      final intent = AndroidIntent(
+        action: 'action_application_details_settings',
+        data: Uri(scheme: 'package', path: 'YOUR_PACKAGE_NAME').toString(),
+        flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await intent.launch();
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Could not open settings using AndroidIntent: $e');
       }
+      await geo.Geolocator.openAppSettings();
+    }
   }
 
   void _showDialog(BuildContext context) {
@@ -204,16 +203,15 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   }
 
   Future<void> deleteRegion(String regionId) async {
-     try {
-        await _repository.deleteRegion(regionId);
-        await loadRegions();
-     } on Exception catch (e) {
-        if (kDebugMode) {
-             print('Error deleting region: $e');
-        }
-        throw SettingsViewModelException('Error deleting region', e);
-     }
-
+    try {
+      await _repository.deleteRegion(regionId);
+      await loadRegions();
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Error deleting region: $e');
+      }
+      throw SettingsViewModelException('Error deleting region', e);
+    }
   }
 
   @override

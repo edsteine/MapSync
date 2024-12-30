@@ -9,10 +9,11 @@ class SettingsRepositoryException implements Exception {
   SettingsRepositoryException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-    final StackTrace? stackTrace;
+  final StackTrace? stackTrace;
 
   @override
-  String toString() => 'SettingsRepositoryException: $message, $error, stackTrace: $stackTrace';
+  String toString() =>
+      'SettingsRepositoryException: $message, $error, stackTrace: $stackTrace';
 }
 
 class SettingsRepository {
@@ -25,12 +26,12 @@ class SettingsRepository {
       print('Clearing Cache from Settings Repo');
     }
     try {
-        await _cacheManager.clearCache();
+      await _cacheManager.clearCache();
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
+      if (kDebugMode) {
         print('Error clearing cache: $e, StackTrace: $stackTrace');
       }
-        throw SettingsRepositoryException('Error clearing cache', e, stackTrace);
+      throw SettingsRepositoryException('Error clearing cache', e, stackTrace);
     }
   }
 
@@ -38,25 +39,29 @@ class SettingsRepository {
     if (kDebugMode) {
       print('Getting Downloaded regions from settings repo');
     }
-      try {
-        final regionsFuture = _tileManagerService.tileStore?.allTileRegions();
+    try {
+      final regionsFuture = _tileManagerService.tileStore?.allTileRegions();
 
-        if (regionsFuture == null) {
-           if (kDebugMode) {
-            print('No downloaded regions');
-          }
-        return [];
-        }
-        final regions = await regionsFuture;
+      if (regionsFuture == null) {
         if (kDebugMode) {
-          print('Downloaded regions: ${regions.map((e) => e.id).toList()}');
+          print('No downloaded regions');
         }
-       return regions.map((e) => e.id).toList();
+        return [];
+      }
+      final regions = await regionsFuture;
+      if (kDebugMode) {
+        print('Downloaded regions: ${regions.map((e) => e.id).toList()}');
+      }
+      return regions.map((e) => e.id).toList();
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error getting downloaded regions: $e, StackTrace: $stackTrace');
       }
-         throw SettingsRepositoryException('Error getting downloaded regions', e, stackTrace);
+      throw SettingsRepositoryException(
+        'Error getting downloaded regions',
+        e,
+        stackTrace,
+      );
     }
   }
 
@@ -64,14 +69,14 @@ class SettingsRepository {
     if (kDebugMode) {
       print('Deleting region from Settings repo: $regionId');
     }
-     try {
-        await _tileManagerService.removeTileRegion(regionId);
-     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
+    try {
+      await _tileManagerService.removeTileRegion(regionId);
+    } on Exception catch (e, stackTrace) {
+      if (kDebugMode) {
         print('Error deleting region: $e, StackTrace: $stackTrace');
       }
-       throw SettingsRepositoryException('Error deleting region', e, stackTrace);
-     }
+      throw SettingsRepositoryException('Error deleting region', e, stackTrace);
+    }
   }
 }
 

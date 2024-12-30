@@ -11,9 +11,10 @@ class TileServiceException implements Exception {
   TileServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-    final StackTrace? stackTrace;
+  final StackTrace? stackTrace;
   @override
-  String toString() => 'TileServiceException: $message, $error, stackTrace: $stackTrace';
+  String toString() =>
+      'TileServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class TileService {
@@ -24,11 +25,14 @@ class TileService {
     try {
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
+      if (kDebugMode) {
+        print('TileStore initialized');
+      }
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error initializing TileStore: $e, StackTrace: $stackTrace');
       }
-       throw TileServiceException('Error initializing TileStore', e, stackTrace);
+      throw TileServiceException('Error initializing TileStore', e, stackTrace);
     }
   }
 
@@ -38,6 +42,9 @@ class TileService {
     int maxZoom,
     String styleUri,
   ) async {
+    if (kDebugMode) {
+      print('Starting downloadTiles');
+    }
     if (_tileStore == null) {
       await initialize();
     }
@@ -45,9 +52,15 @@ class TileService {
     try {
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-
+      if (kDebugMode) {
+        print('Region ID: $regionId');
+      }
+      
       final tileRegionLoadOptions = TileRegionLoadOptions(
-        // geometry: bounds.toJson(),
+        // geometry: Point(coordinates: Position(-80.1263, 25.7845)).toJson(),
+        geometry: Point(coordinates: Position(34.020882, -6.832477)).toJson(),
+        // geometry: Point(coordinates: Position( -6.832477,34.020882)).toJson(),
+        
         descriptorsOptions: [
           TilesetDescriptorOptions(
             styleURI: styleUri,
@@ -58,21 +71,40 @@ class TileService {
         acceptExpired: true,
         networkRestriction: NetworkRestriction.NONE,
       );
+      if (kDebugMode) {
+        print('Loading tile region');
+      }
       await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
-        (progress) {},
+        (progress) {
+          if (kDebugMode) {
+            print('TileService progress callback called');
+            print('Completed resources: ${progress.completedResourceCount}');
+            print('Loaded resources: ${progress.loadedResourceCount}');
+            print('Errored resources: ${progress.erroredResourceCount}');
+          }
+        },
       );
+      if (kDebugMode) {
+        print('Tile region loaded');
+      }
+      final tileRegion = await getTileRegion(regionId);
+      if (kDebugMode) {
+        print('Tile Region Completed Size: ${tileRegion?.completedResourceSize}');
+        print('Tile Region Loaded Size: ${tileRegion?.completedResourceCount}');
+        print('Tile Region Errored Count: ${tileRegion?.completedResourceSize}');
+      }
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error downloading tiles: $e, StackTrace: $stackTrace');
       }
-       throw TileServiceException('Error downloading tiles', e, stackTrace);
+      throw TileServiceException('Error downloading tiles', e, stackTrace);
     }
   }
 
   Future<void> clearOldTiles() async {
-    if (_tileStore == null) {
+      if (_tileStore == null) {
       await initialize();
     }
     if (kDebugMode) {
@@ -93,15 +125,15 @@ class TileService {
         }
       }
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
-         print('Error clearing old tiles: $e, StackTrace: $stackTrace');
-       }
-         throw TileServiceException('Error clearing old tiles', e, stackTrace);
+      if (kDebugMode) {
+        print('Error clearing old tiles: $e, StackTrace: $stackTrace');
+      }
+      throw TileServiceException('Error clearing old tiles', e, stackTrace);
     }
   }
 
   Future<void> removeTileRegion(String regionId) async {
-    if (_tileStore == null) {
+     if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -111,14 +143,20 @@ class TileService {
       await _tileStore?.removeRegion(regionId);
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region $regionId: $e, StackTrace: $stackTrace');
+        print(
+          'Error removing tile region $regionId: $e, StackTrace: $stackTrace',
+        );
       }
-       throw TileServiceException('Error removing tile region $regionId', e, stackTrace);
+      throw TileServiceException(
+        'Error removing tile region $regionId',
+        e,
+        stackTrace,
+      );
     }
   }
 
   Future<TileRegion?> getTileRegion(String regionId) async {
-    if (_tileStore == null) {
+     if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -126,14 +164,20 @@ class TileService {
       return regions.firstWhere((region) => region.id == regionId);
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error getting tile region $regionId: $e, StackTrace: $stackTrace');
+        print(
+          'Error getting tile region $regionId: $e, StackTrace: $stackTrace',
+        );
       }
-      throw TileServiceException('Error getting tile region $regionId', e, stackTrace);
+      throw TileServiceException(
+        'Error getting tile region $regionId',
+        e,
+        stackTrace,
+      );
     }
   }
 
-    Future<List<TileRegion>> getAllTileRegions() async {
-    if (_tileStore == null) {
+  Future<List<TileRegion>> getAllTileRegions() async {
+     if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -142,12 +186,16 @@ class TileService {
       if (kDebugMode) {
         print('Error getting all tile regions: $e, StackTrace: $stackTrace');
       }
-         throw TileServiceException('Error getting all tile regions', e, stackTrace);
+      throw TileServiceException(
+        'Error getting all tile regions',
+        e,
+        stackTrace,
+      );
     }
   }
 
   Future<bool> isRegionDownloaded(CoordinateBounds bounds) async {
-    if (_tileStore == null) {
+      if (_tileStore == null) {
       return false;
     }
 
@@ -179,5 +227,4 @@ class TileService {
   TileStore? get tileStore => _tileStore;
 }
 
-final tileServiceProvider =
-    Provider<TileService>((ref) => TileService());
+final tileServiceProvider = Provider<TileService>((ref) => TileService());
