@@ -1,6 +1,7 @@
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/main.dart ##############
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/config/app_config.dart';
@@ -11,8 +12,12 @@ import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // PerformanceMonitor.startMonitoring();
+  await dotenv.load();
+  //  await dotenv.load(fileName: ".env");
   MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
   await NotificationService.init();
   await PermissionService.requestNotificationPermissions();
@@ -45,19 +50,22 @@ class MyApp extends ConsumerWidget {
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) {
   // Initialize from storage
-  final storageAsync = ref.watch(storageProvider2);
+  final storageAsync = ref.watch(storageProvider);
   final storage = storageAsync.when(
     data: (data) => data,
-    error: (error, stack) => null,
+    error: (error, stack) {
+      debugPrint('Error loading theme from storage: $error');
+      return null;
+    },
     loading: () => null,
   );
   if (storage == null) {
     return ThemeMode.light;
   }
   final themeString = storage.getString(AppConstants.themeModeKey);
-  return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
-});
+    return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
 
+});
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/main.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib ##############
@@ -66,13 +74,12 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_config.dart ##############
 // lib/core/config/app_config.dart
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 // ignore: avoid_classes_with_only_static_members
 class AppConfig {
-  // Replace with environment variables or a secure configuration method
-  static const String mapboxAccessToken =
-      'pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg';
+  static String get mapboxAccessToken => dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? 'pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg'
+;
   static const String apiBaseUrl =
       'https://w-project-u75x.onrender.com/api/v1/';
   static const String appVersion = '1.0.0';
@@ -88,7 +95,7 @@ class AppConfig {
   static String get userResetPassword => '${userPath}reset_password/';
 
   // Locations Paths
-  static String get locationsPath => '${apiBaseUrl}locations/';
+  static String get locationsPath => '${apiBaseUrl}locations/?page=1&page_size=150';
   static String get locationsNearbyPath => '${apiBaseUrl}nearby/';
   static String get locationsStatistics => '${apiBaseUrl}statistics/';
 
@@ -100,7 +107,7 @@ class AppConfig {
     'maxZoom': 22.0,
   };
 
-  static Map<String, int> offlineMapSettings = {
+    static Map<String, int> offlineMapSettings = {
     'maxTiles': 10000,
     'minZoom': 10,
     'maxZoom': 15,
@@ -108,7 +115,6 @@ class AppConfig {
 }
 
 final configProvider = Provider<AppConfig>((ref) => AppConfig());
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_config.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_routes.dart ##############
@@ -127,7 +133,6 @@ class AppRoutes {
     settings: (context) => const SettingsScreen(),
   };
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_routes.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_theme.dart ##############
@@ -179,7 +184,6 @@ class AppTheme {
     useMaterial3: true,
   );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_theme.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config ##############
@@ -209,26 +213,41 @@ class AppConstants {
   static const String offlineError = 'You are currently offline';
   static const String downloadError = 'Failed to download region';
 
-  // Error Messages
+    // Error Messages
   static const String unableToLoadMarkersError = 'Unable to load markers';
   static const String downloadFailedError = 'Download failed: ';
   static const String failedToDownloadRegion = 'Failed to download region: ';
   static const int defaultMaxZoomLevel = 13;
   static const int defaultMinZoomLevel = 10;
   static const String mapboxStreets = MapboxStyles.MAPBOX_STREETS;
-}
 
+}
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_constants.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_helpers.dart ##############
-// lib/core/utils/helpers.dart
-import 'dart:math' as math;
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_utils.dart ##############
+// lib/core/utils/app_utils.dart
+import 'dart:math';
 
-import 'package:dio/dio.dart';
+// ignore: avoid_classes_with_only_static_members
+class AppUtils {
+   static String formatFileSize(int bytes) {
+    if (bytes <= 0) {
+      return '0 B';
+    }
+    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    final i = (log(bytes) / log(1024)).floor();
+    return '${(bytes / pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
+  }
+}
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_utils.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_utils.dart ##############
+// lib/core/utils/map_utils.dart
+import 'dart:math' as math;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 // ignore: avoid_classes_with_only_static_members
-class MapHelpers {
+class MapUtils {
   static bool isPointInBounds(Point point, CoordinateBounds bounds) {
     final pointCoords = point.coordinates;
     final southwestCoords = bounds.southwest.coordinates;
@@ -264,35 +283,8 @@ class MapHelpers {
 
     return earthRadius * c;
   }
-
-  static String formatFileSize(int bytes) {
-    if (bytes <= 0) {
-      return '0 B';
-    }
-    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    final i = (math.log(bytes) / math.log(1024)).floor();
-    return '${(bytes / math.pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
-  }
-
-  static bool isNetworkError(dynamic error) {
-    if (error is DioException) {
-      switch (error.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.receiveTimeout:
-        case DioExceptionType.connectionError:
-          return true;
-
-        default:
-          return error.message.toString().toLowerCase().contains('network') ||
-              error.message.toString().toLowerCase().contains('connection');
-      }
-    }
-    return error.toString().toLowerCase().contains('network') ||
-        error.toString().toLowerCase().contains('connection');
-  }
 }
-
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_helpers.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_utils.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils ##############
 
@@ -307,11 +299,14 @@ import 'package:path_provider/path_provider.dart';
 
 // ignore: avoid_classes_with_only_static_members
 class AppResourceOptimizer {
-  static Future<Uint8List?> compressImage(Uint8List list) async =>
+ static Future<Uint8List?> compressImage(Uint8List list) async =>
       compute(_compressImage, list);
 
   static Future<Uint8List?> _compressImage(Uint8List list) async {
-    final compressedImage = await FlutterImageCompress.compressWithList(
+    if (list.isEmpty) {
+      return null;
+    }
+     final compressedImage = await FlutterImageCompress.compressWithList(
       list,
       minHeight: AppConfig.compressImageMinHeight,
       minWidth: AppConfig.compressImageMinWidth,
@@ -325,17 +320,23 @@ class AppResourceOptimizer {
     return compressedImage;
   }
 
+
   static Future<void> clearTempFiles() async {
     final tempDir = await getTemporaryDirectory();
     final files = tempDir.listSync();
     for (final file in files) {
       if (file is File) {
-        await file.delete();
+        try{
+           await file.delete();
+        } on Exception catch (e) {
+            if(kDebugMode){
+              print('Error deleting file: $e');
+            }
+        }
       }
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/app_resource_optimizer.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/performance_monitor.dart ##############
@@ -425,7 +426,6 @@ class PerformanceMonitor {
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/performance_monitor.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance ##############
@@ -471,7 +471,13 @@ class PermissionService {
       return geo.LocationPermission.denied;
     } else if (permission == geo.LocationPermission.deniedForever) {
       // Permission has been denied, try to open the settings.
-      await geo.Geolocator.openAppSettings();
+       if (kDebugMode) {
+        print(
+          'Location permission is permanently denied',
+        );
+      }
+       await geo.Geolocator.openAppSettings();
+
       return geo.LocationPermission.deniedForever;
     } else if (permission == geo.LocationPermission.whileInUse ||
         permission == geo.LocationPermission.always) {
@@ -481,7 +487,6 @@ class PermissionService {
     return geo.LocationPermission.denied;
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/permission_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/notification_service.dart ##############
@@ -596,7 +601,6 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancel(id);
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/notification_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_service.dart ##############
@@ -605,6 +609,19 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/config/app_config.dart';
+import 'package:mobile/core/services/network_error_handler.dart';
+
+
+// Custom Exception for Network Service errors
+class NetworkServiceException implements Exception {
+  NetworkServiceException(this.message, this.error, [this.stackTrace]);
+  final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
+
+  @override
+  String toString() => 'NetworkServiceException: $message, $error, stackTrace: $stackTrace';
+}
 
 class NetworkService {
   NetworkService() {
@@ -637,11 +654,11 @@ class NetworkService {
           }
           return handler.next(response);
         },
-        onError: (error, handler) {
+         onError: (error, handler) {
           if (kDebugMode) {
             print('Error: ${error.message} ${error.requestOptions.uri}');
           }
-          return handler.next(error);
+           return handler.next(_handleError(error, error.stackTrace));
         },
       ),
     );
@@ -653,8 +670,8 @@ class NetworkService {
   }) async {
     try {
       return await _dio.get(path, queryParameters: queryParameters);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+      throw _handleError(e, stackTrace);
     }
   }
 
@@ -669,54 +686,45 @@ class NetworkService {
         'page_size': pageSize.toString(),
       };
       return await _dio.get(path, queryParameters: queryParameters);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+       throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> post(String path, dynamic data) async {
     try {
       return await _dio.post(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+       throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> put(String path, dynamic data) async {
     try {
       return await _dio.put(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+      throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> delete(String path, {dynamic data}) async {
     try {
       return await _dio.delete(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+     throw _handleError(e, stackTrace);
     }
   }
 
-  Exception _handleError(DioException error) {
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-        return Exception('Connection timeout');
-      case DioExceptionType.receiveTimeout:
-        return Exception('Receive timeout');
-      case DioExceptionType.badResponse:
-        return Exception('Server error: ${error.response?.statusCode}');
-      case DioExceptionType.connectionError:
-        return Exception('Network connection error');
-      default:
-        return Exception('Unexpected error occurred');
-    }
-  }
+
+     DioException _handleError(DioException error, StackTrace? stackTrace) {
+         throw NetworkErrorHandler.handle(error, stackTrace);
+     }
+
+
 }
 
 final networkServiceProvider =
     Provider<NetworkService>((ref) => NetworkService());
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/tile_service.dart ##############
@@ -730,11 +738,12 @@ import 'package:path_provider/path_provider.dart';
 
 // Custom exception for TileService errors
 class TileServiceException implements Exception {
-  TileServiceException(this.message);
+  TileServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
-
+  final dynamic error;
+    final StackTrace? stackTrace;
   @override
-  String toString() => 'TileServiceException: $message';
+  String toString() => 'TileServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class TileService {
@@ -745,11 +754,11 @@ class TileService {
     try {
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error initializing TileStore: $e');
+        print('Error initializing TileStore: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error initializing TileStore: $e');
+       throw TileServiceException('Error initializing TileStore', e, stackTrace);
     }
   }
 
@@ -784,11 +793,11 @@ class TileService {
         tileRegionLoadOptions,
         (progress) {},
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error downloading tiles: $e');
+        print('Error downloading tiles: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error downloading tiles: $e');
+       throw TileServiceException('Error downloading tiles', e, stackTrace);
     }
   }
 
@@ -813,11 +822,11 @@ class TileService {
           print('No old tiles directory found');
         }
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
        if (kDebugMode) {
-         print('Error clearing old tiles: $e');
+         print('Error clearing old tiles: $e, StackTrace: $stackTrace');
        }
-        throw TileServiceException('Error clearing old tiles: $e');
+         throw TileServiceException('Error clearing old tiles', e, stackTrace);
     }
   }
 
@@ -830,11 +839,11 @@ class TileService {
         print('Removing tile region: $regionId');
       }
       await _tileStore?.removeRegion(regionId);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region $regionId: $e');
+        print('Error removing tile region $regionId: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error removing tile region $regionId: $e');
+       throw TileServiceException('Error removing tile region $regionId', e, stackTrace);
     }
   }
 
@@ -845,11 +854,25 @@ class TileService {
     try {
       final regions = await _tileStore!.allTileRegions();
       return regions.firstWhere((region) => region.id == regionId);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error getting tile region $regionId: $e');
+        print('Error getting tile region $regionId: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error getting tile region $regionId: $e');
+      throw TileServiceException('Error getting tile region $regionId', e, stackTrace);
+    }
+  }
+
+    Future<List<TileRegion>> getAllTileRegions() async {
+    if (_tileStore == null) {
+      await initialize();
+    }
+    try {
+      return await _tileStore!.allTileRegions();
+    } on Exception catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error getting all tile regions: $e, StackTrace: $stackTrace');
+      }
+         throw TileServiceException('Error getting all tile regions', e, stackTrace);
     }
   }
 
@@ -870,7 +893,7 @@ class TileService {
         print('Region $regionId is downloaded: $isDownloaded');
       }
       return isDownloaded;
-    } on Exception catch (e) { // Changed catch(e) to on Exception catch (e)
+    } on Exception catch (e) {
       if (kDebugMode) {
         print('Error checking if region is downloaded: $e');
       }
@@ -886,9 +909,57 @@ class TileService {
   TileStore? get tileStore => _tileStore;
 }
 
-final tileManagerServiceProvider =
+final tileServiceProvider =
     Provider<TileService>((ref) => TileService());
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/tile_service.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_error_handler.dart ##############
+// lib/core/services/network_error_handler.dart
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:mobile/core/services/network_service.dart';
+import 'package:mobile/core/utils/app_constants.dart';
+
+// Custom exception for Network errors
+// ignore: avoid_classes_with_only_static_members
+class NetworkErrorHandler {
+  static NetworkServiceException handle(DioException error, [StackTrace? stackTrace]) {
+      if (kDebugMode) {
+        print('Network Error: ${error.message} StackTrace: $stackTrace');
+      }
+
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+        return NetworkServiceException(
+          AppConstants.networkError,
+          error,
+          stackTrace,
+        );
+      case DioExceptionType.receiveTimeout:
+        return NetworkServiceException(
+          AppConstants.networkError,
+          error,
+          stackTrace,
+        );
+        case DioExceptionType.connectionError:
+        return NetworkServiceException(
+          AppConstants.networkError,
+          error,
+          stackTrace,
+        );
+       case DioExceptionType.badResponse:
+         return NetworkServiceException(
+            'Server error: ${error.response?.statusCode}',
+            error,
+             stackTrace,
+        );
+      default:
+        return NetworkServiceException('Unexpected error occurred', error, stackTrace);
+    }
+  }
+
+}
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_error_handler.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/map_service.dart ##############
 // lib/core/services/map_service.dart
@@ -901,14 +972,16 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/tile_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
-import 'package:mobile/core/utils/map_helpers.dart';
+import 'package:mobile/core/utils/app_utils.dart';
 
 // Custom exception for MapService errors
 class MapServiceException implements Exception {
-  MapServiceException(this.message);
+  MapServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
-   @override
-  String toString() => 'MapServiceException: $message';
+  final dynamic error;
+    final StackTrace? stackTrace;
+  @override
+  String toString() => 'MapServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapService {
@@ -926,11 +999,11 @@ class MapService {
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
       await NotificationService.init();
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error initializing Map Service: $e');
+        print('Error initializing Map Service: $e, StackTrace: $stackTrace');
       }
-      rethrow;
+      throw MapServiceException('Error initializing Map Service', e, stackTrace);
     }
   }
 
@@ -962,12 +1035,12 @@ class MapService {
       }
       final sizeBytes = tileRegion.completedResourceSize;
 
-      return MapHelpers.formatFileSize(sizeBytes);
-    } on Exception catch (e) {
+      return AppUtils.formatFileSize(sizeBytes);
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error getting region size: $e');
+        print('Error getting region size: $e, StackTrace: $stackTrace');
       }
-        throw MapServiceException('Error getting region size: $e');
+        throw MapServiceException('Error getting region size', e, stackTrace);
 
     }
   }
@@ -978,12 +1051,12 @@ class MapService {
     required void Function(double) onProgress,
     required void Function() onComplete,
     required void Function(dynamic) onError,
-    int? maxZoom,
+     int? maxZoom,
     int? minZoom,
   }) async {
     try {
       // final maxZoomLevel = maxZoom ?? AppConstants.defaultMaxZoomLevel;
-      // final minZoomLevel = minZoom ?? AppConstants.defaultMinZoomLevel;
+      // final minZoomLevel = minZoom ?? AppConfig.defaultMinZoomLevel;
       const maxZoomLevel = 22;
       const minZoomLevel = 1;
       if (kDebugMode) {
@@ -992,8 +1065,9 @@ class MapService {
 
       final tileCount = calculateTileCount(bounds, minZoomLevel, maxZoomLevel);
       if (tileCount > 7122999999999250) {
-        throw Exception(
-            'Selected area would require too many tiles ($tileCount). Please zoom in or select a smaller region.',);
+        throw MapServiceException(
+            'Selected area would require too many tiles. Please zoom in or select a smaller region. The selected area would require: $tileCount tiles',
+            'Tile count too high',);
       }
       if (kDebugMode) {
         print('Initializing download for region: $regionName');
@@ -1001,7 +1075,7 @@ class MapService {
       await init();
 
       if (_tileStore == null) {
-        throw Exception('TileStore is null after initialization');
+        throw MapServiceException('TileStore is null after initialization', 'TileStore is null');
       }
 
       // Validate coordinates are within valid ranges
@@ -1013,8 +1087,9 @@ class MapService {
           bounds.northeast.coordinates.lng < -180 ||
           bounds.southwest.coordinates.lng > 180 ||
           bounds.southwest.coordinates.lng < -180) {
-        throw Exception(
-            'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',);
+        throw MapServiceException(
+            'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',
+            'Invalid Coordinates',);
       }
       if (kDebugMode) {
         print('Starting download for region $regionName');
@@ -1109,31 +1184,53 @@ class MapService {
       await NotificationService.cancelNotification(1);
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Download failed with error: $e');
-        print('Stack trace: $stackTrace');
+        print('Download failed with error: $e, StackTrace: $stackTrace');
       }
       onError(e);
       await NotificationService.showNotification(
         title: 'Download failed', body: e.toString(), id: 1,);
       await NotificationService.cancelNotification(1);
-      rethrow;
+        throw MapServiceException('Download failed', e, stackTrace);
     }
   }
 
   Future<void> removeTileRegionAndStylePack(
       String tileRegionId, String styleUri,) async {
     try {
+        final tileRegion = await _tileManagerService.getTileRegion(tileRegionId);
+      if (tileRegion == null) {
+         if (kDebugMode) {
+            print(
+                'Tile region with id $tileRegionId does not exist, cannot remove style pack.',
+            );
+            }
+          return;
+      }
       if (kDebugMode) {
         print('Removing tile region and style pack: $tileRegionId, $styleUri');
       }
       await _tileManagerService.removeTileRegion(tileRegionId);
       _tileManagerService.tileStore?.setDiskQuota(0);
-      await _offlineManager?.removeStylePack(styleUri);
-    } catch (e) {
+       await _offlineManager?.removeStylePack(styleUri);
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region and style pack: $e');
+        print('Error removing tile region and style pack: $e, StackTrace: $stackTrace');
       }
-      rethrow;
+         throw MapServiceException('Error removing tile region and style pack', e, stackTrace);
+    }
+  }
+
+    Future<void> removeAllTileRegions() async {
+    try {
+        final regions = await _tileManagerService.getAllTileRegions();
+        for (final region in regions) {
+            await removeTileRegionAndStylePack(region.id, AppConstants.mapboxStreets);
+        }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error removing all tile regions: $e, StackTrace: $stackTrace');
+      }
+         throw MapServiceException('Error removing all tile regions', e, stackTrace);
     }
   }
 
@@ -1143,7 +1240,7 @@ class MapService {
 }
 
 final mapServiceProvider = Provider<MapService>(
-  (ref) => MapService(ref.watch(tileManagerServiceProvider)),
+  (ref) => MapService(ref.watch(tileServiceProvider)),
 );
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/map_service.dart ##############
 
@@ -1156,84 +1253,196 @@ import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/features/map/models/map_marker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Custom Exception for Storage service errors
+class StorageException implements Exception {
+  StorageException(this.message, this.error, [this.stackTrace]);
+  final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
+
+  @override
+  String toString() => 'StorageException: $message, $error, stackTrace: $stackTrace';
+}
+
 class Storage {
-  late Box<MapMarker> _markerBox;
-  late SharedPreferences _prefs;
+
+
+   Storage();
+   late Future<Box<MapMarker>> _markerBoxFuture;
+  final Future<SharedPreferences> _prefsFuture = SharedPreferences.getInstance();
+
   static Future<Storage> init() async {
     final storage = Storage();
-    await Hive.initFlutter();
-    Hive.registerAdapter(MapMarkerAdapter());
-    storage
-      .._markerBox = await Hive.openBox<MapMarker>(AppConstants.markersKey)
-      .._prefs = await SharedPreferences.getInstance();
-    if (kDebugMode) {
-      print('Storage Initialized');
+    try {
+       await Hive.initFlutter();
+       Hive.registerAdapter(MapMarkerAdapter());
+         storage._markerBoxFuture =  Hive.openBox<MapMarker>(AppConstants.markersKey);
+           if (kDebugMode) {
+             print('Storage Initialized');
+          }
+      return storage;
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+            print('Error initializing storage: $e, StackTrace: $stackTrace');
+        }
+       throw StorageException('Error initializing storage', e, stackTrace);
     }
-    return storage;
+
   }
 
   // Marker operations
   Future<void> saveMarkers(List<MapMarker> markers) async {
-    await _markerBox.clear();
-    await _markerBox.putAll(
-      Map.fromIterables(
-        markers.map((e) => e.id),
-        markers,
-      ),
-    );
+      try {
+           final markerBox = await _markerBoxFuture;
+           await markerBox.clear();
+           await markerBox.putAll(
+              Map.fromIterables(
+                markers.map((e) => e.id),
+                markers,
+            ),
+          );
+          final prefs = await _prefsFuture;
+          await prefs.setInt(AppConstants.markersKey, DateTime.now().millisecondsSinceEpoch);
+       } on Exception catch (e, stackTrace) {
+          if(kDebugMode){
+             print('Error saving markers: $e, StackTrace: $stackTrace');
+          }
+          throw StorageException('Error saving markers', e, stackTrace);
+       }
   }
 
-  List<MapMarker> getMarkers() => _markerBox.values.toList();
+  Future<List<MapMarker>> getMarkers() async {
+    try{
+        final markerBox = await _markerBoxFuture;
+        return markerBox.values.toList();
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode) {
+           print('Error getting markers: $e, StackTrace: $stackTrace');
+        }
+        throw StorageException('Error getting markers', e, stackTrace);
+    }
+
+  }
 
   // Preferences operations
-  Future<void> saveString(String key, String value) async {
-    await _prefs.setString(key, value);
+    Future<void> saveInt(String key, int value) async {
+     try {
+       final prefs = await _prefsFuture;
+        await prefs.setInt(key, value);
+      } on Exception catch (e, stackTrace) {
+          if(kDebugMode) {
+               print('Error saving int: $e, StackTrace: $stackTrace');
+          }
+         throw StorageException('Error saving int', e, stackTrace);
+      }
   }
 
-  String? getString(String key) => _prefs.getString(key);
+  Future<int?> getInt(String key) async {
+    try{
+       final prefs = await _prefsFuture;
+        return prefs.getInt(key);
+      }on Exception catch (e, stackTrace) {
+         if(kDebugMode) {
+            print('Error getting int: $e, StackTrace: $stackTrace');
+        }
+         throw StorageException('Error getting int', e, stackTrace);
+     }
+  }
+
+  Future<void> saveString(String key, String value) async {
+      try {
+         final prefs = await _prefsFuture;
+        await prefs.setString(key, value);
+      } on Exception catch (e, stackTrace) {
+           if(kDebugMode){
+              print('Error saving string: $e, StackTrace: $stackTrace');
+           }
+          throw StorageException('Error saving string', e, stackTrace);
+      }
+  }
+
+  Future<String?> getString(String key) async {
+    try{
+      final prefs = await _prefsFuture;
+        return prefs.getString(key);
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+           print('Error getting string: $e, StackTrace: $stackTrace');
+        }
+         throw StorageException('Error getting string', e, stackTrace);
+     }
+  }
 
   Future<void> saveBool(String key, {required bool value}) async {
-    await _prefs.setBool(key, value);
-  }
+        try {
+          final prefs = await _prefsFuture;
+           await prefs.setBool(key, value);
+       } on Exception catch (e, stackTrace) {
+           if(kDebugMode){
+              print('Error saving bool: $e, StackTrace: $stackTrace');
+           }
+           throw StorageException('Error saving bool', e, stackTrace);
+         }
 
-  bool? getBool(String key) => _prefs.getBool(key);
+   }
+
+
+   Future<bool?> getBool(String key) async {
+    try {
+       final prefs = await _prefsFuture;
+         return prefs.getBool(key);
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+          print('Error getting bool: $e, StackTrace: $stackTrace');
+        }
+        throw StorageException('Error getting bool', e, stackTrace);
+    }
+   }
 
   Future<void> clearAll() async {
     if (kDebugMode) {
       print('Clearing All Storage');
     }
-    await _markerBox.clear();
-    await _prefs.clear();
-    if (kDebugMode) {
-      print('All storage cleared');
-    }
+      try {
+          final markerBox = await _markerBoxFuture;
+        await markerBox.clear();
+        final prefs = await _prefsFuture;
+        await prefs.clear();
+      if (kDebugMode) {
+            print('All storage cleared');
+        }
+      } on Exception catch (e, stackTrace) {
+          if(kDebugMode){
+              print('Error clearing storage: $e, StackTrace: $stackTrace');
+          }
+           throw StorageException('Error clearing storage', e, stackTrace);
+      }
   }
 }
 
-final storageProvider2 = FutureProvider<Storage>((ref) async {
+final storageProvider = FutureProvider<Storage>((ref) async {
   final storage = await Storage.init();
   return storage;
 });
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/storage_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/cache_service.dart ##############
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/performance/app_resource_optimizer.dart';
 import 'package:mobile/core/services/map_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/services/tile_service.dart';
-import 'package:mobile/core/utils/app_constants.dart';
 
 // Custom Exception for CacheService errors
 class CacheServiceException implements Exception {
-  CacheServiceException(this.message);
+  CacheServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
+  final dynamic error;
+  final StackTrace? stackTrace;
 
   @override
-  String toString() => 'CacheServiceException: $message';
+  String toString() => 'CacheServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class CacheService {
@@ -1250,11 +1459,11 @@ class CacheService {
     // Clear temporary files first, before clear map data
     try {
       await AppResourceOptimizer.clearTempFiles();
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
         if (kDebugMode) {
-        print('Error clearing temporaries: $e');
+        print('Error clearing temporaries: $e, StackTrace: $stackTrace');
       }
-       throw CacheServiceException('Error clearing temporaries: $e');
+         throw CacheServiceException('Error clearing temporaries', e, stackTrace);
     }
 
     // clear map data
@@ -1263,21 +1472,13 @@ class CacheService {
     }
     // Remove region and style pack for all tiles
     try {
-      final regions = await (tileManagerService.tileStore?.allTileRegions() ??
-          Future.value([]));
-
-      for (final TileRegion region in regions) {
-        await mapService.removeTileRegionAndStylePack(
-          region.id,
-          AppConstants.mapboxStreets,
-        );
-      }
-      await tileManagerService.clearOldTiles();
-    } on Exception catch (e) {
+      await mapService.removeAllTileRegions();
+       await tileManagerService.clearOldTiles();
+    } on Exception catch (e, stackTrace) {
        if (kDebugMode) {
-        print('Error clearing map data: $e');
+        print('Error clearing map data: $e, StackTrace: $stackTrace');
       }
-       throw CacheServiceException('Error clearing map data: $e');
+          throw CacheServiceException('Error clearing map data', e, stackTrace);
     }
 
     // Clear application cache (example)
@@ -1286,24 +1487,24 @@ class CacheService {
       if (kDebugMode) {
         print('Cache has been cleared');
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
        if (kDebugMode) {
-        print('Error clearing storage: $e');
+        print('Error clearing storage: $e, StackTrace: $stackTrace');
       }
-      throw CacheServiceException('Error clearing storage: $e');
+      throw CacheServiceException('Error clearing storage', e, stackTrace);
     }
   }
 }
 
 final cacheManagerProvider = Provider<CacheService>(
   (ref) => CacheService(
-    ref.watch(storageProvider2).when(
+    ref.watch(storageProvider).when(
           data: (data) => data,
-          error: (error, stack) => throw CacheServiceException('Storage Error: $error'),
+          error: (error, stack) => throw CacheServiceException('Storage Error: $error', error, stack),
           loading: Storage.new,
         ),
     ref.watch(mapServiceProvider),
-    ref.watch(tileManagerServiceProvider),
+    ref.watch(tileServiceProvider),
   ),
 );
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/cache_service.dart ##############
@@ -1361,18 +1562,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ListTile(
               title: const Text('Clear Data'),
               onTap: () {
-                settingsViewModel.clearData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Data cleared!')),
-                );
+                 settingsViewModel.clearData(context);
+
               },
             ),
-            ListTile(
-              title: const Text('Clear System Cache'),
-              onTap: () {
-                settingsViewModel.clearSystemCache(context);
-              },
-            ),
+            // ListTile(
+            //   title: const Text('Clear System Cache'),
+            //   onTap: () {
+            //     settingsViewModel.clearSystemCache(context);
+            //   },
+            // ),
             const SizedBox(height: 20),
             const Text(
               'Downloaded Regions',
@@ -1382,7 +1581,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Consumer(
                 builder: (BuildContext context, WidgetRef ref, Widget? child) {
                   final state = ref.watch(settingsViewModelProvider);
-                  return ListView.builder(
+                  return state.isLoading ? const Center(child: CircularProgressIndicator()) : ListView.builder(
                     itemCount: state.regions.length,
                     itemBuilder: (context, index) => RegionItem(
                       region: state.regions[index],
@@ -1400,7 +1599,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_screen.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_repository.dart ##############
@@ -1409,6 +1607,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/services/cache_service.dart';
 import 'package:mobile/core/services/tile_service.dart';
+
+// Custom Exception for Settings repository errors
+class SettingsRepositoryException implements Exception {
+  SettingsRepositoryException(this.message, this.error, [this.stackTrace]);
+  final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
+
+  @override
+  String toString() => 'SettingsRepositoryException: $message, $error, stackTrace: $stackTrace';
+}
 
 class SettingsRepository {
   SettingsRepository(this._cacheManager, this._tileManagerService);
@@ -1419,43 +1628,63 @@ class SettingsRepository {
     if (kDebugMode) {
       print('Clearing Cache from Settings Repo');
     }
-    await _cacheManager.clearCache();
+    try {
+        await _cacheManager.clearCache();
+    } on Exception catch (e, stackTrace) {
+       if (kDebugMode) {
+        print('Error clearing cache: $e, StackTrace: $stackTrace');
+      }
+        throw SettingsRepositoryException('Error clearing cache', e, stackTrace);
+    }
   }
 
   Future<List<String>> getDownloadedRegions() async {
     if (kDebugMode) {
       print('Getting Downloaded regions from settings repo');
     }
-    final regionsFuture = _tileManagerService.tileStore?.allTileRegions();
+      try {
+        final regionsFuture = _tileManagerService.tileStore?.allTileRegions();
 
-    if (regionsFuture == null) {
+        if (regionsFuture == null) {
+           if (kDebugMode) {
+            print('No downloaded regions');
+          }
+        return [];
+        }
+        final regions = await regionsFuture;
+        if (kDebugMode) {
+          print('Downloaded regions: ${regions.map((e) => e.id).toList()}');
+        }
+       return regions.map((e) => e.id).toList();
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('No downloaded regions');
+        print('Error getting downloaded regions: $e, StackTrace: $stackTrace');
       }
-      return [];
+         throw SettingsRepositoryException('Error getting downloaded regions', e, stackTrace);
     }
-    final regions = await regionsFuture;
-    if (kDebugMode) {
-      print('Downloaded regions: ${regions.map((e) => e.id).toList()}');
-    }
-    return regions.map((e) => e.id).toList();
   }
 
   Future<void> deleteRegion(String regionId) async {
     if (kDebugMode) {
       print('Deleting region from Settings repo: $regionId');
     }
-    await _tileManagerService.removeTileRegion(regionId);
+     try {
+        await _tileManagerService.removeTileRegion(regionId);
+     } on Exception catch (e, stackTrace) {
+       if (kDebugMode) {
+        print('Error deleting region: $e, StackTrace: $stackTrace');
+      }
+       throw SettingsRepositoryException('Error deleting region', e, stackTrace);
+     }
   }
 }
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
   (ref) => SettingsRepository(
     ref.watch(cacheManagerProvider),
-    ref.watch(tileManagerServiceProvider),
+    ref.watch(tileServiceProvider),
   ),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_repository.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_viewmodel.dart ##############
@@ -1474,11 +1703,12 @@ import 'package:mobile/main.dart';
 
 // Custom exception for SettingsViewModel errors
 class SettingsViewModelException implements Exception {
-  SettingsViewModelException(this.message);
+  SettingsViewModelException(this.message, this.error);
   final String message;
+  final dynamic error;
 
   @override
-  String toString() => 'SettingsViewModelException: $message';
+  String toString() => 'SettingsViewModelException: $message, $error';
 }
 
 class SettingsState {
@@ -1486,37 +1716,41 @@ class SettingsState {
     this.themeMode = ThemeMode.light,
     this.regions = const [],
     this.isLoading = false,
+    this.message, // Add message for callbacks
   });
   final ThemeMode themeMode;
   final List<String> regions;
   final bool isLoading;
+    final String? message; // Add message for callbacks
 
   SettingsState copyWith({
     ThemeMode? themeMode,
     List<String>? regions,
     bool? isLoading,
+    String? message,
   }) =>
       SettingsState(
         themeMode: themeMode ?? this.themeMode,
         regions: regions ?? this.regions,
         isLoading: isLoading ?? this.isLoading,
+        message: message,
       );
 }
 
 final settingsViewModelProvider =
     StateNotifierProvider.autoDispose<SettingsViewModel, SettingsState>((ref) {
-  final storageAsyncValue = ref.watch(storageProvider2); // watch the AsyncValue
+  final storageAsyncValue = ref.watch(storageProvider); // watch the AsyncValue
   final storage = storageAsyncValue.when(
     data: (data) => data,
     error: (error, stack) =>
-        throw SettingsViewModelException('Error loading storage: $error'),
+        throw SettingsViewModelException('Error loading storage', error),
     loading: () => null, // Or some other default
   );
 
   if (storage == null) {
     return SettingsViewModel(
       ref.watch(settingsRepositoryProvider),
-      ref.watch(tileManagerServiceProvider),
+      ref.watch(tileServiceProvider),
       Future.value(Storage()),
       ref.watch(themeModeProvider.notifier),
       ref,
@@ -1524,7 +1758,7 @@ final settingsViewModelProvider =
   }
   return SettingsViewModel(
     ref.watch(settingsRepositoryProvider),
-    ref.watch(tileManagerServiceProvider),
+    ref.watch(tileServiceProvider),
     Future.value(storage),
     ref.watch(themeModeProvider.notifier),
     ref,
@@ -1581,31 +1815,33 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       if(kDebugMode) {
          print('Error loading regions: $e');
       }
-      throw SettingsViewModelException('Error loading regions: $e');
+       throw SettingsViewModelException('Error loading regions', e);
     }
 
   }
 
-  Future<void> clearData() async {
+  Future<void> clearData(BuildContext context) async {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+      state = state.copyWith(isLoading: true);
+
     if (kDebugMode) {
       print('Clearing cache');
     }
     try {
         await _repository.clearCache();
         await loadRegions();
-        if (!mounted) {
+         if (!mounted) {
           return;
         }
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(isLoading: false, message: 'Data cleared!');
     } on Exception catch (e) {
         if (kDebugMode) {
             print('Error clearing data: $e');
         }
-         throw SettingsViewModelException('Error clearing data: $e');
+         state = state.copyWith(isLoading: false, message: 'Error clearing data: $e');
+           throw SettingsViewModelException('Error clearing data', e);
     }
 
   }
@@ -1665,7 +1901,7 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
         if (kDebugMode) {
              print('Error deleting region: $e');
         }
-         throw SettingsViewModelException('Error deleting region: $e');
+        throw SettingsViewModelException('Error deleting region', e);
      }
 
   }
@@ -1704,7 +1940,6 @@ class RegionItem extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/widgets/region_item.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/widgets ##############
@@ -1716,15 +1951,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/config/app_config.dart';
 import 'package:mobile/core/services/network_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/features/map/models/map_marker.dart';
 
 // Custom exception for MapRepository errors
 class MapRepositoryException implements Exception {
-  MapRepositoryException(this.message);
+  MapRepositoryException(this.message, this.error, [this.stackTrace]);
   final String message;
-
+  final dynamic error;
+   final StackTrace? stackTrace;
   @override
-  String toString() => 'MapRepositoryException: $message';
+  String toString() => 'MapRepositoryException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapRepository {
@@ -1732,38 +1969,63 @@ class MapRepository {
   final NetworkService _network;
   final Storage _storage;
   Future<List<MapMarker>> getMarkers({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      final cached = _storage.getMarkers();
-      if (cached.isNotEmpty) {
-        return cached;
-      }
+       final lastUpdate = await _storage.getInt(AppConstants.markersKey);
+       if (!forceRefresh) {
+          if (lastUpdate != null) {
+              final now = DateTime.now().millisecondsSinceEpoch;
+               final diff = now - lastUpdate;
+            if (diff < const Duration(minutes: 10).inMilliseconds) {
+                  final cached = await _storage.getMarkers();
+                  if (cached.isNotEmpty) {
+                       if (kDebugMode) {
+                          print('Returning cached markers');
+                        }
+                    return cached;
+                  }
+              }
+          }
     }
     try {
       final response = await _network.get(AppConfig.locationsPath);
-      final responseData =
-          response.data as Map<String, dynamic>;
+        if(response.statusCode != 200) {
+          throw MapRepositoryException(AppConstants.networkError, response.statusCode);
+      }
+       final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+          throw MapRepositoryException('Invalid response format', responseData);
+       }
       final results = responseData['results'] as List<dynamic>;
       final markers = results
           .map((json) => _parseMapMarker(json as Map<String, dynamic>))
           .toList();
-      await _storage.saveMarkers(markers);
-      return markers;
-    } catch (e) {
-      if (e is ArgumentError) {
+       await _storage.saveMarkers(markers);
         if (kDebugMode) {
-          print('Data validation error: $e');
+           print('Returning markers from API');
+      }
+      return markers;
+    } on Exception catch (e, stackTrace) {
+      if (e is ArgumentError) {
+         if (kDebugMode) {
+          print('Data validation error: $e, StackTrace: $stackTrace');
         }
       }
-      final cached = _storage.getMarkers();
+      final cached = await _storage.getMarkers();
       if (cached.isNotEmpty) {
         return cached;
       }
-      rethrow;
+        if (kDebugMode) {
+           print('Error getting markers: $e, StackTrace: $stackTrace');
+      }
+      throw MapRepositoryException('Error getting markers from API', e, stackTrace);
     }
   }
 
-  MapMarker _parseMapMarker(Map<String, dynamic> json) {
-    final coordinates = json['coordinates'] as String;
+   MapMarker _parseMapMarker(Map<String, dynamic> json) {
+     final dynamic coordinates = json['coordinates'];
+
+    if(coordinates is! String) {
+         throw ArgumentError('Invalid coordinates format, the value was not a string: $coordinates');
+    }
     final regex = RegExp(r'POINT \(([^ ]+) ([^)]+)\)');
     final match = regex.firstMatch(coordinates);
     if (match == null) {
@@ -1772,8 +2034,9 @@ class MapRepository {
     final longitude = double.tryParse(match.group(1)!);
     final latitude = double.tryParse(match.group(2)!);
     if (longitude == null || latitude == null) {
-      throw ArgumentError(
-          'Could not parse latitude and longitude from : $coordinates',);
+       throw ArgumentError(
+          'Could not parse latitude and longitude from : $coordinates',
+       );
     }
     return MapMarker(
       id: json['id'] as String,
@@ -1784,10 +2047,11 @@ class MapRepository {
     );
   }
 
+
   Future<void> updateMarker(MapMarker marker) async {
     try {
       await _network.put('/locations/${marker.id}', marker.toJson());
-      final markers = _storage.getMarkers();
+      final markers = await _storage.getMarkers();
 
       // Convert markers list to a map for faster lookup
       final markersMap = {for (final m in markers) m.id: m};
@@ -1796,11 +2060,11 @@ class MapRepository {
       // Convert the map back to a list
       final updatedMarkers = markersMap.values.toList();
       await _storage.saveMarkers(updatedMarkers);
-    } catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-         print('Error updating marker: $e');
+         print('Error updating marker: $e, StackTrace: $stackTrace');
       }
-      throw MapRepositoryException('Error updating marker: $e');
+      throw MapRepositoryException('Error updating marker', e, stackTrace);
     }
   }
 }
@@ -1808,9 +2072,9 @@ class MapRepository {
 final mapRepositoryProvider = Provider<MapRepository>(
   (ref) => MapRepository(
     ref.watch(networkServiceProvider),
-    ref.watch(storageProvider2).when(
+   ref.watch(storageProvider).when(
           data: (data) => data,
-          error: (error, stack) => throw MapRepositoryException('Storage loading error: $error'),
+          error: (error, stack) => throw MapRepositoryException('Storage loading error', error, stack),
           loading: Storage.new,
         ),
   ),
@@ -1833,11 +2097,13 @@ import 'package:mobile/features/map/models/map_marker.dart';
 
 // Custom exception for MapViewModel errors
 class MapViewModelException implements Exception {
-  MapViewModelException(this.message);
+  MapViewModelException(this.message, this.error, [this.stackTrace]);
   final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
 
   @override
-  String toString() => 'MapViewModelException: $message';
+  String toString() => 'MapViewModelException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapState {
@@ -1851,8 +2117,9 @@ class MapState {
     this.regionSize,
     this.isLocationLoading = false,
     this.isDownloadingRegion = false,
-    this.maxZoomLevel = 13,
+        this.maxZoomLevel = 13,
     this.minZoomLevel = 10,
+    this.message,
   });
   final bool isLoading;
   final List<MapMarker> markers;
@@ -1861,10 +2128,11 @@ class MapState {
   final double? downloadProgress;
   final bool didFetchSuccessfully;
   final String? regionSize;
-  final bool isLocationLoading;
+    final bool isLocationLoading;
   final bool isDownloadingRegion;
-  final int maxZoomLevel;
-  final int minZoomLevel;
+    final int maxZoomLevel;
+    final int minZoomLevel;
+  final String? message;
 
   MapState copyWith({
     bool? isLoading,
@@ -1873,11 +2141,12 @@ class MapState {
     bool? isOffline,
     double? downloadProgress,
     bool? didFetchSuccessfully,
-    String? regionSize,
+      String? regionSize,
     bool? isLocationLoading,
     bool? isDownloadingRegion,
-    int? maxZoomLevel,
+      int? maxZoomLevel,
     int? minZoomLevel,
+    String? message,
   }) =>
       MapState(
         isLoading: isLoading ?? this.isLoading,
@@ -1886,11 +2155,12 @@ class MapState {
         isOffline: isOffline ?? this.isOffline,
         downloadProgress: downloadProgress ?? this.downloadProgress,
         didFetchSuccessfully: didFetchSuccessfully ?? this.didFetchSuccessfully,
-        regionSize: regionSize ?? this.regionSize,
-        isLocationLoading: isLocationLoading ?? this.isLocationLoading,
-        isDownloadingRegion: isDownloadingRegion ?? this.isDownloadingRegion,
+           regionSize: regionSize ?? this.regionSize,
+             isLocationLoading: isLocationLoading ?? this.isLocationLoading,
+             isDownloadingRegion: isDownloadingRegion ?? this.isDownloadingRegion,
         maxZoomLevel: maxZoomLevel ?? this.maxZoomLevel,
         minZoomLevel: minZoomLevel ?? this.minZoomLevel,
+        message: message,
       );
 }
 
@@ -1967,10 +2237,10 @@ class MapViewModel extends StateNotifier<MapState> {
     }
 
     try {
-      state = state.copyWith(
-        isDownloadingRegion: true,
-        downloadProgress: 0,
-      );
+       state = state.copyWith(
+          isDownloadingRegion: true,
+          downloadProgress: 0,
+        );
       await _mapService.downloadRegion(
         regionName: 'region_${DateTime.now().millisecondsSinceEpoch}',
         bounds: bounds,
@@ -1985,10 +2255,10 @@ class MapViewModel extends StateNotifier<MapState> {
           if (!mounted) {
             return;
           }
-          state = state.copyWith(isDownloadingRegion: false);
+          state = state.copyWith(isDownloadingRegion: false, message: 'Download Complete!');
           _progressController.add(1);
         },
-         onError: (e) {
+        onError: (e) {
           if (!mounted) {
             return;
           }
@@ -1997,7 +2267,7 @@ class MapViewModel extends StateNotifier<MapState> {
             isDownloadingRegion: false,
           );
         },
-        maxZoom: state.maxZoomLevel,
+           maxZoom: state.maxZoomLevel,
         minZoom: state.minZoomLevel,
       );
     } on Exception catch (e) {
@@ -2011,24 +2281,58 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
-  Future<void> moveToCurrentLocation(MapboxMap map) async {
-    if (!mounted) {
-      return;
-    }
+   Future<void> getRegionSize(CoordinateBounds bounds) async {
+        try{
+          final size =  await _mapService.getRegionSize(bounds);
+          if(!mounted){
+            return;
+          }
+          state = state.copyWith(regionSize: size);
+        }on Exception catch(e) {
+          if(!mounted){
+            return;
+          }
+            state = state.copyWith(error: e.toString());
+        }
+  }
+
+   Future<void> moveToCurrentLocation(MapboxMap map) async {
+     if (!mounted) {
+        return;
+      }
     state = state.copyWith(isLocationLoading: true);
     try {
       final permission = await PermissionService.requestLocationPermissions();
-      if (permission == geo.LocationPermission.denied ||
-          permission == geo.LocationPermission.deniedForever) {
+       if (permission == geo.LocationPermission.deniedForever) {
         if (!mounted) {
           return;
         }
-        state = state.copyWith(isLocationLoading: false);
-        {
+        state = state.copyWith(isLocationLoading: false, message: 'Location permissions permanently denied, please enable in settings.');
           return;
         }
+
+      if (permission == geo.LocationPermission.denied) {
+          if (!mounted) {
+            return;
+          }
+        state = state.copyWith(isLocationLoading: false,  message: 'Location permissions denied, using default location.');
+         await map.flyTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(
+              AppConstants.defaultLongitude,
+              AppConstants.defaultLatitude,
+            ),
+          ),
+          zoom: AppConstants.defaultZoom,
+        ),
+        MapAnimationOptions(duration: 200),
+      );
+
+        return;
       }
-      final position = await geo.Geolocator.getCurrentPosition(
+
+       final position = await geo.Geolocator.getCurrentPosition(
         desiredAccuracy: geo.LocationAccuracy.high,
       );
       await map.flyTo(
@@ -2040,12 +2344,24 @@ class MapViewModel extends StateNotifier<MapState> {
         ),
         MapAnimationOptions(duration: 200),
       );
-    } on Exception catch (e) { // Added on Exception here
+    } on Exception catch (e, stackTrace) { // Added on Exception here
       // Do nothing. Use default location.
        if (kDebugMode) {
-        print('Error getting current location: $e');
+         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
-      state = state.copyWith(isLocationLoading: false);
+      state = state.copyWith(isLocationLoading: false, message: 'Error getting current location, using default location.');
+       await map.flyTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(
+              AppConstants.defaultLongitude,
+              AppConstants.defaultLatitude,
+            ),
+          ),
+          zoom: AppConstants.defaultZoom,
+        ),
+        MapAnimationOptions(duration: 200),
+      );
     } finally {
       if (mounted) {
         state = state.copyWith(isLocationLoading: false);
@@ -2053,7 +2369,7 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
-  void setMap(MapboxMap map) {
+    void setMap(MapboxMap map) {
     _mapService.init();
   }
 
@@ -2066,7 +2382,6 @@ class MapViewModel extends StateNotifier<MapState> {
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_viewmodel.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_screen.dart ##############
-// lib/features/map/map_screen.dart
 // lib/features/map/map_screen.dart
 import 'dart:async';
 
@@ -2098,6 +2413,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       AppConstants.mapboxStreets; // Choose your map style here.
   List<mb.PointAnnotation> _pointAnnotations = [];
   bool _mapReady = false; // Track if the map has been initialized
+    StreamSubscription<bool>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -2112,6 +2428,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       zoom: AppConstants.defaultZoom,
     );
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   ref.read(mapViewModelProvider.notifier).loadMarkers();
+    // });
+
+  }
+
+   @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -2136,6 +2462,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         body: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             final state = ref.watch(mapViewModelProvider);
+             ref.listen(mapViewModelProvider, (previous, next) {
+              if(next.message != null && next.message!.isNotEmpty){
+                   ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(next.message!)),
+                    );
+                   }
+             });
             return Stack(
               children: [
                 MapWidget(
@@ -2143,20 +2476,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   cameraOptions: _initialCameraOptions,
                   onMapCreated: _onMapCreated,
                 ),
-                if (state.isOffline) const OfflineBanner(),
+                 OfflineBanner(isOffline: state.isOffline,),
                 MapControls(
                   onDownloadRegion: _downloadCurrentRegion,
                   isDownloading: state.isDownloadingRegion,
                   downloadProgress: state.downloadProgress ?? 0.0,
                   onZoomIn: _zoomIn,
                   onZoomOut: _zoomOut,
-                  onMoveToCurrentLocation: _moveToCurrentLocation,
-                  isLocationLoading: state.isLocationLoading,
-                  regionSize: state.regionSize,
+                   onMoveToCurrentLocation: _moveToCurrentLocation,
+                    isLocationLoading: state.isLocationLoading,
+                     regionSize: state.regionSize,
                 ),
-                if (state.error != null) CustomErrorWidget(error: state.error!),
-                if (state.isLoading && !state.isDownloadingRegion)
+                  if (state.error != null) CustomErrorWidget(error: state.error!),
+               if (state.isLoading && !state.isDownloadingRegion)
                   const LoadingOverlay(message: 'Loading Markers...'),
+
               ],
             );
           },
@@ -2227,7 +2561,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         print('Southwest: ${bounds.southwest.coordinates}');
         print('Northeast: ${bounds.northeast.coordinates}');
       }
+
+      await ref.read(mapViewModelProvider.notifier).getRegionSize(bounds);
       await ref.read(mapViewModelProvider.notifier).downloadRegion(bounds);
+
     } on Exception catch (e) {
       if (kDebugMode) {
         print('Error fetching bounds or download region: $e');
@@ -2259,16 +2596,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Future<void> _moveToCurrentLocation() async {
-    if (_mapboxMap == null) {
-      return;
+    Future<void> _moveToCurrentLocation() async {
+      if (_mapboxMap == null) {
+        return;
+      }
+      await ref
+          .read(mapViewModelProvider.notifier)
+          .moveToCurrentLocation(_mapboxMap!);
     }
-    await ref
-        .read(mapViewModelProvider.notifier)
-        .moveToCurrentLocation(_mapboxMap!);
-  }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_screen.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map ##############
@@ -2410,7 +2746,6 @@ class MapMarker {
         'description': description,
       };
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/models/map_marker.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/models ##############
@@ -2429,7 +2764,7 @@ class MapControls extends StatelessWidget {
     required this.onMoveToCurrentLocation,
     super.key,
     this.regionSize,
-    this.isLocationLoading = false,
+     this.isLocationLoading = false,
   });
   final VoidCallback onDownloadRegion;
   final bool isDownloading;
@@ -2438,7 +2773,7 @@ class MapControls extends StatelessWidget {
   final VoidCallback onZoomOut;
   final VoidCallback onMoveToCurrentLocation;
   final String? regionSize;
-  final bool isLocationLoading;
+   final bool isLocationLoading;
 
   @override
   Widget build(BuildContext context) => Positioned(
@@ -2447,7 +2782,7 @@ class MapControls extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (regionSize != null)
+               if (regionSize != null)
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -2487,26 +2822,18 @@ class MapControls extends StatelessWidget {
               onPressed: onZoomOut,
               child: const Icon(Icons.remove),
             ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
             FloatingActionButton(
-              heroTag: 'my_location',
-              mini: true,
+                heroTag: 'my_location',
+                mini: true,
               onPressed: onMoveToCurrentLocation,
-              child: isLocationLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.my_location),
+                child: isLocationLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2,)) : const Icon(Icons.my_location),
+
             ),
           ],
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/widgets/map_controls.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/widgets/offline_banner.dart ##############
@@ -2514,10 +2841,10 @@ class MapControls extends StatelessWidget {
 import 'package:flutter/material.dart';
 
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key});
-
+  const OfflineBanner({super.key, this.isOffline = false});
+   final bool isOffline;
   @override
-  Widget build(BuildContext context) => Positioned(
+  Widget build(BuildContext context) => isOffline ?  Positioned(
         top: 0,
         left: 0,
         right: 0,
@@ -2533,9 +2860,8 @@ class OfflineBanner extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ) : const SizedBox();
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/widgets/offline_banner.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/widgets ##############
@@ -2590,7 +2916,6 @@ class ThemePicker extends ConsumerWidget {
     );
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/theme_picker.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/loading_overlay.dart ##############
@@ -2633,7 +2958,6 @@ class LoadingOverlay extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/loading_overlay.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/custom_error_widget.dart ##############
@@ -2670,7 +2994,6 @@ class CustomErrorWidget extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/custom_error_widget.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets ##############

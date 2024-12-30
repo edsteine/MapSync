@@ -46,18 +46,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ListTile(
               title: const Text('Clear Data'),
               onTap: () {
-                settingsViewModel.clearData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Data cleared!')),
-                );
+                 settingsViewModel.clearData(context);
+
               },
             ),
-            ListTile(
-              title: const Text('Clear System Cache'),
-              onTap: () {
-                settingsViewModel.clearSystemCache(context);
-              },
-            ),
+            // ListTile(
+            //   title: const Text('Clear System Cache'),
+            //   onTap: () {
+            //     settingsViewModel.clearSystemCache(context);
+            //   },
+            // ),
             const SizedBox(height: 20),
             const Text(
               'Downloaded Regions',
@@ -67,7 +65,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Consumer(
                 builder: (BuildContext context, WidgetRef ref, Widget? child) {
                   final state = ref.watch(settingsViewModelProvider);
-                  return ListView.builder(
+                  return state.isLoading ? const Center(child: CircularProgressIndicator()) : ListView.builder(
                     itemCount: state.regions.length,
                     itemBuilder: (context, index) => RegionItem(
                       region: state.regions[index],

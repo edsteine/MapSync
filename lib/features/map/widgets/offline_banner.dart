@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key});
-
+  const OfflineBanner({super.key, this.isOffline = false});
+   final bool isOffline;
   @override
-  Widget build(BuildContext context) => Positioned(
+  Widget build(BuildContext context) => isOffline ?  Positioned(
         top: 0,
         left: 0,
         right: 0,
@@ -21,5 +21,5 @@ class OfflineBanner extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ) : const SizedBox();
 }

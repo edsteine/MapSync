@@ -38,7 +38,13 @@ class PermissionService {
       return geo.LocationPermission.denied;
     } else if (permission == geo.LocationPermission.deniedForever) {
       // Permission has been denied, try to open the settings.
-      await geo.Geolocator.openAppSettings();
+       if (kDebugMode) {
+        print(
+          'Location permission is permanently denied',
+        );
+      }
+       await geo.Geolocator.openAppSettings();
+
       return geo.LocationPermission.deniedForever;
     } else if (permission == geo.LocationPermission.whileInUse ||
         permission == geo.LocationPermission.always) {

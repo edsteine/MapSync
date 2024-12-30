@@ -125,8 +125,20 @@ Offline map support with FMTC
 Documentation
 Code standards
 Performance monitoring
+flutter build apk --split-per-abi --release
+flutter build apk --release
+
+flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/app/debug-info
+flutter build apk --release --obfuscate --split-debug-info=build/app/debug-info
+flutter build apk --debug --split-per-abi --obfuscate --split-debug-info=build/app/debug-info
+flutter build apk --debug --obfuscate --split-debug-info=build/app/debug-info
 
 
+        ("arm64-v8a", "ARM64 v8a"),
+        ("armeabi-v7a", "ARM v7a"),
+        ("x86_64", "x86 64-bit"),
+        ("x86", "x86 32-bit"),
+        ("universal", "Universal"),
 dart run build_runner build
 dart run build_runner watch
 flutter run --dart-define ACCESS_TOKEN=pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg

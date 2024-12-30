@@ -8,14 +8,16 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/tile_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
-import 'package:mobile/core/utils/map_helpers.dart';
+import 'package:mobile/core/utils/app_utils.dart';
 
 // Custom exception for MapService errors
 class MapServiceException implements Exception {
-  MapServiceException(this.message);
+  MapServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
-   @override
-  String toString() => 'MapServiceException: $message';
+  final dynamic error;
+    final StackTrace? stackTrace;
+  @override
+  String toString() => 'MapServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapService {
@@ -33,11 +35,11 @@ class MapService {
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
       await NotificationService.init();
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error initializing Map Service: $e');
+        print('Error initializing Map Service: $e, StackTrace: $stackTrace');
       }
-      rethrow;
+      throw MapServiceException('Error initializing Map Service', e, stackTrace);
     }
   }
 
@@ -69,12 +71,12 @@ class MapService {
       }
       final sizeBytes = tileRegion.completedResourceSize;
 
-      return MapHelpers.formatFileSize(sizeBytes);
-    } on Exception catch (e) {
+      return AppUtils.formatFileSize(sizeBytes);
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error getting region size: $e');
+        print('Error getting region size: $e, StackTrace: $stackTrace');
       }
-        throw MapServiceException('Error getting region size: $e');
+        throw MapServiceException('Error getting region size', e, stackTrace);
 
     }
   }
@@ -85,12 +87,12 @@ class MapService {
     required void Function(double) onProgress,
     required void Function() onComplete,
     required void Function(dynamic) onError,
-    int? maxZoom,
+     int? maxZoom,
     int? minZoom,
   }) async {
     try {
       // final maxZoomLevel = maxZoom ?? AppConstants.defaultMaxZoomLevel;
-      // final minZoomLevel = minZoom ?? AppConstants.defaultMinZoomLevel;
+      // final minZoomLevel = minZoom ?? AppConfig.defaultMinZoomLevel;
       const maxZoomLevel = 22;
       const minZoomLevel = 1;
       if (kDebugMode) {
@@ -99,8 +101,9 @@ class MapService {
 
       final tileCount = calculateTileCount(bounds, minZoomLevel, maxZoomLevel);
       if (tileCount > 7122999999999250) {
-        throw Exception(
-            'Selected area would require too many tiles ($tileCount). Please zoom in or select a smaller region.',);
+        throw MapServiceException(
+            'Selected area would require too many tiles. Please zoom in or select a smaller region. The selected area would require: $tileCount tiles',
+            'Tile count too high',);
       }
       if (kDebugMode) {
         print('Initializing download for region: $regionName');
@@ -108,7 +111,7 @@ class MapService {
       await init();
 
       if (_tileStore == null) {
-        throw Exception('TileStore is null after initialization');
+        throw MapServiceException('TileStore is null after initialization', 'TileStore is null');
       }
 
       // Validate coordinates are within valid ranges
@@ -120,8 +123,9 @@ class MapService {
           bounds.northeast.coordinates.lng < -180 ||
           bounds.southwest.coordinates.lng > 180 ||
           bounds.southwest.coordinates.lng < -180) {
-        throw Exception(
-            'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',);
+        throw MapServiceException(
+            'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180',
+            'Invalid Coordinates',);
       }
       if (kDebugMode) {
         print('Starting download for region $regionName');
@@ -216,31 +220,53 @@ class MapService {
       await NotificationService.cancelNotification(1);
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Download failed with error: $e');
-        print('Stack trace: $stackTrace');
+        print('Download failed with error: $e, StackTrace: $stackTrace');
       }
       onError(e);
       await NotificationService.showNotification(
         title: 'Download failed', body: e.toString(), id: 1,);
       await NotificationService.cancelNotification(1);
-      rethrow;
+        throw MapServiceException('Download failed', e, stackTrace);
     }
   }
 
   Future<void> removeTileRegionAndStylePack(
       String tileRegionId, String styleUri,) async {
     try {
+        final tileRegion = await _tileManagerService.getTileRegion(tileRegionId);
+      if (tileRegion == null) {
+         if (kDebugMode) {
+            print(
+                'Tile region with id $tileRegionId does not exist, cannot remove style pack.',
+            );
+            }
+          return;
+      }
       if (kDebugMode) {
         print('Removing tile region and style pack: $tileRegionId, $styleUri');
       }
       await _tileManagerService.removeTileRegion(tileRegionId);
       _tileManagerService.tileStore?.setDiskQuota(0);
-      await _offlineManager?.removeStylePack(styleUri);
-    } catch (e) {
+       await _offlineManager?.removeStylePack(styleUri);
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region and style pack: $e');
+        print('Error removing tile region and style pack: $e, StackTrace: $stackTrace');
       }
-      rethrow;
+         throw MapServiceException('Error removing tile region and style pack', e, stackTrace);
+    }
+  }
+
+    Future<void> removeAllTileRegions() async {
+    try {
+        final regions = await _tileManagerService.getAllTileRegions();
+        for (final region in regions) {
+            await removeTileRegionAndStylePack(region.id, AppConstants.mapboxStreets);
+        }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error removing all tile regions: $e, StackTrace: $stackTrace');
+      }
+         throw MapServiceException('Error removing all tile regions', e, stackTrace);
     }
   }
 
@@ -250,5 +276,5 @@ class MapService {
 }
 
 final mapServiceProvider = Provider<MapService>(
-  (ref) => MapService(ref.watch(tileManagerServiceProvider)),
+  (ref) => MapService(ref.watch(tileServiceProvider)),
 );

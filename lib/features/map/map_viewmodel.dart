@@ -13,11 +13,13 @@ import 'package:mobile/features/map/models/map_marker.dart';
 
 // Custom exception for MapViewModel errors
 class MapViewModelException implements Exception {
-  MapViewModelException(this.message);
+  MapViewModelException(this.message, this.error, [this.stackTrace]);
   final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
 
   @override
-  String toString() => 'MapViewModelException: $message';
+  String toString() => 'MapViewModelException: $message, $error, stackTrace: $stackTrace';
 }
 
 class MapState {
@@ -31,8 +33,9 @@ class MapState {
     this.regionSize,
     this.isLocationLoading = false,
     this.isDownloadingRegion = false,
-    this.maxZoomLevel = 13,
+        this.maxZoomLevel = 13,
     this.minZoomLevel = 10,
+    this.message,
   });
   final bool isLoading;
   final List<MapMarker> markers;
@@ -41,10 +44,11 @@ class MapState {
   final double? downloadProgress;
   final bool didFetchSuccessfully;
   final String? regionSize;
-  final bool isLocationLoading;
+    final bool isLocationLoading;
   final bool isDownloadingRegion;
-  final int maxZoomLevel;
-  final int minZoomLevel;
+    final int maxZoomLevel;
+    final int minZoomLevel;
+  final String? message;
 
   MapState copyWith({
     bool? isLoading,
@@ -53,11 +57,12 @@ class MapState {
     bool? isOffline,
     double? downloadProgress,
     bool? didFetchSuccessfully,
-    String? regionSize,
+      String? regionSize,
     bool? isLocationLoading,
     bool? isDownloadingRegion,
-    int? maxZoomLevel,
+      int? maxZoomLevel,
     int? minZoomLevel,
+    String? message,
   }) =>
       MapState(
         isLoading: isLoading ?? this.isLoading,
@@ -66,11 +71,12 @@ class MapState {
         isOffline: isOffline ?? this.isOffline,
         downloadProgress: downloadProgress ?? this.downloadProgress,
         didFetchSuccessfully: didFetchSuccessfully ?? this.didFetchSuccessfully,
-        regionSize: regionSize ?? this.regionSize,
-        isLocationLoading: isLocationLoading ?? this.isLocationLoading,
-        isDownloadingRegion: isDownloadingRegion ?? this.isDownloadingRegion,
+           regionSize: regionSize ?? this.regionSize,
+             isLocationLoading: isLocationLoading ?? this.isLocationLoading,
+             isDownloadingRegion: isDownloadingRegion ?? this.isDownloadingRegion,
         maxZoomLevel: maxZoomLevel ?? this.maxZoomLevel,
         minZoomLevel: minZoomLevel ?? this.minZoomLevel,
+        message: message,
       );
 }
 
@@ -112,32 +118,37 @@ class MapViewModel extends StateNotifier<MapState> {
     );
   }
 
-  Future<void> loadMarkers({bool forceRefresh = false}) async {
+   Future<void> loadMarkers({bool forceRefresh = false}) async {
     if (!mounted) {
       return;
     }
     state = state.copyWith(isLoading: true);
     try {
-      final markers = await _repository.getMarkers(forceRefresh: forceRefresh);
+       final markers = await _repository.getMarkers(forceRefresh: forceRefresh);
       if (!mounted) {
         return;
       }
       state = state.copyWith(
-        isLoading: false, // Set isLoading to false after success
+        isLoading: false,
         markers: markers,
         isOffline: false,
-        didFetchSuccessfully: true,
+        didFetchSuccessfully: markers.isNotEmpty,
+        message: markers.isNotEmpty ? '${markers.length} markers added from a total of ${markers.length} results' : null,
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
        if (!mounted) {
         return;
       }
        state = state.copyWith(
-        isLoading: false, // Set isLoading to false if there's an error
+        isLoading: false,
+         markers: const [],
         error: '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
         isOffline: true,
         didFetchSuccessfully: false,
       );
+        if (kDebugMode) {
+          print('Error loading markers: $e, StackTrace: $stackTrace');
+        }
     }
   }
 
@@ -147,10 +158,10 @@ class MapViewModel extends StateNotifier<MapState> {
     }
 
     try {
-      state = state.copyWith(
-        isDownloadingRegion: true,
-        downloadProgress: 0,
-      );
+       state = state.copyWith(
+          isDownloadingRegion: true,
+          downloadProgress: 0,
+        );
       await _mapService.downloadRegion(
         regionName: 'region_${DateTime.now().millisecondsSinceEpoch}',
         bounds: bounds,
@@ -165,10 +176,10 @@ class MapViewModel extends StateNotifier<MapState> {
           if (!mounted) {
             return;
           }
-          state = state.copyWith(isDownloadingRegion: false);
+          state = state.copyWith(isDownloadingRegion: false, message: 'Download Complete!');
           _progressController.add(1);
         },
-         onError: (e) {
+        onError: (e) {
           if (!mounted) {
             return;
           }
@@ -177,7 +188,7 @@ class MapViewModel extends StateNotifier<MapState> {
             isDownloadingRegion: false,
           );
         },
-        maxZoom: state.maxZoomLevel,
+           maxZoom: state.maxZoomLevel,
         minZoom: state.minZoomLevel,
       );
     } on Exception catch (e) {
@@ -191,24 +202,58 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
-  Future<void> moveToCurrentLocation(MapboxMap map) async {
-    if (!mounted) {
-      return;
-    }
+   Future<void> getRegionSize(CoordinateBounds bounds) async {
+        try{
+          final size =  await _mapService.getRegionSize(bounds);
+          if(!mounted){
+            return;
+          }
+          state = state.copyWith(regionSize: size);
+        }on Exception catch(e) {
+          if(!mounted){
+            return;
+          }
+            state = state.copyWith(error: e.toString());
+        }
+  }
+
+   Future<void> moveToCurrentLocation(MapboxMap map) async {
+     if (!mounted) {
+        return;
+      }
     state = state.copyWith(isLocationLoading: true);
     try {
       final permission = await PermissionService.requestLocationPermissions();
-      if (permission == geo.LocationPermission.denied ||
-          permission == geo.LocationPermission.deniedForever) {
+       if (permission == geo.LocationPermission.deniedForever) {
         if (!mounted) {
           return;
         }
-        state = state.copyWith(isLocationLoading: false);
-        {
+        state = state.copyWith(isLocationLoading: false, message: 'Location permissions permanently denied, please enable in settings.');
           return;
         }
+
+      if (permission == geo.LocationPermission.denied) {
+          if (!mounted) {
+            return;
+          }
+        state = state.copyWith(isLocationLoading: false,  message: 'Location permissions denied, using default location.');
+         await map.flyTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(
+              AppConstants.defaultLongitude,
+              AppConstants.defaultLatitude,
+            ),
+          ),
+          zoom: AppConstants.defaultZoom,
+        ),
+        MapAnimationOptions(duration: 200),
+      );
+
+        return;
       }
-      final position = await geo.Geolocator.getCurrentPosition(
+
+       final position = await geo.Geolocator.getCurrentPosition(
         desiredAccuracy: geo.LocationAccuracy.high,
       );
       await map.flyTo(
@@ -220,12 +265,24 @@ class MapViewModel extends StateNotifier<MapState> {
         ),
         MapAnimationOptions(duration: 200),
       );
-    } on Exception catch (e) { // Added on Exception here
+    } on Exception catch (e, stackTrace) { // Added on Exception here
       // Do nothing. Use default location.
        if (kDebugMode) {
-        print('Error getting current location: $e');
+         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
-      state = state.copyWith(isLocationLoading: false);
+      state = state.copyWith(isLocationLoading: false, message: 'Error getting current location, using default location.');
+       await map.flyTo(
+        CameraOptions(
+          center: Point(
+            coordinates: Position(
+              AppConstants.defaultLongitude,
+              AppConstants.defaultLatitude,
+            ),
+          ),
+          zoom: AppConstants.defaultZoom,
+        ),
+        MapAnimationOptions(duration: 200),
+      );
     } finally {
       if (mounted) {
         state = state.copyWith(isLocationLoading: false);
@@ -233,7 +290,7 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
-  void setMap(MapboxMap map) {
+    void setMap(MapboxMap map) {
     _mapService.init();
   }
 

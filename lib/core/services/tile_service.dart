@@ -8,11 +8,12 @@ import 'package:path_provider/path_provider.dart';
 
 // Custom exception for TileService errors
 class TileServiceException implements Exception {
-  TileServiceException(this.message);
+  TileServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
-
+  final dynamic error;
+    final StackTrace? stackTrace;
   @override
-  String toString() => 'TileServiceException: $message';
+  String toString() => 'TileServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
 class TileService {
@@ -23,11 +24,11 @@ class TileService {
     try {
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error initializing TileStore: $e');
+        print('Error initializing TileStore: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error initializing TileStore: $e');
+       throw TileServiceException('Error initializing TileStore', e, stackTrace);
     }
   }
 
@@ -62,11 +63,11 @@ class TileService {
         tileRegionLoadOptions,
         (progress) {},
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error downloading tiles: $e');
+        print('Error downloading tiles: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error downloading tiles: $e');
+       throw TileServiceException('Error downloading tiles', e, stackTrace);
     }
   }
 
@@ -91,11 +92,11 @@ class TileService {
           print('No old tiles directory found');
         }
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
        if (kDebugMode) {
-         print('Error clearing old tiles: $e');
+         print('Error clearing old tiles: $e, StackTrace: $stackTrace');
        }
-        throw TileServiceException('Error clearing old tiles: $e');
+         throw TileServiceException('Error clearing old tiles', e, stackTrace);
     }
   }
 
@@ -108,11 +109,11 @@ class TileService {
         print('Removing tile region: $regionId');
       }
       await _tileStore?.removeRegion(regionId);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error removing tile region $regionId: $e');
+        print('Error removing tile region $regionId: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error removing tile region $regionId: $e');
+       throw TileServiceException('Error removing tile region $regionId', e, stackTrace);
     }
   }
 
@@ -123,11 +124,25 @@ class TileService {
     try {
       final regions = await _tileStore!.allTileRegions();
       return regions.firstWhere((region) => region.id == regionId);
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error getting tile region $regionId: $e');
+        print('Error getting tile region $regionId: $e, StackTrace: $stackTrace');
       }
-      throw TileServiceException('Error getting tile region $regionId: $e');
+      throw TileServiceException('Error getting tile region $regionId', e, stackTrace);
+    }
+  }
+
+    Future<List<TileRegion>> getAllTileRegions() async {
+    if (_tileStore == null) {
+      await initialize();
+    }
+    try {
+      return await _tileStore!.allTileRegions();
+    } on Exception catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error getting all tile regions: $e, StackTrace: $stackTrace');
+      }
+         throw TileServiceException('Error getting all tile regions', e, stackTrace);
     }
   }
 
@@ -148,7 +163,7 @@ class TileService {
         print('Region $regionId is downloaded: $isDownloaded');
       }
       return isDownloaded;
-    } on Exception catch (e) { // Changed catch(e) to on Exception catch (e)
+    } on Exception catch (e) {
       if (kDebugMode) {
         print('Error checking if region is downloaded: $e');
       }
@@ -164,5 +179,5 @@ class TileService {
   TileStore? get tileStore => _tileStore;
 }
 
-final tileManagerServiceProvider =
+final tileServiceProvider =
     Provider<TileService>((ref) => TileService());

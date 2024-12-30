@@ -1,11 +1,9 @@
-// lib/core/utils/helpers.dart
+// lib/core/utils/map_utils.dart
 import 'dart:math' as math;
-
-import 'package:dio/dio.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 // ignore: avoid_classes_with_only_static_members
-class MapHelpers {
+class MapUtils {
   static bool isPointInBounds(Point point, CoordinateBounds bounds) {
     final pointCoords = point.coordinates;
     final southwestCoords = bounds.southwest.coordinates;
@@ -40,31 +38,5 @@ class MapHelpers {
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
 
     return earthRadius * c;
-  }
-
-  static String formatFileSize(int bytes) {
-    if (bytes <= 0) {
-      return '0 B';
-    }
-    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    final i = (math.log(bytes) / math.log(1024)).floor();
-    return '${(bytes / math.pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
-  }
-
-  static bool isNetworkError(dynamic error) {
-    if (error is DioException) {
-      switch (error.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.receiveTimeout:
-        case DioExceptionType.connectionError:
-          return true;
-
-        default:
-          return error.message.toString().toLowerCase().contains('network') ||
-              error.message.toString().toLowerCase().contains('connection');
-      }
-    }
-    return error.toString().toLowerCase().contains('network') ||
-        error.toString().toLowerCase().contains('connection');
   }
 }

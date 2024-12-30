@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/config/app_config.dart';
@@ -10,8 +11,12 @@ import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // PerformanceMonitor.startMonitoring();
+  await dotenv.load();
+  //  await dotenv.load(fileName: ".env");
   MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
   await NotificationService.init();
   await PermissionService.requestNotificationPermissions();
@@ -44,15 +49,19 @@ class MyApp extends ConsumerWidget {
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) {
   // Initialize from storage
-  final storageAsync = ref.watch(storageProvider2);
+  final storageAsync = ref.watch(storageProvider);
   final storage = storageAsync.when(
     data: (data) => data,
-    error: (error, stack) => null,
+    error: (error, stack) {
+      debugPrint('Error loading theme from storage: $error');
+      return null;
+    },
     loading: () => null,
   );
   if (storage == null) {
     return ThemeMode.light;
   }
   final themeString = storage.getString(AppConstants.themeModeKey);
-  return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
+
 });

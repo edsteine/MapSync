@@ -11,7 +11,7 @@ class MapControls extends StatelessWidget {
     required this.onMoveToCurrentLocation,
     super.key,
     this.regionSize,
-    this.isLocationLoading = false,
+     this.isLocationLoading = false,
   });
   final VoidCallback onDownloadRegion;
   final bool isDownloading;
@@ -20,7 +20,7 @@ class MapControls extends StatelessWidget {
   final VoidCallback onZoomOut;
   final VoidCallback onMoveToCurrentLocation;
   final String? regionSize;
-  final bool isLocationLoading;
+   final bool isLocationLoading;
 
   @override
   Widget build(BuildContext context) => Positioned(
@@ -29,7 +29,7 @@ class MapControls extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (regionSize != null)
+               if (regionSize != null)
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -69,20 +69,13 @@ class MapControls extends StatelessWidget {
               onPressed: onZoomOut,
               child: const Icon(Icons.remove),
             ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
             FloatingActionButton(
-              heroTag: 'my_location',
-              mini: true,
+                heroTag: 'my_location',
+                mini: true,
               onPressed: onMoveToCurrentLocation,
-              child: isLocationLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.my_location),
+                child: isLocationLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2,)) : const Icon(Icons.my_location),
+
             ),
           ],
         ),

@@ -6,61 +6,174 @@ import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/features/map/models/map_marker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Custom Exception for Storage service errors
+class StorageException implements Exception {
+  StorageException(this.message, this.error, [this.stackTrace]);
+  final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
+
+  @override
+  String toString() => 'StorageException: $message, $error, stackTrace: $stackTrace';
+}
+
 class Storage {
-  late Box<MapMarker> _markerBox;
-  late SharedPreferences _prefs;
+   Storage();
+   late Future<Box<MapMarker>> _markerBoxFuture;
+  final Future<SharedPreferences> _prefsFuture = SharedPreferences.getInstance();
+
   static Future<Storage> init() async {
     final storage = Storage();
-    await Hive.initFlutter();
-    Hive.registerAdapter(MapMarkerAdapter());
-    storage
-      .._markerBox = await Hive.openBox<MapMarker>(AppConstants.markersKey)
-      .._prefs = await SharedPreferences.getInstance();
-    if (kDebugMode) {
-      print('Storage Initialized');
+    try {
+       await Hive.initFlutter();
+       Hive.registerAdapter(MapMarkerAdapter());
+        Hive.registerAdapter(GeometryAdapter());
+        Hive.registerAdapter(GeometryTypeAdapter()); // Register the new adapter
+         storage._markerBoxFuture =  Hive.openBox<MapMarker>(AppConstants.markersKey);
+           if (kDebugMode) {
+             print('Storage Initialized');
+          }
+      return storage;
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+            print('Error initializing storage: $e, StackTrace: $stackTrace');
+        }
+       throw StorageException('Error initializing storage', e, stackTrace);
     }
-    return storage;
+
   }
 
   // Marker operations
   Future<void> saveMarkers(List<MapMarker> markers) async {
-    await _markerBox.clear();
-    await _markerBox.putAll(
-      Map.fromIterables(
-        markers.map((e) => e.id),
-        markers,
-      ),
-    );
+      try {
+           final markerBox = await _markerBoxFuture;
+           await markerBox.clear();
+           await markerBox.putAll(
+              Map.fromIterables(
+                markers.map((e) => e.id),
+                markers,
+            ),
+          );
+          final prefs = await _prefsFuture;
+          await prefs.setInt(AppConstants.markersKey, DateTime.now().millisecondsSinceEpoch);
+       } on Exception catch (e, stackTrace) {
+          if(kDebugMode){
+             print('Error saving markers: $e, StackTrace: $stackTrace');
+          }
+          throw StorageException('Error saving markers', e, stackTrace);
+       }
   }
 
-  List<MapMarker> getMarkers() => _markerBox.values.toList();
+  Future<List<MapMarker>> getMarkers() async {
+    try{
+        final markerBox = await _markerBoxFuture;
+        return markerBox.values.toList();
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode) {
+           print('Error getting markers: $e, StackTrace: $stackTrace');
+        }
+        throw StorageException('Error getting markers', e, stackTrace);
+    }
+
+  }
 
   // Preferences operations
-  Future<void> saveString(String key, String value) async {
-    await _prefs.setString(key, value);
+    Future<void> saveInt(String key, int value) async {
+     try {
+       final prefs = await _prefsFuture;
+        await prefs.setInt(key, value);
+      } on Exception catch (e, stackTrace) {
+          if(kDebugMode) {
+               print('Error saving int: $e, StackTrace: $stackTrace');
+          }
+         throw StorageException('Error saving int', e, stackTrace);
+      }
   }
 
-  String? getString(String key) => _prefs.getString(key);
+  Future<int?> getInt(String key) async {
+    try{
+       final prefs = await _prefsFuture;
+        return prefs.getInt(key);
+      }on Exception catch (e, stackTrace) {
+         if(kDebugMode) {
+            print('Error getting int: $e, StackTrace: $stackTrace');
+        }
+         throw StorageException('Error getting int', e, stackTrace);
+     }
+  }
+
+  Future<void> saveString(String key, String value) async {
+      try {
+         final prefs = await _prefsFuture;
+        await prefs.setString(key, value);
+      } on Exception catch (e, stackTrace) {
+           if(kDebugMode){
+              print('Error saving string: $e, StackTrace: $stackTrace');
+           }
+          throw StorageException('Error saving string', e, stackTrace);
+      }
+  }
+
+  Future<String?> getString(String key) async {
+    try{
+      final prefs = await _prefsFuture;
+        return prefs.getString(key);
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+           print('Error getting string: $e, StackTrace: $stackTrace');
+        }
+         throw StorageException('Error getting string', e, stackTrace);
+     }
+  }
 
   Future<void> saveBool(String key, {required bool value}) async {
-    await _prefs.setBool(key, value);
-  }
+        try {
+          final prefs = await _prefsFuture;
+           await prefs.setBool(key, value);
+       } on Exception catch (e, stackTrace) {
+           if(kDebugMode){
+              print('Error saving bool: $e, StackTrace: $stackTrace');
+           }
+           throw StorageException('Error saving bool', e, stackTrace);
+         }
 
-  bool? getBool(String key) => _prefs.getBool(key);
+   }
+
+
+   Future<bool?> getBool(String key) async {
+    try {
+       final prefs = await _prefsFuture;
+         return prefs.getBool(key);
+    } on Exception catch (e, stackTrace) {
+        if(kDebugMode){
+          print('Error getting bool: $e, StackTrace: $stackTrace');
+        }
+        throw StorageException('Error getting bool', e, stackTrace);
+    }
+   }
 
   Future<void> clearAll() async {
     if (kDebugMode) {
       print('Clearing All Storage');
     }
-    await _markerBox.clear();
-    await _prefs.clear();
-    if (kDebugMode) {
-      print('All storage cleared');
-    }
+      try {
+          final markerBox = await _markerBoxFuture;
+        await markerBox.clear();
+        final prefs = await _prefsFuture;
+        await prefs.clear();
+      if (kDebugMode) {
+            print('All storage cleared');
+        }
+      } on Exception catch (e, stackTrace) {
+          if(kDebugMode){
+              print('Error clearing storage: $e, StackTrace: $stackTrace');
+          }
+           throw StorageException('Error clearing storage', e, stackTrace);
+      }
   }
 }
 
-final storageProvider2 = FutureProvider<Storage>((ref) async {
+final storageProvider = FutureProvider<Storage>((ref) async {
   final storage = await Storage.init();
   return storage;
 });

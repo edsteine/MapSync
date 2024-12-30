@@ -25,6 +25,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   android_intent_plus: ^5.2.1
   cupertino_icons: ^1.0.8
+  flutter_dotenv: ^5.2.1
   # internet_connection_checker: ^1.0.0
 dev_dependencies:
   flutter_test:
@@ -38,3 +39,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - .env

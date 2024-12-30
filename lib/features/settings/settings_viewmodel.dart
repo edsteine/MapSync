@@ -13,11 +13,12 @@ import 'package:mobile/main.dart';
 
 // Custom exception for SettingsViewModel errors
 class SettingsViewModelException implements Exception {
-  SettingsViewModelException(this.message);
+  SettingsViewModelException(this.message, this.error);
   final String message;
+  final dynamic error;
 
   @override
-  String toString() => 'SettingsViewModelException: $message';
+  String toString() => 'SettingsViewModelException: $message, $error';
 }
 
 class SettingsState {
@@ -25,37 +26,41 @@ class SettingsState {
     this.themeMode = ThemeMode.light,
     this.regions = const [],
     this.isLoading = false,
+    this.message, // Add message for callbacks
   });
   final ThemeMode themeMode;
   final List<String> regions;
   final bool isLoading;
+    final String? message; // Add message for callbacks
 
   SettingsState copyWith({
     ThemeMode? themeMode,
     List<String>? regions,
     bool? isLoading,
+    String? message,
   }) =>
       SettingsState(
         themeMode: themeMode ?? this.themeMode,
         regions: regions ?? this.regions,
         isLoading: isLoading ?? this.isLoading,
+        message: message,
       );
 }
 
 final settingsViewModelProvider =
     StateNotifierProvider.autoDispose<SettingsViewModel, SettingsState>((ref) {
-  final storageAsyncValue = ref.watch(storageProvider2); // watch the AsyncValue
+  final storageAsyncValue = ref.watch(storageProvider); // watch the AsyncValue
   final storage = storageAsyncValue.when(
     data: (data) => data,
     error: (error, stack) =>
-        throw SettingsViewModelException('Error loading storage: $error'),
+        throw SettingsViewModelException('Error loading storage', error),
     loading: () => null, // Or some other default
   );
 
   if (storage == null) {
     return SettingsViewModel(
       ref.watch(settingsRepositoryProvider),
-      ref.watch(tileManagerServiceProvider),
+      ref.watch(tileServiceProvider),
       Future.value(Storage()),
       ref.watch(themeModeProvider.notifier),
       ref,
@@ -63,7 +68,7 @@ final settingsViewModelProvider =
   }
   return SettingsViewModel(
     ref.watch(settingsRepositoryProvider),
-    ref.watch(tileManagerServiceProvider),
+    ref.watch(tileServiceProvider),
     Future.value(storage),
     ref.watch(themeModeProvider.notifier),
     ref,
@@ -120,31 +125,33 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       if(kDebugMode) {
          print('Error loading regions: $e');
       }
-      throw SettingsViewModelException('Error loading regions: $e');
+       throw SettingsViewModelException('Error loading regions', e);
     }
 
   }
 
-  Future<void> clearData() async {
+  Future<void> clearData(BuildContext context) async {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+      state = state.copyWith(isLoading: true);
+
     if (kDebugMode) {
       print('Clearing cache');
     }
     try {
         await _repository.clearCache();
         await loadRegions();
-        if (!mounted) {
+         if (!mounted) {
           return;
         }
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(isLoading: false, message: 'Data cleared!');
     } on Exception catch (e) {
         if (kDebugMode) {
             print('Error clearing data: $e');
         }
-         throw SettingsViewModelException('Error clearing data: $e');
+         state = state.copyWith(isLoading: false, message: 'Error clearing data: $e');
+           throw SettingsViewModelException('Error clearing data', e);
     }
 
   }
@@ -204,7 +211,7 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
         if (kDebugMode) {
              print('Error deleting region: $e');
         }
-         throw SettingsViewModelException('Error deleting region: $e');
+        throw SettingsViewModelException('Error deleting region', e);
      }
 
   }

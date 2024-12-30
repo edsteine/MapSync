@@ -3,6 +3,19 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/config/app_config.dart';
+import 'package:mobile/core/services/network_error_handler.dart';
+
+
+// Custom Exception for Network Service errors
+class NetworkServiceException implements Exception {
+  NetworkServiceException(this.message, this.error, [this.stackTrace]);
+  final String message;
+  final dynamic error;
+    final StackTrace? stackTrace;
+
+  @override
+  String toString() => 'NetworkServiceException: $message, $error, stackTrace: $stackTrace';
+}
 
 class NetworkService {
   NetworkService() {
@@ -35,11 +48,11 @@ class NetworkService {
           }
           return handler.next(response);
         },
-        onError: (error, handler) {
+         onError: (error, handler) {
           if (kDebugMode) {
             print('Error: ${error.message} ${error.requestOptions.uri}');
           }
-          return handler.next(error);
+           return handler.next(_handleError(error, error.stackTrace));
         },
       ),
     );
@@ -51,8 +64,8 @@ class NetworkService {
   }) async {
     try {
       return await _dio.get(path, queryParameters: queryParameters);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+      throw _handleError(e, stackTrace);
     }
   }
 
@@ -67,49 +80,41 @@ class NetworkService {
         'page_size': pageSize.toString(),
       };
       return await _dio.get(path, queryParameters: queryParameters);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+       throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> post(String path, dynamic data) async {
     try {
       return await _dio.post(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+       throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> put(String path, dynamic data) async {
     try {
       return await _dio.put(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+      throw _handleError(e, stackTrace);
     }
   }
 
   Future<Response> delete(String path, {dynamic data}) async {
     try {
       return await _dio.delete(path, data: data);
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } on DioException catch (e, stackTrace) {
+     throw _handleError(e, stackTrace);
     }
   }
 
-  Exception _handleError(DioException error) {
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-        return Exception('Connection timeout');
-      case DioExceptionType.receiveTimeout:
-        return Exception('Receive timeout');
-      case DioExceptionType.badResponse:
-        return Exception('Server error: ${error.response?.statusCode}');
-      case DioExceptionType.connectionError:
-        return Exception('Network connection error');
-      default:
-        return Exception('Unexpected error occurred');
-    }
-  }
+
+     DioException _handleError(DioException error, StackTrace? stackTrace) {
+         throw NetworkErrorHandler.handle(error, stackTrace);
+     }
+
+
 }
 
 final networkServiceProvider =
