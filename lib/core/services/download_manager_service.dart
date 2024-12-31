@@ -1,4 +1,12 @@
-// // lib/core/services/download_manager_service.dart
+///
+/// File: lib/core/services/download_manager_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the state of downloads.
+/// Updates: Initial setup for managing download states like isDownloading and progress.
+/// Used Libraries: flutter_riverpod/flutter_riverpod.dart
+///
+library;
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // class DownloadState {

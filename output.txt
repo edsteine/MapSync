@@ -1,5 +1,13 @@
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/main.dart ##############
-// lib/main.dart
+///
+/// File: lib/main.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Entry point of the Flutter application. Initializes services and sets up the app.
+/// Updates: Initial setup with theme management, Mapbox access, and notification permissions.
+/// Used Libraries: flutter/material.dart, flutter_dotenv/flutter_dotenv.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,28 +21,35 @@ import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 
 void main() async {
+  // Ensures that Flutter is initialized before running any app-specific code.
   WidgetsFlutterBinding.ensureInitialized();
-  // PerformanceMonitor.startMonitoring();
+  // Load environment variables from the .env file, allowing for configuration.
   await dotenv.load();
-  //  await dotenv.load(fileName: ".env");
+  // Sets the Mapbox access token using the configuration from the loaded .env file.
   MapboxOptions.setAccessToken(AppConfig.mapboxAccessToken);
+  // Initializes the notification service for managing push notifications.
   await NotificationService.init();
+  // Requests permission to send notifications to the user.
   await PermissionService.requestNotificationPermissions();
+  // Entry point for the app, wraps the main app with ProviderScope for riverpod.
   runApp(
     const ProviderScope(
       child: MyApp(),
     ),
   );
 }
-
+// Global key for navigation, to be used outside of the widget tree.
 final navigatorKey = GlobalKey<NavigatorState>();
 
+/// `MyApp` is the root widget of the application, utilizing `ConsumerWidget` to access the Riverpod state.
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watches the themeModeProvider to dynamically update the theme based on the selected mode.
     final themeMode = ref.watch(themeModeProvider);
+    // Material App is the basic app with configurations like navigator, theme, and routes.
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Offline Maps',
@@ -47,24 +62,29 @@ class MyApp extends ConsumerWidget {
   }
 }
 
+///  Provides the current theme mode, initialized from storage, this provider can be watched for updates.
 final themeModeProvider = StateProvider<ThemeMode>((ref) {
-  // Initialize from storage
+  // Fetches the storage provider to load stored data from local storage.
   final storageAsync = ref.watch(storageProvider);
+  //Handles asynchronous loading of storage data to determine the stored theme mode
   final storage = storageAsync.when(
     data: (data) => data,
     error: (error, stack) {
+      // Prints an error message to the console if the theme cannot be loaded from storage
       debugPrint('Error loading theme from storage: $error');
       return null;
     },
     loading: () => null,
   );
+  // If the storage service is null, uses light theme by default.
   if (storage == null) {
     return ThemeMode.light;
   }
+  // Gets the theme mode stored in storage.
   final themeString = storage.getString(AppConstants.themeModeKey);
+  // Returns the theme based on the stored value or default light theme.
   return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
 });
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/main.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib ##############
@@ -72,35 +92,58 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_config.dart ##############
-// lib/core/config/app_config.dart
+///
+/// File: lib/core/config/app_config.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Configuration settings for the application, such as API endpoints and map settings.
+/// Updates: Initial configuration, added defaults for access token and API base URL.
+/// Used Libraries: flutter_dotenv/flutter_dotenv.dart, flutter_riverpod/flutter_riverpod.dart
+///
+library;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// AppConfig class provides static properties for application configuration
 // ignore: avoid_classes_with_only_static_members
 class AppConfig {
+    /// Retrieves the Mapbox access token from environment variables or defaults.
   static String get mapboxAccessToken =>
       dotenv.env['MAPBOX_ACCESS_TOKEN'] ??
       'pk.eyJ1IjoiZWRzdGVpbmUiLCJhIjoiY201OGMzZWFxMXBpMTJuczJvY2s1Y2pvYiJ9.9fFMjW1mum1H9WqA2E1rQg';
+  ///  Base URL for the API communication with the backend
   static const String apiBaseUrl =
       'https://w-project-u75x.onrender.com/api/v1/';
+  ///  Application version number
   static const String appVersion = '1.0.0';
 
+  /// Minimum height for image compression for the images to download for offline usage.
   static const int compressImageMinHeight = 1920;
+  /// Minimum width for image compression for the images to download for offline usage.
   static const int compressImageMinWidth = 1080;
+  /// Quality for the image compression, between 0 and 100 for images to download for offline usage.
   static const int compressImageQuality = 85;
 
-  // User Paths
+  // User Paths: These are API paths related to user operations.
+    /// User base path for user operations
   static String get userPath => '${apiBaseUrl}users/';
+    /// User path for verification
   static String get userVerify => '${userPath}verify/';
+    /// User path for forgot password
   static String get userForgotPassword => '${userPath}forgot_password/';
+     /// User path for reset password
   static String get userResetPassword => '${userPath}reset_password/';
 
-  // Locations Paths
+  // Locations Paths: These are API paths related to location operations.
+    /// Location base path for locations
   static String get locationsPath =>
       '${apiBaseUrl}locations/?page=1&page_size=150';
+  /// Location path for nearby locations
   static String get locationsNearbyPath => '${apiBaseUrl}nearby/';
+  /// Location path for statistics
   static String get locationsStatistics => '${apiBaseUrl}statistics/';
 
+  /// Default map settings for initial map view.
   static Map<String, double> defaultMapSettings = {
     'initialLatitude': 0.0,
     'initialLongitude': 0.0,
@@ -109,6 +152,7 @@ class AppConfig {
     'maxZoom': 22.0,
   };
 
+   /// Default settings for offline map downloads
   static Map<String, int> offlineMapSettings = {
     'maxTiles': 10000,
     'minZoom': 10,
@@ -116,42 +160,68 @@ class AppConfig {
   };
 }
 
+/// ConfigProvider to provide the AppConfig as a provider instance.
 final configProvider = Provider<AppConfig>((ref) => AppConfig());
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_config.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_routes.dart ##############
-// lib/core/config/app_routes.dart
+///
+/// File: lib/core/config/app_config.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Configuration settings for the application, such as API endpoints and map settings.
+/// Updates: Initial configuration, added defaults for access token and API base URL.
+/// Used Libraries: flutter_dotenv/flutter_dotenv.dart, flutter_riverpod/flutter_riverpod.dart
+///
+library;
+
 import 'package:flutter/material.dart';
 import 'package:mobile/features/map/map_screen.dart';
 import 'package:mobile/features/offline_map/offline_map_screen.dart';
 import 'package:mobile/features/settings/settings_screen.dart';
 
+//  AppRoutes class provides static properties for managing navigation routes within the app.
 // ignore: avoid_classes_with_only_static_members
 class AppRoutes {
+    /// Route for the map screen.
   static const String map = '/map';
+     /// Route for the settings screen.
   static const String settings = '/settings';
+    /// Route for the offline map screen.
   static const String offlineMap = '/offline_map';
 
+    /// Defines the routes, linking route names to their corresponding screen widgets.
   static Map<String, WidgetBuilder> routes = {
     map: (context) => const MapScreen(),
     settings: (context) => const SettingsScreen(),
     offlineMap: (context) => const OfflineMapScreen(),
   };
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_routes.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_theme.dart ##############
-// lib/core/config/theme.dart
+///
+/// File: lib/core/config/app_theme.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Defines the theme settings for the Flutter application.
+/// Updates: Initial setup of light and dark themes with primary, secondary, and error colors.
+/// Used Libraries: flutter/material.dart
+///
+library;
 import 'package:flutter/material.dart';
 
+// AppTheme class provides static properties for application's theme configurations
 // ignore: avoid_classes_with_only_static_members
 class AppTheme {
+  /// Primary color for the theme
   static const Color primaryColor = Color(0xff6200ee);
+  /// Secondary color for the theme
   static const Color secondaryColor = Color(0xff03dac6);
+  /// Error color for the theme
   static const Color errorColor = Color(0xffb00020);
 
+  /// Light theme settings for the app
   static ThemeData lightTheme = ThemeData(
     colorScheme: ColorScheme.fromSeed(seedColor: primaryColor).copyWith(
       onPrimary: Colors.white,
@@ -171,6 +241,7 @@ class AppTheme {
     useMaterial3: true,
   );
 
+    /// Dark theme settings for the app
   static ThemeData darkTheme = ThemeData(
     colorScheme: ColorScheme.fromSeed(seedColor: primaryColor).copyWith(
       brightness: Brightness.dark,
@@ -191,55 +262,91 @@ class AppTheme {
     useMaterial3: true,
   );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_theme.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_constants.dart ##############
-// lib/core/utils/constants.dart
+///
+/// File: lib/core/utils/app_constants.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Defines application constants such as default map settings, storage keys, and error messages.
+/// Updates: Initial setup with constants for map, channel IDs, storage keys and error messages.
+/// Used Libraries: mapbox_maps_flutter/mapbox_maps_flutter.dart
+///
+library;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+/// AppConstants class provides static constants used throughout the application.
 class AppConstants {
   // Map Constants
+   /// Default longitude value
   static const double defaultLongitude = -7.6351861;
+    /// Default latitude value
   static const double defaultLatitude = 33.5724805;
 
+    /// Default zoom value for the map
   static const double defaultZoom = 14;
+   /// Minimum zoom value for the map
   static const int minZoom = 0;
+    /// Maximum zoom value for the map
   static const int maxZoom = 22;
 
+  // Notification Channel Constants
+    /// ID of the notification channel
   static const String channelId = 'channelId';
+     /// Name of the notification channel
   static const String channelName = 'channelName';
+    /// Description of the notification channel
   static const String channelDescription = 'channelDescription';
   // Storage Keys
+   /// Storage key for markers
   static const String markersKey = 'markers';
+   /// Storage key for theme mode
   static const String themeModeKey = 'theme_mode';
 
   // Error Messages
+    /// Error message for network issues
   static const String networkError = 'Network error occurred';
+    /// Error message for when the user is offline
   static const String offlineError = 'You are currently offline';
+    /// Error message for download issues
   static const String downloadError = 'Failed to download region';
 
-  // Error Messages
+    /// Error message when markers fail to load
   static const String unableToLoadMarkersError = 'Unable to load markers';
+    /// Error message when download operation fails
   static const String downloadFailedError = 'Download failed: ';
+   /// Error message when failed to download a region
   static const String failedToDownloadRegion = 'Failed to download region: ';
   // static const int defaultMaxZoomLevel = 13;
   // static const int defaultMinZoomLevel = 10;
+   /// Mapbox streets style url
   static const String mapboxStreets = MapboxStyles.MAPBOX_STREETS;
 }
 
+/// enum to represent the download status
 enum DownloadStatus {
+  /// idle
   idle,
+  /// downloading
   downloading,
+  /// completed
   completed,
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_constants.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_utils.dart ##############
-// lib/core/utils/app_utils.dart
+///
+/// File: lib/core/utils/app_utils.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides utility functions for the application, such as formatting file sizes and handling state errors.
+/// Updates: Initial setup with file size formatting and generic error handling.
+/// Used Libraries: flutter/foundation.dart, flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, mobile/core/utils/app_constants.dart, mobile/core/utils/context_provider.dart, mobile/core/utils/error_manager.dart
+///
+library;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -249,18 +356,25 @@ import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/context_provider.dart';
 import 'package:mobile/core/utils/error_manager.dart';
 
+// AppUtils class provides static utility functions for the application
 // ignore: avoid_classes_with_only_static_members
 class AppUtils {
+  /// Formats a file size in bytes into human-readable format (B, KB, MB, GB, TB).
   static String formatFileSize(int bytes) {
+    // Checks if size is zero, returns '0 B'.
     if (bytes <= 0) {
       return '0 B';
     }
+     // Defines suffixes for file sizes.
     const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    // Calculates the index of the suffix needed for appropriate formatting.
     final i = (log(bytes) / log(1024)).floor();
+    // Formats the file size to a readable string with appropriate suffix.
     return '${(bytes / pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
   }
 // lib/core/utils/app_utils.dart
 
+  /// Generic error handling for state notifiers. It updates state, prints the error, and shows a SnackBar.
   static void handleStateError<T extends StateNotifier<S>, S, R extends Ref>(
     T notifier,
     R ref,
@@ -268,71 +382,103 @@ class AppUtils {
     dynamic error,
     String errorMessage,
   ) {
+      // Checks if the notifier is still mounted to prevent errors on disposed widgets.
     if (!notifier.mounted) {
       return;
     }
+    // Creates a new state with the error message and download status.
     final newState = (state as dynamic).copyWith(
       downloadStatus: DownloadStatus.idle,
       error: errorMessage,
     );
 
+    //Updates the state with the new state.
     notifier.state = newState;
+     // Prints the error to the console in debug mode.
     if (kDebugMode) {
       print('Error: $error');
     }
+    // Retrieves the current build context from the context provider
     final context = ref.read(contextProvider);
+     //Checks if the context is valid for showing the snackbar.
     if (context != null) {
+     //Shows a snackbar message to the user with error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
     }
+    // Sets the error in the error provider
     ref.read(errorProvider.notifier).setError(errorMessage);
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_utils.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/context_provider.dart ##############
-// lib/core/utils/context_provider.dart
+///
+/// File: lib/core/utils/context_provider.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides a way to access the current BuildContext throughout the application.
+/// Updates: Initial setup, used to get current BuildContext for operations.
+/// Used Libraries: flutter/material.dart, flutter_riverpod/flutter_riverpod.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Context provider allows other parts of application to access build context.
 final contextProvider = StateProvider<BuildContext?>((ref) => null);
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/context_provider.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/map_utils.dart ##############
-// lib/core/utils/map_utils.dart
+///
+/// File: lib/core/utils/map_utils.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides utility functions related to map operations, such as checking if a point is in bounds and calculating distances.
+/// Updates: Initial setup with functions to check point in bounds and calculate distance.
+/// Used Libraries: mapbox_maps_flutter/mapbox_maps_flutter.dart
+///
+library;
 import 'dart:math' as math;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+// MapUtils class provides static utility functions for map-related operations
 // ignore: avoid_classes_with_only_static_members
 class MapUtils {
+    /// Checks if a given point is within the specified coordinate bounds.
   static bool isPointInBounds(Point point, CoordinateBounds bounds) {
+    // Get the coordinates of the point
     final pointCoords = point.coordinates;
+     // Get the coordinates of the southwest bound
     final southwestCoords = bounds.southwest.coordinates;
+     // Get the coordinates of the northeast bound
     final northeastCoords = bounds.northeast.coordinates;
 
+    // Checks if the point is within the bounds
     return pointCoords[1]! >= southwestCoords[1]! &&
         pointCoords[1]! <= northeastCoords[1]! &&
         pointCoords[0]! >= southwestCoords[0]! &&
         pointCoords[0]! <= northeastCoords[0]!;
   }
 
+    /// Calculates the distance in meters between two points using the Haversine formula.
   static double calculateDistance(Point point1, Point point2) {
     const double earthRadius = 6371000; // meters
-
+     // Get the coordinates of the first point
     final coords1 = point1.coordinates;
+     // Get the coordinates of the second point
     final coords2 = point2.coordinates;
 
-    final lat1 = coords1[1]! * math.pi / 180;
-    final lat2 = coords2[1]! * math.pi / 180;
-    final lon1 = coords1[0]! * math.pi / 180;
-    final lon2 = coords2[0]! * math.pi / 180;
+    final lat1 = coords1[1]! * math.pi / 180; // Convert latitude of point1 to radians
+    final lat2 = coords2[1]! * math.pi / 180;// Convert latitude of point2 to radians
+    final lon1 = coords1[0]! * math.pi / 180;// Convert longitude of point1 to radians
+    final lon2 = coords2[0]! * math.pi / 180;// Convert longitude of point2 to radians
 
-    final dLat = lat2 - lat1;
-    final dLon = lon2 - lon1;
+    final dLat = lat2 - lat1; // Calculate the difference in latitude
+    final dLon = lon2 - lon1;// Calculate the difference in longitude
 
+     // Haversine formula to calculate the distance between two points.
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1) *
             math.cos(lat2) *
@@ -340,25 +486,36 @@ class MapUtils {
             math.sin(dLon / 2);
 
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-
+     // Returns the distance in meters
     return earthRadius * c;
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/map_utils.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/error_manager.dart ##############
-// lib/core/utils/error_manager.dart
+///
+/// File: lib/core/utils/error_manager.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides a state management solution for handling errors in the application.
+/// Updates: Initial setup for error state and notifier.
+/// Used Libraries: flutter_riverpod/flutter_riverpod.dart
+///
+library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Represents the state of an error in the application.
 class ErrorState {
   ErrorState({this.message});
+  /// Message of the error.
   final String? message;
 
+  ///  Creates a copy of the ErrorState with an optional updated message.
   ErrorState copyWith({String? message}) =>
       ErrorState(message: message ?? this.message);
 }
 
+/// Manages the state of errors, providing methods to set and clear errors.
 class ErrorNotifier extends StateNotifier<ErrorState> {
   ErrorNotifier() : super(ErrorState());
 
@@ -371,28 +528,37 @@ class ErrorNotifier extends StateNotifier<ErrorState> {
   // void updateState(ErrorState newState) {
   //   state = newState;
   // }
-
+  /// Sets a new error message.
   void setError(String message) {
     // updateState(state.copyWith(message: message));
     state.copyWith(message: message);
   }
 
+    /// Clears the current error message.
   void clearError() {
     // updateState(state.copyWith());
     state.copyWith();
   }
 }
 
+/// Provider for the ErrorNotifier to manage error state throughout the app.
 final errorProvider = StateNotifierProvider<ErrorNotifier, ErrorState>(
   (ref) => ErrorNotifier(),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/error_manager.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/app_resource_optimizer.dart ##############
-// lib/core/performance/app_size_reducer.dart
+///
+/// File: lib/core/performance/app_resource_optimizer.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides utility functions for optimizing application resources, such as compressing images and clearing temporary files.
+/// Updates: Initial setup with image compression and temporary file cleaning.
+/// Used Libraries: dart/io.dart, flutter/foundation.dart, flutter_image_compress/flutter_image_compress.dart, mobile/core/config/app_config.dart, path_provider/path_provider.dart
+///
+library;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -400,36 +566,47 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:mobile/core/config/app_config.dart';
 import 'package:path_provider/path_provider.dart';
 
+// AppResourceOptimizer class provides static utility functions for app resources optimization
 // ignore: avoid_classes_with_only_static_members
 class AppResourceOptimizer {
+  /// Compresses an image represented as a Uint8List, using compute to execute on a separate thread.
   static Future<Uint8List?> compressImage(Uint8List list) async =>
       compute(_compressImage, list);
 
+  ///  Internal function to perform the image compression.
   static Future<Uint8List?> _compressImage(Uint8List list) async {
+     //Checks if the image is not empty before compressing.
     if (list.isEmpty) {
       return null;
     }
+     // Compress the image with configured height, width, and quality.
     final compressedImage = await FlutterImageCompress.compressWithList(
       list,
       minHeight: AppConfig.compressImageMinHeight,
       minWidth: AppConfig.compressImageMinWidth,
       quality: AppConfig.compressImageQuality,
     );
-
+    // Prints the compressed image size to the console in debug mode.
     if (kDebugMode) {
       print('Compressed image size: ${compressedImage.length} bytes');
     }
-
+    // Returns the compressed image
     return compressedImage;
   }
 
+    /// Clears temporary files from the application's temporary directory.
   static Future<void> clearTempFiles() async {
+      // Get the temporary directory.
     final tempDir = await getTemporaryDirectory();
+    //  Gets all files inside the temp directory.
     final files = tempDir.listSync();
+     // Loops over the files
     for (final file in files) {
       if (file is File) {
         try {
+          // Tries to delete the current file.
           await file.delete();
+         // Prints an error if the file cannot be deleted
         } on Exception catch (e) {
           if (kDebugMode) {
             print('Error deleting file: $e');
@@ -439,20 +616,30 @@ class AppResourceOptimizer {
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/app_resource_optimizer.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/performance_monitor.dart ##############
-// lib/core/performance/performance_monitor.dart
+///
+/// File: lib/core/performance/performance_monitor.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Provides functionalities for monitoring the performance of the Flutter application, such as frame timings and widget rebuilds.
+/// Updates: Initial setup with start and stop monitoring functionalities and frame timings.
+/// Used Libraries: flutter/foundation.dart, flutter/material.dart, flutter/rendering.dart, flutter/scheduler.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+//  PerformanceMonitor class provides static functions for monitoring application performance.
 // ignore: avoid_classes_with_only_static_members
 class PerformanceMonitor {
+    /// Boolean indicating if the monitoring is active.
   static bool isMonitoring = false;
 
+    /// Starts the performance monitoring if in debug mode, prints rebuilds, layouts, and frame timing.
   static void startMonitoring() {
     if (kDebugMode && !isMonitoring) {
       isMonitoring = true;
@@ -461,27 +648,31 @@ class PerformanceMonitor {
       debugPrintBeginFrameBanner = true;
       debugPrintEndFrameBanner = true;
 
+       // Adds a callback for frame timings.
       WidgetsBinding.instance.addTimingsCallback(_onFrameTimings);
     }
   }
 
+   /// Handles frame timings, logging details about build and raster durations.
   static void _onFrameTimings(List<FrameTiming> timings) {
+    // Loops over the frame timings.
     for (final timing in timings) {
       final buildTime = timing.buildDuration.inMilliseconds;
       final rasterTime = timing.rasterDuration.inMilliseconds;
 
+      // Logs details for dropped frames if the time is over the recommended 16 ms.
       if (buildTime > 16 || rasterTime > 16) {
-        // Frame dropped, log more details
+         // Gathers details about which widgets were rebuilt
         final buildDetails = _getBuildDetails();
         debugPrint(
           'Frame drop detected - Build: ${buildTime}ms, Raster: ${rasterTime}ms, Rebuilt Widgets: $buildDetails',
         );
       }
-      // Example timer for each method.
+       // Example timer for each method.
       _methodTimer(
         'Raster',
         () {
-          // Example of a raster method being timed.
+           // Example of a raster method being timed.
           // You can replace this with any raster method you want to measure
           // const Color color = Colors.red; // Example action
           // final paint = Paint()..color = color;
@@ -506,19 +697,22 @@ class PerformanceMonitor {
       );
     }
   }
-
+   /// Measures and logs time for a method execution.
   static void _methodTimer(String methodName, Function method, int time) {
+     //  Executes only in debug mode.
     if (kDebugMode) {
+     // Starts a stopwatch before the method execution
       final stopwatch = Stopwatch()..start();
       // method();
       // stopwatch.stop();
-
+       //Prints the method time.
       debugPrint(
         '$methodName time: ${time}ms, actual method time: ${stopwatch.elapsedMilliseconds}ms',
       );
     }
   }
 
+   /// Gathers and returns a string of names of the widgets that were rebuilt.
   static String _getBuildDetails() {
     final rebuiltWidgets = <String>[];
     // Only do this in debug
@@ -533,9 +727,11 @@ class PerformanceMonitor {
         }
       });
     }
+     // Returns a string of the rebuilt widgets.
     return rebuiltWidgets.join(', ');
   }
 
+    /// Stops the performance monitoring, resets the debug print flags, and removes the timings callback.
   static void stopMonitoring() {
     if (isMonitoring) {
       isMonitoring = false;
@@ -543,64 +739,89 @@ class PerformanceMonitor {
       debugPrintLayouts = false;
       debugPrintBeginFrameBanner = false;
       debugPrintEndFrameBanner = false;
+       // Removes the callback for frame timings.
       WidgetsBinding.instance.removeTimingsCallback(_onFrameTimings);
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/performance_monitor.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/permission_service.dart ##############
-// lib/core/services/permission_service.dart
+///
+/// File: lib/core/services/permission_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages permission requests for the application, handling both notification and location permissions.
+/// Updates: Initial setup with request methods for notification and location permissions.
+/// Used Libraries: flutter/foundation.dart, geolocator/geolocator.dart, permission_handler/permission_handler.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:permission_handler/permission_handler.dart';
 
+//  PermissionService class provides static methods for requesting app permissions.
 // ignore: avoid_classes_with_only_static_members
 class PermissionService {
+    /// Requests notification permissions from the user, handles denied or permanently denied cases.
   static Future<void> requestNotificationPermissions() async {
+      // Requests the notification permission from the user.
     final status = await Permission.notification.request();
+    // Prints the status of the notification permission to console in debug mode.
     if (kDebugMode) {
       print('Notification permission status: $status');
     }
+     // Handles the case where notification permission is denied.
     if (status.isDenied) {
-      // Handle case when the permission is denied by the user.
+       // Prints a message to console if the permission is denied
       if (kDebugMode) {
         print('Notification permission is denied');
       }
+     //Handles the case where the notification permission is permanently denied,
     } else if (status.isPermanentlyDenied) {
+       // Prints a message to console when permission is denied and opening settings
       if (kDebugMode) {
         print(
           'Notification permission is permanently denied, opening app settings',
         );
       }
+      // Opens the application settings to allow the user to enable the permission.
       await openAppSettings();
+      //Handles the case where permission is granted by the user
     } else if (status.isGranted) {
-      // Permission is granted by the user, use notification services
+     // Prints a message to console when permission is granted
       if (kDebugMode) {
         print('Notification permission is granted');
       }
     }
   }
 
+   /// Requests location permissions from the user, returns the permission status.
   static Future<geo.LocationPermission> requestLocationPermissions() async {
+    // Requests the location permission from the user.
     final permission = await geo.Geolocator.requestPermission();
 
+   // Handles the case when permission is denied.
     if (permission == geo.LocationPermission.denied) {
       // Do not use the location services, and use default location.
       return geo.LocationPermission.denied;
+       // Handles the case when location permission is permanently denied.
     } else if (permission == geo.LocationPermission.deniedForever) {
+
       // Permission has been denied, try to open the settings.
       if (kDebugMode) {
         print(
           'Location permission is permanently denied',
         );
       }
+       // Opens the app settings.
       await geo.Geolocator.openAppSettings();
 
+     // Returns the location permission status as 
       return geo.LocationPermission.deniedForever;
+       // Handles the case where permission is granted by the user
     } else if (permission == geo.LocationPermission.whileInUse ||
         permission == geo.LocationPermission.always) {
       // Do use location services.
@@ -613,63 +834,84 @@ class PermissionService {
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/permission_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/notification_service.dart ##############
-// lib/core/services/notification_service.dart
+///
+/// File: lib/core/services/notification_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages local notifications for the application.
+/// Updates: Initial setup with initialization, showing notifications, progress notifications, and canceling notifications.
+/// Used Libraries: flutter/foundation.dart, flutter_local_notifications/flutter_local_notifications.dart, mobile/core/utils/app_constants.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 
+//  NotificationService class provides static methods for managing app notifications.
 // ignore: avoid_classes_with_only_static_members
 class NotificationService {
+  /// Plugin for managing local notifications.
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
+    /// Action identifier for pausing a download.
   static const String downloadPauseActionId = 'download_pause_action';
+    /// Action identifier for canceling a download.
   static const String downloadCancelActionId = 'download_cancel_action';
 
+    /// Initializes the notification service by setting up platform-specific configurations.
   static Future<void> init() async {
+      // Android specific notification initialization settings.
     const initializationSettingsAndroid =
         AndroidInitializationSettings('mipmap/ic_launcher');
-
+     // Darwin (iOS and macOS) specific notification initialization settings.
     const initializationSettingsDarwin = DarwinInitializationSettings(
         // Request specific permissions, if necessary for your app
         );
 
+     // Combines initialization settings for all platforms.
     const initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
       macOS: initializationSettingsDarwin,
     );
-
+     // Initializes the notification plugin.
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
     );
   }
 
+   /// Handles actions on notification tap
   static Future<void> _onDidReceiveNotificationResponse(
     NotificationResponse notificationResponse,
   ) async {
+     // Prints the notification response to the console in debug mode.
     if (kDebugMode) {
       print('Notification response: $notificationResponse');
     }
+     //Handles the case when download is paused
     if (notificationResponse.actionId == downloadPauseActionId) {
       // Pause the current action, we are not going to do anything here. The action will be handled in the MapService
+       // Prints a message to the console when download is paused.
       if (kDebugMode) {
         print('Download is paused!');
       }
     } else if (notificationResponse.actionId == downloadCancelActionId) {
-      // Cancel the current action, we are not going to do anything here. The action will be handled in the MapService
+       // Cancel the current action, we are not going to do anything here. The action will be handled in the MapService
+       // Prints a message to the console when download is canceled.
       if (kDebugMode) {
         print('Download is canceled!');
       }
     }
   }
 
+   /// Displays a simple notification with title and body.
   static Future<void> showNotification({
     required String title,
     required String body,
     int? id,
   }) async {
+    // Android specific notification details.
     const androidNotificationDetails = AndroidNotificationDetails(
       AppConstants.channelId,
       AppConstants.channelName,
@@ -678,8 +920,10 @@ class NotificationService {
       importance: Importance.max,
       showWhen: false,
     );
+    // Combine the platform notification details.
     const notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
+    // Shows the notification
     await flutterLocalNotificationsPlugin.show(
       id ?? 0,
       title,
@@ -688,12 +932,14 @@ class NotificationService {
     );
   }
 
+    /// Displays a progress notification with a title and a progress value.
   static Future<void> showProgressNotification({
     required String title,
     required int progress,
     int? id,
     bool indeterminate = false,
   }) async {
+    // Android specific notification details
     final androidNotificationDetails = AndroidNotificationDetails(
       AppConstants.channelId,
       AppConstants.channelName,
@@ -710,8 +956,10 @@ class NotificationService {
         AndroidNotificationAction(downloadCancelActionId, 'Cancel'),
       ],
     );
+      // Combine the platform notification details
     final notificationDetails =
         NotificationDetails(android: androidNotificationDetails);
+    // Shows the progress notification
     await flutterLocalNotificationsPlugin.show(
       id ?? 1,
       title,
@@ -720,15 +968,24 @@ class NotificationService {
     );
   }
 
+    /// Cancels a specific notification by its ID.
   static Future<void> cancelNotification(int id) async {
+     // Cancels the notification with the given id
     await flutterLocalNotificationsPlugin.cancel(id);
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/notification_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_service.dart ##############
-// lib/core/services/network_service.dart
+///
+/// File: lib/core/services/network_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Handles network requests using Dio, including setting up interceptors for logging and error handling.
+/// Updates: Initial setup with get, post, put, and delete methods, along with interceptors for request/response/error logging and handling.
+/// Used Libraries: dio/dio.dart, flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mobile/core/config/app_config.dart, mobile/core/services/network_error_handler.dart
+///
+library;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -747,7 +1004,9 @@ class NetworkServiceException implements Exception {
       'NetworkServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// NetworkService class provides methods for making network requests.
 class NetworkService {
+    /// Constructor for the network service setting configurations and interceptors.
   NetworkService() {
     _dio = Dio(
       BaseOptions(
@@ -761,96 +1020,127 @@ class NetworkService {
     );
     _setupInterceptors();
   }
+  /// Dio client used for making requests
   late final Dio _dio;
 
+    /// Configures interceptors for requests, responses, and errors.
   void _setupInterceptors() {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+           // Logs the request method and url in debug mode.
           if (kDebugMode) {
             print('Request: ${options.method} ${options.uri}');
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
+           // Logs the response status code and url in debug mode.
           if (kDebugMode) {
             print('Response: ${response.statusCode} ${response.realUri}');
           }
           return handler.next(response);
         },
         onError: (error, handler) {
+          // Logs the error message and url in debug mode.
           if (kDebugMode) {
             print('Error: ${error.message} ${error.requestOptions.uri}');
           }
+           // Handles the error before passing to the next handler.
           return handler.next(_handleError(error, error.stackTrace));
         },
       ),
     );
   }
 
+   /// Performs a GET request to the specified path.
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
+       // Executes the get method.
       return await _dio.get(path, queryParameters: queryParameters);
+      // Handles Dio exceptions.
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
   }
 
+   /// Handles errors from Dio by calling the NetworkErrorHandler.
   DioException _handleError(DioException error, StackTrace? stackTrace) {
     throw NetworkErrorHandler.handle(error, stackTrace);
   }
 
+   /// Performs a GET request with pagination to the specified path.
   Future<Response> getWithPages(
     String path, {
     int page = 1,
     int pageSize = 150,
   }) async {
     try {
+       // Construct the query parameters with page and page size.
       final queryParameters = {
         'page': page.toString(),
         'page_size': pageSize.toString(),
       };
+       // Executes the get method with the added query parameters.
       return await _dio.get(path, queryParameters: queryParameters);
+       // Handles Dio exceptions.
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
   }
 
+    /// Performs a POST request to the specified path with the given data.
   Future<Response> post(String path, dynamic data) async {
     try {
+      // Executes the post method.
       return await _dio.post(path, data: data);
+      // Handles Dio exceptions.
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
   }
 
+  /// Performs a PUT request to the specified path with the given data.
   Future<Response> put(String path, dynamic data) async {
     try {
+       // Executes the put method
       return await _dio.put(path, data: data);
+      // Handles Dio exceptions.
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
   }
 
+    /// Performs a DELETE request to the specified path.
   Future<Response> delete(String path, {dynamic data}) async {
     try {
+      // Executes the delete method
       return await _dio.delete(path, data: data);
+      // Handles Dio exceptions.
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
   }
 }
 
+/// Provider for the NetworkService to manage network requests throughout the app
 final networkServiceProvider =
     Provider<NetworkService>((ref) => NetworkService());
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/tile_service.dart ##############
-// lib/core/services/tile_service.dart
+///
+/// File: lib/core/services/tile_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages offline tile storage and downloads using the Mapbox Maps SDK for Flutter.
+/// Updates: Initial setup with tile store initialization, tile download, and region management functions.
+/// Used Libraries: dart/io.dart, flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, path_provider/path_provider.dart
+///
+library;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -869,18 +1159,26 @@ class TileServiceException implements Exception {
       'TileServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// TileService class provides methods for managing offline map tiles using Mapbox SDK.
 class TileService {
+   /// Constructor for the tile service
   TileService();
+  ///  TileStore object for tile storage operations
   TileStore? _tileStore;
 
+    /// Initializes the tile store, creates a default tile store and sets disk quota to null.
   Future<void> initialize() async {
     try {
+       // Creates the default tile store
       _tileStore = await TileStore.createDefault();
+      // Sets the disk quota to null, allowing unlimited storage.
       _tileStore?.setDiskQuota(null);
+      // Prints to console when tile store is successfully initialized.
       if (kDebugMode) {
         print('TileStore initialized');
       }
     } on Exception catch (e, stackTrace) {
+       // Prints the error to the console if there was an issue during initialization.
       if (kDebugMode) {
         print('Error initializing TileStore: $e, StackTrace: $stackTrace');
       }
@@ -888,28 +1186,35 @@ class TileService {
     }
   }
 
+    /// Downloads tiles for a specified region, zoom levels, and style URI.
   Future<void> downloadTiles(
     CoordinateBounds bounds,
     int minZoom,
     int maxZoom,
     String styleUri,
   ) async {
+    // Prints a message to console when starting the download.
     if (kDebugMode) {
       print('Starting downloadTiles');
     }
     if (_tileStore == null) {
+       // Initializes the tile store if it isn't already initialized
       await initialize();
     }
 
     try {
+      // Creates a unique region ID.
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
+      // Prints the current region id to the console.
       if (kDebugMode) {
         print('Region ID: $regionId');
       }
 
+       // Configure tile region load options
       final tileRegionLoadOptions = TileRegionLoadOptions(
         // geometry: Point(coordinates: Position(-80.1263, 25.7845)).toJson(),
+         // Setting a default geometry for the current region.
         geometry: Point(coordinates: Position(34.020882, -6.832477)).toJson(),
         // geometry: Point(coordinates: Position( -6.832477,34.020882)).toJson(),
 
@@ -923,13 +1228,16 @@ class TileService {
         acceptExpired: true,
         networkRestriction: NetworkRestriction.NONE,
       );
+       // Prints a message to console when tile region is loading.
       if (kDebugMode) {
         print('Loading tile region');
       }
+        // Loads the tile region, using a progress callback
       await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
         (progress) {
+           // Prints progress to the console.
           if (kDebugMode) {
             print('TileService progress callback called');
             print('Completed resources: ${progress.completedResourceCount}');
@@ -938,10 +1246,13 @@ class TileService {
           }
         },
       );
+       // Prints a message to the console when tile region is loaded.
       if (kDebugMode) {
         print('Tile region loaded');
       }
+         // Get the completed tile region
       final tileRegion = await getTileRegion(regionId);
+       //Prints the tile region details to the console after the download
       if (kDebugMode) {
         print(
           'Tile Region Completed Size: ${tileRegion?.completedResourceSize}',
@@ -951,18 +1262,23 @@ class TileService {
           'Tile Region Errored Count: ${tileRegion?.completedResourceSize}',
         );
       }
+       // Catch any exception that occurs during the download
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error downloading tiles: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception in case of failure.
       throw TileServiceException('Error downloading tiles', e, stackTrace);
     }
   }
 
+    /// Clears old tiles by deleting the tiles directory from the app's document directory.
   Future<void> clearOldTiles() async {
     if (_tileStore == null) {
+        // Initializes the tile store if not already initialized.
       await initialize();
     }
+      // Prints to console before clearing the old tiles.
     if (kDebugMode) {
       print('Clearing old tiles');
     }
@@ -971,38 +1287,50 @@ class TileService {
       final dir = await getApplicationDocumentsDirectory();
       final tilesDir = Directory('${dir.path}/tiles');
       if (tilesDir.existsSync()) {
+         // Delete all tiles recursively.
         tilesDir.deleteSync(recursive: true);
+        // Prints to console when the old tile directory has been deleted.
         if (kDebugMode) {
           print('Old tiles directory deleted');
         }
       } else {
+        // Prints to console when there are no old tiles to clear
         if (kDebugMode) {
           print('No old tiles directory found');
         }
       }
+      // Catch any exception that occurs during the cleaning
     } on Exception catch (e, stackTrace) {
+       // Prints the exception to console if there was an issue while clearing the old tiles.
       if (kDebugMode) {
         print('Error clearing old tiles: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception in case of failure.
       throw TileServiceException('Error clearing old tiles', e, stackTrace);
     }
   }
 
+    /// Removes a specific tile region by its ID.
   Future<void> removeTileRegion(String regionId) async {
     if (_tileStore == null) {
+         // Initializes the tile store if not already initialized.
       await initialize();
     }
     try {
+       // Prints the current region id to be removed.
       if (kDebugMode) {
         print('Removing tile region: $regionId');
       }
+       // Removes the tile region using it's id.
       await _tileStore?.removeRegion(regionId);
     } on Exception catch (e, stackTrace) {
+       // Prints to console in case of error.
       if (kDebugMode) {
         print(
           'Error removing tile region $regionId: $e, StackTrace: $stackTrace',
         );
       }
+       // Throws a custom exception in case of failure.
       throw TileServiceException(
         'Error removing tile region $regionId',
         e,
@@ -1011,19 +1339,25 @@ class TileService {
     }
   }
 
+    /// Retrieves a specific tile region by its ID.
   Future<TileRegion?> getTileRegion(String regionId) async {
     if (_tileStore == null) {
+       // Initializes the tile store if not already initialized.
       await initialize();
     }
     try {
+       // Gets all the tile regions.
       final regions = await _tileStore!.allTileRegions();
+      // Returns the region that matches the given id or null if not exists.
       return regions.firstWhere((region) => region.id == regionId);
     } on Exception catch (e, stackTrace) {
+       // Prints to console in case of error.
       if (kDebugMode) {
         print(
           'Error getting tile region $regionId: $e, StackTrace: $stackTrace',
         );
       }
+       // Throws a custom exception in case of failure.
       throw TileServiceException(
         'Error getting tile region $regionId',
         e,
@@ -1032,16 +1366,21 @@ class TileService {
     }
   }
 
+    /// Retrieves all available tile regions.
   Future<List<TileRegion>> getAllTileRegions() async {
     if (_tileStore == null) {
+        // Initializes the tile store if not already initialized.
       await initialize();
     }
     try {
+        // Returns all the tile regions
       return await _tileStore!.allTileRegions();
+       // Catch any exception that occurs while getting all the tile regions
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error getting all tile regions: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception in case of failure.
       throw TileServiceException(
         'Error getting all tile regions',
         e,
@@ -1050,23 +1389,30 @@ class TileService {
     }
   }
 
+   /// Checks if a region has been downloaded based on its bounds.
   Future<bool> isRegionDownloaded(CoordinateBounds bounds) async {
     if (_tileStore == null) {
       return false;
     }
 
     try {
+      // Creates a unique region ID.
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
+       // Prints the regionId to the console in debug mode.
       if (kDebugMode) {
         print('Checking if region is downloaded: $regionId');
       }
+      // Get all regions.
       final regions = await _tileStore!.allTileRegions();
+       // Checks if any region exists with the same id.
       final isDownloaded = regions.any((region) => region.id == regionId);
+       // Prints whether the region is downloaded or not
       if (kDebugMode) {
         print('Region $regionId is downloaded: $isDownloaded');
       }
       return isDownloaded;
+     // Catches the exception, if any happens while checking if a region is downloaded
     } on Exception catch (e) {
       if (kDebugMode) {
         print('Error checking if region is downloaded: $e');
@@ -1075,20 +1421,29 @@ class TileService {
     }
   }
 
+    /// Disposes of the tile store.
   void dispose() {
     _tileStore = null;
   }
 
-  // Public getter to access _tileStore
+    /// Public getter to access _tileStore.
   TileStore? get tileStore => _tileStore;
 }
 
+///  Provider for the TileService to manage tile storage and downloads.
 final tileServiceProvider = Provider<TileService>((ref) => TileService());
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/tile_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_error_handler.dart ##############
-// lib/core/services/network_error_handler.dart
+///
+/// File: lib/core/services/network_error_handler.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Handles Dio errors and provides custom error messages.
+/// Updates: Initial setup to handle connection timeouts, receive timeouts, and bad responses, including a default error case.
+/// Used Libraries: dio/dio.dart, flutter/foundation.dart, mobile/core/utils/app_constants.dart
+///
+library;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobile/core/utils/app_constants.dart';
@@ -1096,15 +1451,18 @@ import 'package:mobile/core/utils/app_constants.dart';
 // Custom exception for Network errors
 // ignore: avoid_classes_with_only_static_members
 class NetworkErrorHandler {
+   /// Handles Dio errors, converting them into meaningful errors.
   static DioException handle(
     DioException error, [
     StackTrace? stackTrace,
   ]) {
+     // Prints the error message and stack trace in debug mode
     if (kDebugMode) {
       print('Network Error: ${error.message} StackTrace: $stackTrace');
     }
-
+     // Handle different types of Dio errors
     switch (error.type) {
+     // Handles connection timeouts, receive timeouts, and connection errors, which are treated as a network error.
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
@@ -1113,9 +1471,10 @@ class NetworkErrorHandler {
           error: AppConstants.networkError,
           type: error.type,
         );
-
+      // Handles bad responses coming from the backend
       case DioExceptionType.badResponse:
         return error;
+        // Handles other types of errors that aren't in the cases above
       default:
         return DioException(
           requestOptions: error.requestOptions,
@@ -1125,11 +1484,18 @@ class NetworkErrorHandler {
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_error_handler.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/download_manager_service.dart ##############
-// // lib/core/services/download_manager_service.dart
+///
+/// File: lib/core/services/download_manager_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the state of downloads.
+/// Updates: Initial setup for managing download states like isDownloading and progress.
+/// Used Libraries: flutter_riverpod/flutter_riverpod.dart
+///
+library;
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // class DownloadState {
@@ -1178,11 +1544,18 @@ class NetworkErrorHandler {
 //     StateNotifierProvider<DownloadManager, DownloadState>(
 //   (ref) => DownloadManager(),
 // );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/download_manager_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/map_service.dart ##############
-// lib/core/services/map_service.dart
+///
+/// File: lib/core/services/map_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages map-related operations such as downloading regions, removing style packs, and calculating tile counts.
+/// Updates: Initial setup with functionalities for downloading regions, managing styles, and calculating tiles and size. Includes detailed error handling and logging.
+/// Used Libraries: dart/async.dart, dart/math.dart, flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/services/notification_service.dart, mobile/core/services/tile_service.dart, mobile/core/utils/app_constants.dart, mobile/core/utils/app_utils.dart
+///
+library;
 import 'dart:async';
 import 'dart:math';
 
@@ -1194,7 +1567,7 @@ import 'package:mobile/core/services/tile_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/app_utils.dart';
 
-// Custom exception for MapService errors
+// Custom exception for MapService errors, provides a structured way to handle errors within the service.
 class MapServiceException implements Exception {
   MapServiceException(this.message, this.error, [this.stackTrace]);
   final String message;
@@ -1205,28 +1578,51 @@ class MapServiceException implements Exception {
       'MapServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// MapService class manages map-related operations such as tile downloads, style packs and region management.
 class MapService {
+  /// Constructor for the Map Service, requires an instance of `TileService`.
   MapService(this._tileManagerService);
+
+  ///  Tile service manager for handling tile storage operations.
   final TileService _tileManagerService;
+
+  /// Tile store object for tile storage operations
   TileStore? _tileStore;
+
+  ///  Offline manager object to manage offline resources like style packs.
   OfflineManager? _offlineManager;
+
+  /// Stream controller for tracking the progress of style pack loading.
   final StreamController<double> _stylePackProgress =
       StreamController<double>.broadcast();
+
+  /// Stream that provides updates on the progress of the style pack loading, making it possible to track it from other places in the app
   Stream<double> get stylePackProgress => _stylePackProgress.stream;
+
+  /// Stream controller for tracking the progress of tile region download.
   final StreamController<double> _tileRegionLoadProgress =
       StreamController<double>.broadcast();
+
+  /// Stream that provides updates on the progress of the tile region loading, making it possible to track it from other places in the app.
   Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
 
+  /// Initializes the offline manager, tile store, and notification services required for map operations.
   Future<void> init() async {
     try {
+      // Creates a new OfflineManager instance.
       _offlineManager = await OfflineManager.create();
+      // Creates a default TileStore instance and disables the disk quota
       _tileStore = await TileStore.createDefault();
       _tileStore?.setDiskQuota(null);
+      // Initializes notification service.
       await NotificationService.init();
+       // Catching potential exception in case of failure during the initialization of the map service
     } catch (e, stackTrace) {
+      // Logging error to console when debug mode is activated
       if (kDebugMode) {
         print('Error initializing Map Service: $e, StackTrace: $stackTrace');
       }
+      // Throw a custom exception for handling initialization failure
       throw MapServiceException(
         'Error initializing Map Service',
         e,
@@ -1235,6 +1631,7 @@ class MapService {
     }
   }
 
+  /// Calculates the approximate number of tiles required to cover a given region, based on the zoom levels.
   int calculateTileCount(CoordinateBounds bounds, int minZoom, int maxZoom) {
     final latDiff =
         (bounds.northeast.coordinates.lat - bounds.southwest.coordinates.lat)
@@ -1253,25 +1650,35 @@ class MapService {
     return totalTiles;
   }
 
+  /// Retrieves and formats the size of a downloaded map region, providing human-readable values
   Future<String> getRegionSize(CoordinateBounds bounds) async {
     try {
+      // Creates a unique region ID using the southwest and northeast coordinates.
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
+          // Fetches the tile region information for a given id using the tileManagerService.
       final tileRegion = await _tileManagerService.getTileRegion(regionId);
+      // Returns "0 B" if no tile region is found for given id.
       if (tileRegion == null) {
         return '0 B';
       }
+      // Gets the size of the completed resources.
       final sizeBytes = tileRegion.completedResourceSize;
 
+      // Returns the formatted file size, converting from bytes to a human readable format.
       return AppUtils.formatFileSize(sizeBytes);
+       // Handles any exception that occurs during the execution.
     } on Exception catch (e, stackTrace) {
+      // Logs error details if an exception occurs in debug mode.
       if (kDebugMode) {
         print('Error getting region size: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception to be handled by the caller
       throw MapServiceException('Error getting region size', e, stackTrace);
     }
   }
 
+  /// Downloads a map region with specified bounds, zoom levels and style, and notifies the user about progress and completion.
   Future<void> downloadRegion({
     required String regionName,
     required CoordinateBounds bounds,
@@ -1284,24 +1691,31 @@ class MapService {
     try {
       // final maxZoomLevel = maxZoom ?? AppConstants.defaultMaxZoomLevel;
       // final minZoomLevel = minZoom ?? AppConfig.defaultMinZoomLevel;
+      // Default max and min zoom level
       const maxZoomLevel = 22;
       const minZoomLevel = 1;
+      // Logs the zoom level configurations for this region download process.
       if (kDebugMode) {
         print('downloadRegion: minZoom=$minZoomLevel, maxZoom=$maxZoomLevel');
       }
 
+      // Calculates the total number of tiles required for the specified region and zoom levels
       final tileCount = calculateTileCount(bounds, minZoomLevel, maxZoomLevel);
+      // Checks if the selected area would require too many tiles to download, throws an exception if exceeded.
       if (tileCount > 7122999999999250) {
         throw MapServiceException(
           'Selected area would require too many tiles. Please zoom in or select a smaller region. The selected area would require: $tileCount tiles',
           'Tile count too high',
         );
       }
+       // Logs the start of the download process for the given region name
       if (kDebugMode) {
         print('Initializing download for region: $regionName');
       }
+      // Initializes the map service, which prepares the offline manager, tile store, and notifications.
       await init();
 
+      // Checks if the tile store is initialized. If null an exception is thrown.
       if (_tileStore == null) {
         throw MapServiceException(
           'TileStore is null after initialization',
@@ -1309,7 +1723,7 @@ class MapService {
         );
       }
 
-      // Validate coordinates are within valid ranges
+      // Validate coordinates are within valid ranges, throwing an error if they aren't
       if (bounds.northeast.coordinates.lat > 90 ||
           bounds.northeast.coordinates.lat < -90 ||
           bounds.southwest.coordinates.lat > 90 ||
@@ -1323,6 +1737,7 @@ class MapService {
           'Invalid Coordinates',
         );
       }
+      // Prints to console the start of the download region, also the coordinates and zoom level
       if (kDebugMode) {
         print('Starting download for region $regionName');
         print('Southwest: ${bounds.southwest.coordinates}');
@@ -1330,24 +1745,30 @@ class MapService {
         print('Zoom levels: min=$minZoomLevel, max=$maxZoomLevel');
       }
 
+      // Configure style pack load options for offline use
       final stylePackLoadOptions = StylePackLoadOptions(
         glyphsRasterizationMode:
             GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
         metadata: {'tag': regionName},
         acceptExpired: true,
       );
+      // Loads the style pack from a specified URI and updates the style pack loading progress.
       await _offlineManager?.loadStylePack(
           AppConstants.mapboxStreets, stylePackLoadOptions, (progress) {
+           // Calculates the percentage of the completed style resources
         final percentage =
             progress.completedResourceCount / progress.requiredResourceCount;
+             // Sends the current progress to the stream, only if the stream is not closed.
         if (!_stylePackProgress.isClosed) {
           _stylePackProgress.sink.add(percentage);
         }
+        // After finishing, it closes the style pack progress stream.
       }).then((value) {
         _stylePackProgress.sink.add(1);
         _stylePackProgress.sink.close();
       });
 
+      //  Creates a geometry object for the selected region
       final geometry = {
         'type': 'Polygon',
         'coordinates': [
@@ -1376,9 +1797,11 @@ class MapService {
         ],
       };
 
+      // Logs the created geometry object in debug mode.
       if (kDebugMode) {
         print('Geometry created: $geometry');
       }
+      //  Shows the notification to the user that a download has started for the region.
       await NotificationService.showProgressNotification(
         title: 'Downloading region',
         progress: 0,
@@ -1386,6 +1809,7 @@ class MapService {
         indeterminate: true,
       );
 
+      // Configure tile region load options
       final tileRegionLoadOptions = TileRegionLoadOptions(
         geometry: geometry,
         descriptorsOptions: [
@@ -1398,19 +1822,22 @@ class MapService {
         acceptExpired: true,
         networkRestriction: NetworkRestriction.NONE,
       );
-
+      // Creates a unique region ID
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-
+      // Starts the process of downloading the tiles of a region, while also updating the progress stream.
       await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
         (progress) {
+          // Calculates the percentage of the completed tiles.
           final percentage =
               progress.completedResourceCount / progress.requiredResourceCount;
+          // Adds the current percentage to the stream, only if the stream is not closed
           if (!_tileRegionLoadProgress.isClosed) {
             _tileRegionLoadProgress.sink.add(percentage);
           }
+          // Logs the progress information to the console
           if (kDebugMode) {
             print('progress.completedResourceCount');
             print(progress.completedResourceCount);
@@ -1421,37 +1848,51 @@ class MapService {
           }
         },
       ).then((value) {
+        // Adds 1 to the stream for completion and closes the stream.
         _tileRegionLoadProgress.sink.add(1);
         _tileRegionLoadProgress.sink.close();
       });
 
+      // Logs the completion of download to console for a given region.
       if (kDebugMode) {
         print('Download complete for region: $regionName');
       }
+      // Executes the callback for onComplete
       onComplete();
+      // Removes the notification when the download has completed.
       await NotificationService.cancelNotification(1);
+      //Catches any exceptions that happened during the download
     } on Exception catch (e, stackTrace) {
+       // Prints to console the exception in debug mode
       if (kDebugMode) {
         print('Download failed with error: $e, StackTrace: $stackTrace');
       }
+       // Executes the callback in case of error.
       onError(e);
+       // Shows the notification to the user that download has failed.
       await NotificationService.showNotification(
         title: 'Download failed',
         body: e.toString(),
         id: 1,
       );
+      // Removes the notification for the download after the error
       await NotificationService.cancelNotification(1);
+        // Throws a custom exception to be handled by the caller
       throw MapServiceException('Download failed', e, stackTrace);
     }
   }
 
+    /// Removes a tile region and its associated style pack.
   Future<void> removeTileRegionAndStylePack(
     String tileRegionId,
     String styleUri,
   ) async {
     try {
+        // Retrieves the tile region using the tile id.
       final tileRegion = await _tileManagerService.getTileRegion(tileRegionId);
+       // Checks if the tile region with this id exists before removing its style pack.
       if (tileRegion == null) {
+          // Logs to console if a tile region doesn't exist
         if (kDebugMode) {
           print(
             'Tile region with id $tileRegionId does not exist, cannot remove style pack.',
@@ -1459,18 +1900,22 @@ class MapService {
         }
         return;
       }
+      // Prints to console the tile region and style pack being removed.
       if (kDebugMode) {
         print('Removing tile region and style pack: $tileRegionId, $styleUri');
       }
+       // Removes the tile region, the tile store disk quota is set to zero and then removes the style pack using it's url
       await _tileManagerService.removeTileRegion(tileRegionId);
-      _tileManagerService.tileStore?.setDiskQuota(0);
+       _tileManagerService.tileStore?.setDiskQuota(0);
       await _offlineManager?.removeStylePack(styleUri);
     } catch (e, stackTrace) {
+        // Prints to console if there was an error during the removal of tile region and style pack
       if (kDebugMode) {
         print(
           'Error removing tile region and style pack: $e, StackTrace: $stackTrace',
         );
       }
+         // Throws a custom exception to be handled by the caller
       throw MapServiceException(
         'Error removing tile region and style pack',
         e,
@@ -1479,19 +1924,26 @@ class MapService {
     }
   }
 
+    /// Removes all tile regions by iterating through each region and its associated style pack.
   Future<void> removeAllTileRegions() async {
     try {
+      // Get all tile regions
       final regions = await _tileManagerService.getAllTileRegions();
+      // Loop over all of the tile regions
       for (final region in regions) {
+        // remove the tile region and its style pack
         await removeTileRegionAndStylePack(
           region.id,
           AppConstants.mapboxStreets,
         );
       }
+      // Catch any exception that occurred during the removal of tiles.
     } catch (e, stackTrace) {
+       // Prints to console if there was an error removing all tile regions.
       if (kDebugMode) {
         print('Error removing all tile regions: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception to be handled by the caller
       throw MapServiceException(
         'Error removing all tile regions',
         e,
@@ -1500,20 +1952,29 @@ class MapService {
     }
   }
 
+  /// Closes the stream controllers used for tracking the download progress.
   void dispose() {
     _tileRegionLoadProgress.close();
     _stylePackProgress.close();
   }
 }
 
+/// Provider for the MapService, allowing access to map-related functionalities.
 final mapServiceProvider = Provider<MapService>(
   (ref) => MapService(ref.watch(tileServiceProvider)),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/map_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/storage_service.dart ##############
-// lib/core/services/storage_service.dart
+///
+/// File: lib/core/services/storage_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages data storage using Hive for map markers and SharedPreferences for other settings.
+/// Updates: Initial setup with methods to save, retrieve, and clear map markers, integers, strings, and booleans, and added comments
+/// Used Libraries: flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, hive_flutter/hive_flutter.dart, mobile/core/utils/app_constants.dart, mobile/shared/models/map_marker.dart, shared_preferences/shared_preferences.dart
+///
+library;
 import 'package:flutter/foundation.dart'; // Import kDebugMode
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -1533,172 +1994,258 @@ class StorageException implements Exception {
       'StorageException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// Storage class that handles data storage for application
 class Storage {
+    /// Constructor for the storage class
   Storage();
+    /// Future box for storing Map Markers in Hive
   late Future<Box<MapMarker>> _markerBoxFuture;
+  /// Shared preferences instance to store simple data
   final Future<SharedPreferences> _prefsFuture =
       SharedPreferences.getInstance();
 
+  /// Initializes the storage by setting up Hive and registering adapters for models.
   static Future<Storage> init() async {
     final storage = Storage();
     try {
+       // Initializes hive for flutter storage
       await Hive.initFlutter();
+      // Registers the needed adapters for the models
       Hive
         ..registerAdapter(MapMarkerAdapter())
         ..registerAdapter(GeometryAdapter())
         ..registerAdapter(GeometryTypeAdapter()); // Register the new adapter
+         // Opens the box for storing the map markers, assigning it to a variable
       storage._markerBoxFuture =
           Hive.openBox<MapMarker>(AppConstants.markersKey);
+       // Prints to the console in debug mode when storage is initialized.
       if (kDebugMode) {
         print('Storage Initialized');
       }
+      // Returns the initialized storage.
       return storage;
+      // Catches any exception that occurs during the storage initialization.
     } on Exception catch (e, stackTrace) {
+      // Prints error to the console if there was a failure during initialization
       if (kDebugMode) {
         print('Error initializing storage: $e, StackTrace: $stackTrace');
       }
+      // Throws custom exception when initialization fails.
       throw StorageException('Error initializing storage', e, stackTrace);
     }
   }
 
   // Marker operations
+
+    /// Saves map markers to storage, clearing existing data first.
   Future<void> saveMarkers(List<MapMarker> markers) async {
     try {
+       // Gets the map marker box.
       final markerBox = await _markerBoxFuture;
+       // Clears the existing data from box.
       await markerBox.clear();
+       // Puts all new markers in the box
       await markerBox.putAll(
         Map.fromIterables(
           markers.map((e) => e.id),
           markers,
         ),
       );
+         // Gets a shared preference instance
       final prefs = await _prefsFuture;
+       // Updates a timestamp for the markers.
       await prefs.setInt(
         AppConstants.markersKey,
         DateTime.now().millisecondsSinceEpoch,
       );
+      //Catches any exception that occurs during the save operation
     } on Exception catch (e, stackTrace) {
+      //Prints to the console if an error occurs during the saving
       if (kDebugMode) {
         print('Error saving markers: $e, StackTrace: $stackTrace');
       }
+       // Throws custom exception when saving markers fails
       throw StorageException('Error saving markers', e, stackTrace);
     }
   }
 
+    /// Retrieves map markers from storage.
   Future<List<MapMarker>> getMarkers() async {
     try {
+         // Gets the map marker box.
       final markerBox = await _markerBoxFuture;
+      // Returns all the values stored in the box as a list.
       return markerBox.values.toList();
+    //Catches any exception that occurs during getting markers.
     } on Exception catch (e, stackTrace) {
+      // Prints to console if an error occurs during retrieving markers.
       if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
+      // Throws custom exception when getting markers fails.
       throw StorageException('Error getting markers', e, stackTrace);
     }
   }
 
   // Preferences operations
+
+    /// Saves an integer value to shared preferences.
   Future<void> saveInt(String key, int value) async {
     try {
+       // Gets shared preference instance.
       final prefs = await _prefsFuture;
+      // Set the integer value for a given key
       await prefs.setInt(key, value);
+    // Catches any exception that occurs while saving an int value.
     } on Exception catch (e, stackTrace) {
+      // Prints to console if an error occurs while saving an integer
       if (kDebugMode) {
         print('Error saving int: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception when saving fails
       throw StorageException('Error saving int', e, stackTrace);
     }
   }
 
+   /// Retrieves an integer value from shared preferences.
   Future<int?> getInt(String key) async {
     try {
+        // Gets the shared preference instance
       final prefs = await _prefsFuture;
+       // Returns the integer value for a given key
       return prefs.getInt(key);
+    // Catches any exception that occurs while getting an int value.
     } on Exception catch (e, stackTrace) {
+       // Prints to console if an error occurs while getting an integer
       if (kDebugMode) {
         print('Error getting int: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception when getting int fails
       throw StorageException('Error getting int', e, stackTrace);
     }
   }
 
+   /// Saves a string value to shared preferences.
   Future<void> saveString(String key, String value) async {
     try {
+         // Gets shared preference instance
       final prefs = await _prefsFuture;
+       // Sets string value for the given key
       await prefs.setString(key, value);
+    // Catches any exception that occurs while saving a string
     } on Exception catch (e, stackTrace) {
+       // Prints to console if an error occurs while saving a string
       if (kDebugMode) {
         print('Error saving string: $e, StackTrace: $stackTrace');
       }
+      // Throws custom exception when saving a string fails.
       throw StorageException('Error saving string', e, stackTrace);
     }
   }
 
+    /// Retrieves a string value from shared preferences.
   Future<String?> getString(String key) async {
     try {
+         // Gets shared preference instance.
       final prefs = await _prefsFuture;
+         // Returns a string value for the given key
       return prefs.getString(key);
+       // Catches any exception that occurs during getting a string.
     } on Exception catch (e, stackTrace) {
+       // Prints to console if an error occurs while getting a string.
       if (kDebugMode) {
         print('Error getting string: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception when getting a string fails.
       throw StorageException('Error getting string', e, stackTrace);
     }
   }
 
+    /// Saves a boolean value to shared preferences.
   Future<void> saveBool(String key, {required bool value}) async {
     try {
+         // Gets shared preference instance
       final prefs = await _prefsFuture;
+       // Saves a boolean value for a given key.
       await prefs.setBool(key, value);
+      // Catches any exception that occurs during saving a boolean.
     } on Exception catch (e, stackTrace) {
+      // Prints to console if an error occurs while saving a boolean value
       if (kDebugMode) {
         print('Error saving bool: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception when saving a boolean fails.
       throw StorageException('Error saving bool', e, stackTrace);
     }
   }
 
+    /// Retrieves a boolean value from shared preferences.
   Future<bool?> getBool(String key) async {
     try {
+        // Gets the shared preference instance.
       final prefs = await _prefsFuture;
+        // Returns the boolean value for a given key
       return prefs.getBool(key);
+       // Catches any exception that occurs during getting a bool.
     } on Exception catch (e, stackTrace) {
+       // Prints to console if an error occurs while getting a boolean.
       if (kDebugMode) {
         print('Error getting bool: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception when getting a boolean fails.
       throw StorageException('Error getting bool', e, stackTrace);
     }
   }
 
+  /// Clears all storage data, both Hive and SharedPreferences.
   Future<void> clearAll() async {
+     // Prints to the console in debug mode before cleaning the storage.
     if (kDebugMode) {
       print('Clearing All Storage');
     }
     try {
+        // Gets the map marker box
       final markerBox = await _markerBoxFuture;
+      // Clears the marker box
       await markerBox.clear();
+      // Gets the shared preferences
       final prefs = await _prefsFuture;
+       // Clears all data from shared preferences
       await prefs.clear();
+        // Prints to the console in debug mode when all the storage is cleared.
       if (kDebugMode) {
         print('All storage cleared');
       }
+       //Catches any exception that occurs while clearing all the storage data.
     } on Exception catch (e, stackTrace) {
+         // Prints to the console in debug mode when failing to clear the storage
       if (kDebugMode) {
         print('Error clearing storage: $e, StackTrace: $stackTrace');
       }
+      //Throws custom exception when failing to clear all storage data.
       throw StorageException('Error clearing storage', e, stackTrace);
     }
   }
 }
 
+/// Provider for Storage, providing a single entry point to access storage functionalities.
 final storageProvider = FutureProvider<Storage>((ref) async {
   final storage = await Storage.init();
   return storage;
 });
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/storage_service.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/cache_service.dart ##############
+///
+/// File: lib/core/services/cache_service.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the clearing of application cache, encompassing temporary files, map data, and storage.
+/// Updates: Initial setup to clear temporary files, map data and app storage.
+/// Used Libraries: flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mobile/core/performance/app_resource_optimizer.dart, mobile/core/services/map_service.dart, mobile/core/services/storage_service.dart, mobile/core/services/tile_service.dart
+///
+library;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/performance/app_resource_optimizer.dart';
@@ -1718,24 +2265,35 @@ class CacheServiceException implements Exception {
       'CacheServiceException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// Manages clearing the application's cache, including temporary files, map data, and storage.
 class CacheService {
+    /// Constructor for CacheService, it takes `Storage`, `MapService`, and `TileService` as parameters
   CacheService(this.storage, this.mapService, this.tileManagerService);
+
+    /// Storage service for managing preferences and map markers.
   final Storage storage;
+    /// Map service for managing map-related operations.
   final MapService mapService;
+  /// Tile service for managing offline tiles.
   final TileService tileManagerService;
 
+  /// Clears the application's cache by removing temporary files, map data, and application data.
   Future<void> clearCache() async {
+      //Prints to the console when clearCache is called
     if (kDebugMode) {
       print('clearCache is being called');
     }
 
     // Clear temporary files first, before clear map data
     try {
+        // Clear all temp files using resource optimizer
       await AppResourceOptimizer.clearTempFiles();
+        //Prints to the console if there was an error deleting temporary files
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error clearing temporaries: $e, StackTrace: $stackTrace');
       }
+       // Throws an exception if there was an error during the cleaning process.
       throw CacheServiceException('Error clearing temporaries', e, stackTrace);
     }
 
@@ -1745,30 +2303,40 @@ class CacheService {
     }
     // Remove region and style pack for all tiles
     try {
+        // Removes all the tile regions and styles from the offline maps.
       await mapService.removeAllTileRegions();
+       // Clears the old tiles in the device storage.
       await tileManagerService.clearOldTiles();
+        //Prints to the console if there was an error while clearing map data.
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error clearing map data: $e, StackTrace: $stackTrace');
       }
+      // Throws an exception if there was an error during the map data cleaning
       throw CacheServiceException('Error clearing map data', e, stackTrace);
     }
 
     // Clear application cache (example)
     try {
+       // Clears all application storage
       await storage.clearAll();
+        // Prints to the console when the cache has been successfully cleared.
       if (kDebugMode) {
         print('Cache has been cleared');
       }
+      // Catches any exceptions that occurred during clearing the storage
     } on Exception catch (e, stackTrace) {
+       // Prints to the console if there was an error while clearing the storage.
       if (kDebugMode) {
         print('Error clearing storage: $e, StackTrace: $stackTrace');
       }
+      // Throws a custom exception in case of a failure
       throw CacheServiceException('Error clearing storage', e, stackTrace);
     }
   }
 }
 
+/// Provider for the CacheService, providing a single entry point to clear the cache.
 final cacheManagerProvider = Provider<CacheService>(
   (ref) => CacheService(
     ref.watch(storageProvider).when(
@@ -1784,7 +2352,6 @@ final cacheManagerProvider = Provider<CacheService>(
     ref.watch(tileServiceProvider),
   ),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/cache_service.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services ##############
@@ -1792,12 +2359,21 @@ final cacheManagerProvider = Provider<CacheService>(
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_screen.dart ##############
-// lib/features/settings/settings_screen.dart
+///
+/// File: lib/features/settings/settings_screen.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays the settings screen, allowing users to change the application theme and clear data.
+/// Updates: Initial setup with theme picker, clear data options, and downloaded region display.
+/// Used Libraries: flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, mobile/features/settings/settings_viewmodel.dart, mobile/shared/widgets/theme_picker.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/settings/settings_viewmodel.dart';
 import 'package:mobile/shared/widgets/theme_picker.dart';
 
+/// SettingsScreen widget provides UI to change app theme, clear data, and list downloaded regions.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -1809,6 +2385,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    // Adding a callback to load regions after the first frame renders.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(settingsViewModelProvider.notifier).loadRegions();
     });
@@ -1816,26 +2393,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Gets the view model to execute actions
     final settingsViewModel = ref.read(settingsViewModelProvider.notifier);
     return Scaffold(
+       // AppBar with the title "Settings".
       appBar: AppBar(title: const Text('Settings')),
+       // Padding and a column to arrange the components.
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+           //Section title for the theme settings
             const Text(
               'Theme',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            // Theme picker for changing application themes
             ThemePicker(
               onThemeChanged: settingsViewModel.changeTheme,
             ),
             const SizedBox(height: 20),
+           //Section title for app performance settings
             const Text(
               'Performance',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            // ListTile to clear the application cache.
             ListTile(
               title: const Text('Clear Data'),
               onTap: () {
@@ -1849,10 +2433,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             //   },
             // ),
             const SizedBox(height: 20),
+            //Section title for the downloaded regions.
             const Text(
               'Downloaded Regions',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            // List to show the downloaded regions
             // Expanded(
             //   child: Consumer(
             //     builder: (BuildContext context, WidgetRef ref, Widget? child) {
@@ -1875,11 +2461,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_screen.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_repository.dart ##############
-// lib/features/settings/settings_repository.dart
+///
+/// File: lib/features/settings/settings_repository.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Data layer responsible for handling settings-related operations such as clearing the cache and retrieving downloaded regions.
+/// Updates: Initial setup with methods to clear cache, get downloaded regions, and delete specific regions.
+/// Used Libraries: flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mobile/core/services/cache_service.dart, mobile/core/services/tile_service.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/services/cache_service.dart';
@@ -1897,47 +2490,65 @@ class SettingsRepositoryException implements Exception {
       'SettingsRepositoryException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// SettingsRepository class provides data handling methods for settings related functionalities.
 class SettingsRepository {
+    /// Constructor of the `SettingsRepository` which requires `CacheService` and `TileService`
   SettingsRepository(this._cacheManager, this._tileManagerService);
+   /// Cache service instance for managing cache operations.
   final CacheService _cacheManager;
+   /// Tile service instance for managing tile storage operations.
   final TileService _tileManagerService;
 
+  /// Clears the application cache using the provided `CacheService`.
   Future<void> clearCache() async {
+       // Prints to the console in debug mode before clearing the cache.
     if (kDebugMode) {
       print('Clearing Cache from Settings Repo');
     }
     try {
+      // Clears the cache using cache manager
       await _cacheManager.clearCache();
+     // Catches any exception and prints in debug mode
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error clearing cache: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception if there was an error during the clearing of the cache.
       throw SettingsRepositoryException('Error clearing cache', e, stackTrace);
     }
   }
 
+    /// Retrieves downloaded regions from the tile manager.
   Future<List<String>> getDownloadedRegions() async {
+    // Prints to the console in debug mode before retrieving the downloaded regions.
     if (kDebugMode) {
       print('Getting Downloaded regions from settings repo');
     }
     try {
+        //Fetches all the tile regions from the tile manager service
       final regionsFuture = _tileManagerService.tileStore?.allTileRegions();
 
+        //Return an empty list if no regions was found.
       if (regionsFuture == null) {
         if (kDebugMode) {
           print('No downloaded regions');
         }
         return [];
       }
+      //Awaits the tile regions and converts them to a list of ids
       final regions = await regionsFuture;
+       //Prints the list of downloaded regions to the console.
       if (kDebugMode) {
         print('Downloaded regions: ${regions.map((e) => e.id).toList()}');
       }
+      // Returns the list of tile regions ids
       return regions.map((e) => e.id).toList();
+      // Catches any exception and prints in debug mode.
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error getting downloaded regions: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception if there was an error while getting all downloaded regions
       throw SettingsRepositoryException(
         'Error getting downloaded regions',
         e,
@@ -1946,32 +2557,45 @@ class SettingsRepository {
     }
   }
 
+    /// Deletes a tile region using the tile manager.
   Future<void> deleteRegion(String regionId) async {
+       //Prints to the console in debug mode before removing the given tile region.
     if (kDebugMode) {
       print('Deleting region from Settings repo: $regionId');
     }
     try {
+       // Removes the given tile region using the tile id.
       await _tileManagerService.removeTileRegion(regionId);
+      // Catches any exception and prints in debug mode
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error deleting region: $e, StackTrace: $stackTrace');
       }
+       // Throws a custom exception if there was an error during deletion
       throw SettingsRepositoryException('Error deleting region', e, stackTrace);
     }
   }
 }
 
+/// Provider for the SettingsRepository to manage settings-related data.
 final settingsRepositoryProvider = Provider<SettingsRepository>(
   (ref) => SettingsRepository(
     ref.watch(cacheManagerProvider),
     ref.watch(tileServiceProvider),
   ),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_repository.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_viewmodel.dart ##############
-// lib/features/settings/settings_viewmodel.dart
+///
+/// File: lib/features/settings/settings_viewmodel.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the state and logic for the settings screen, handling theme changes, data clearing, and region management.
+/// Updates: Initial setup with theme change functionality, data clearing, loading regions, and Android-specific settings opening.
+/// Used Libraries: android_intent_plus/android_intent.dart, android_intent_plus/flag.dart, flutter/foundation.dart, flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, geolocator/geolocator.dart, mobile/core/services/storage_service.dart, mobile/core/services/tile_service.dart, mobile/core/utils/app_constants.dart, mobile/features/settings/settings_repository.dart, mobile/main.dart
+///
+library;
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/foundation.dart';
@@ -1984,7 +2608,7 @@ import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/features/settings/settings_repository.dart';
 import 'package:mobile/main.dart';
 
-// Custom exception for SettingsViewModel errors
+// Custom exception for SettingsViewModel errors.
 class SettingsViewModelException implements Exception {
   SettingsViewModelException(this.message, this.error);
   final String message;
@@ -1994,18 +2618,25 @@ class SettingsViewModelException implements Exception {
   String toString() => 'SettingsViewModelException: $message, $error';
 }
 
+/// Represents the state of the settings view model.
 class SettingsState {
+   /// Constructor of the state class, sets the default values
   SettingsState({
     this.themeMode = ThemeMode.light,
     this.regions = const [],
     this.isLoading = false,
     this.message, // Add message for callbacks
   });
+    /// Current selected theme mode.
   final ThemeMode themeMode;
+  /// List of downloaded regions.
   final List<String> regions;
+  /// Loading status.
   final bool isLoading;
+    /// Message for feedback after completing an action or when an error occur.
   final String? message; // Add message for callbacks
 
+  /// Creates a copy of the state with optional new properties.
   SettingsState copyWith({
     ThemeMode? themeMode,
     List<String>? regions,
@@ -2020,36 +2651,46 @@ class SettingsState {
       );
 }
 
+/// Provider for the SettingsViewModel to manage state and logic for the settings screen.
 final settingsViewModelProvider =
     StateNotifierProvider<SettingsViewModel, SettingsState>((ref) {
   final storageAsyncValue = ref.watch(storageProvider); // watch the AsyncValue
+  // Handle the AsyncValue
   final storage = storageAsyncValue.when(
     data: (data) {
+       // Prints a message in debug mode when the storage is loaded successfully
       if (kDebugMode) {
         print('SettingsViewModel: Storage loaded successfully');
       }
       return data;
     },
     error: (error, stack) {
+       // Prints an error message with the stack trace to the console in debug mode.
       if (kDebugMode) {
         print(
           'SettingsViewModel: Error loading storage: $error, Stacktrace: $stack',
         );
       }
+       // Throws a custom exception for error during the storage loading.
       throw SettingsViewModelException('Error loading storage', error);
     },
     loading: () {
+        // Prints a message to the console when storage is loading.
       if (kDebugMode) {
         print('SettingsViewModel: Loading storage...');
       }
+       // returns a default value during the loading.
       return null;
-    }, // Or some other default
+    },
   );
 
+   // Return default view model if the storage is null.
   if (storage == null) {
+      // Prints to the console when storage is null.
     if (kDebugMode) {
       print('SettingsViewModel: Storage is null, using default view model');
     }
+      // Creates a SettingsViewModel with a default storage and other required instances
     return SettingsViewModel(
       ref.watch(settingsRepositoryProvider),
       ref.watch(tileServiceProvider),
@@ -2058,6 +2699,7 @@ final settingsViewModelProvider =
       ref,
     );
   }
+   // Creates a SettingsViewModel with the loaded storage and other required instances.
   return SettingsViewModel(
     ref.watch(settingsRepositoryProvider),
     ref.watch(tileServiceProvider),
@@ -2067,6 +2709,7 @@ final settingsViewModelProvider =
   );
 });
 
+/// SettingsViewModel manages the state and business logic for the settings screen.
 class SettingsViewModel extends StateNotifier<SettingsState> {
   SettingsViewModel(
     this._repository,
@@ -2075,109 +2718,153 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
     this._themeModeNotifier,
     this.ref,
   ) : super(SettingsState()) {
+    // Executes after the storage is initialized, and loads the regions
     _storage.then((value) {
+        // Checks if value is not null before trying to load the regions.
       // ignore: unnecessary_null_comparison
       if (value != null) {
         loadRegions();
       }
+       //Prints to console if storage is not null.
       if (kDebugMode) {
         print('SettingsViewModel: Storage is not null, loading regions');
       }
     });
   }
+  /// Settings repository instance for data operations
   final SettingsRepository _repository;
+  ///  Tile service manager for managing tile storage operations.
   final TileService _tileManagerService;
+  /// Controller for theme mode state.
   final StateController<ThemeMode> _themeModeNotifier;
+  /// Future storage instance to retrieve from database.
   late final Future<Storage> _storage;
+   /// Riverpod ref to update the state.
   final Ref ref;
 
+    /// Changes the theme, saves the change to storage and updates the state.
   Future<void> changeTheme(ThemeMode themeMode) async {
+    // Prints to the console in debug mode when the theme change starts.
     if (kDebugMode) {
       print(
         'SettingsViewModel: Attempting to change theme to: ${themeMode.name}',
       );
     }
+    // returns when the state is not mounted.
     if (!mounted) {
       return;
     }
+    // Set the new state of theme.
     _themeModeNotifier.state = themeMode;
 
+    // Gets an instance of storage.
     final storage = await _storage;
+     //Prints to the console in debug mode when the theme is being saved to storage
     if (kDebugMode) {
       print('SettingsViewModel: Saving theme to storage: ${themeMode.name}');
     }
+    // Saves the theme to storage
     await storage.saveString(AppConstants.themeModeKey, themeMode.name);
+     //Prints to the console in debug mode after the theme is saved to the storage.
     if (kDebugMode) {
       print('SettingsViewModel: Saved theme to storage: ${themeMode.name}');
     }
+      // Prints to the console when theme changes and the state is set.
     if (kDebugMode) {
       print(
         'SettingsViewModel: Theme changed to: ${themeMode.name} setting state',
       );
     }
+    // Set the new state for the view model.
     state = state.copyWith(themeMode: themeMode);
   }
 
+    /// Loads the downloaded regions from repository and updates the state.
   Future<void> loadRegions() async {
+      // Prints to the console in debug mode when the regions are being loaded.
     if (kDebugMode) {
       print('Loading Regions');
     }
     try {
+        // Retrieves the downloaded regions using the repository.
       final regions = await _repository.getDownloadedRegions();
+      // Prints the downloaded regions to the console.
       if (kDebugMode) {
         print('Loaded regions: $regions');
       }
+      // returns when the state is not mounted.
       if (!mounted) {
         return;
       }
+      // Updates the state with the new region.
       state = state.copyWith(regions: regions);
+      // Catches any exception that occurs when loading the regions.
     } on Exception catch (e) {
+        // Prints to the console the exception that occurred when loading regions
       if (kDebugMode) {
         print('Error loading regions: $e');
       }
+       // Throws an exception with the error.
       throw SettingsViewModelException('Error loading regions', e);
     }
   }
 
+   /// Clears application data (cache, markers), and reloads regions.
   Future<void> clearData(BuildContext context) async {
+       // return if the state is not mounted.
     if (!mounted) {
       return;
     }
+      // Updates the state to show loading.
     state = state.copyWith(isLoading: true);
-
+     // Prints the console when the cache is about to get cleared
     if (kDebugMode) {
       print('Clearing cache');
     }
     try {
+      // Clears the cache.
       await _repository.clearCache();
+      // Reloads the regions after clearing the cache
       await loadRegions();
+      // Returns when the state is not mounted
       if (!mounted) {
         return;
       }
+       // Update the state to stop loading and to show a message to the user.
       state = state.copyWith(isLoading: false, message: 'Data cleared!');
+        // Catches any exception that occurs when clearing data.
     } on Exception catch (e) {
+       // Prints the error to console when the data failed to get cleared.
       if (kDebugMode) {
         print('Error clearing data: $e');
       }
+       // Updates the state to stop loading and return error message.
       state =
           state.copyWith(isLoading: false, message: 'Error clearing data: $e');
+          // Throws custom exception with the error message.
       throw SettingsViewModelException('Error clearing data', e);
     }
   }
 
+    /// Opens the system app settings for the current application.
   Future<void> clearSystemCache(BuildContext context) async {
+    // return if its a web platform
     if (kIsWeb) {
       return;
     }
+     // Opens the app settings for android
     if (Theme.of(context).platform == TargetPlatform.android) {
       await _openAppSettings();
+       // Shows a dialog on other platforms since there is no built in functionality
     } else {
       _showDialog(context);
     }
   }
 
+  /// Opens the settings using AndroidIntent, it defaults to open settings using Geolocator if it fails.
   Future<void> _openAppSettings() async {
     try {
+      // Using intent to launch settings for the current application
       final intent = AndroidIntent(
         action: 'action_application_details_settings',
         data: Uri(scheme: 'package', path: 'YOUR_PACKAGE_NAME').toString(),
@@ -2188,10 +2875,12 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       if (kDebugMode) {
         print('Could not open settings using AndroidIntent: $e');
       }
+      // Opens settings using the geolocator package.
       await geo.Geolocator.openAppSettings();
     }
   }
 
+    /// Shows a dialog for non-Android platforms to clear system cache manually.
   void _showDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -2212,31 +2901,45 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
     );
   }
 
+    /// Deletes a specified region using the repository and reloads regions.
   Future<void> deleteRegion(String regionId) async {
     try {
+         // Deletes a region using it's id
       await _repository.deleteRegion(regionId);
+       // Reload the regions after deletion.
       await loadRegions();
+        // Catches any exception that occurs during deleting the regions.
     } on Exception catch (e) {
+        // Prints the error to the console if the deletion fails.
       if (kDebugMode) {
         print('Error deleting region: $e');
       }
+       // Throws a custom exception if the deletion of the region failed.
       throw SettingsViewModelException('Error deleting region', e);
     }
   }
 
   @override
   void dispose() {
+      // Disposes of the tile manager service when the view model is disposed of.
     _tileManagerService.dispose();
     super.dispose();
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_viewmodel.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_screen.dart ##############
-// lib/features/offline_map/offline_map_screen.dart
+///
+/// File: lib/features/offline_map/offline_map_screen.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays the offline map screen, including controls for downloading and managing offline map regions.
+/// Updates: Initial setup with a map widget, download dialog, regions management, zoom controls and current location functionalities.
+/// Used Libraries: flutter/foundation.dart, flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/utils/app_constants.dart, mobile/core/utils/error_manager.dart, mobile/features/offline_map/offline_map_viewmodel.dart, mobile/shared/widgets/custom_error_widget.dart, mobile/shared/widgets/loading_overlay.dart, mobile/shared/widgets/map_controls.dart, mobile/shared/widgets/region_item.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2250,6 +2953,7 @@ import 'package:mobile/shared/widgets/loading_overlay.dart';
 import 'package:mobile/shared/widgets/map_controls.dart';
 import 'package:mobile/shared/widgets/region_item.dart';
 
+/// OfflineMapScreen provides UI for displaying and managing offline map regions.
 class OfflineMapScreen extends ConsumerStatefulWidget {
   const OfflineMapScreen({super.key});
 
@@ -2258,10 +2962,14 @@ class OfflineMapScreen extends ConsumerStatefulWidget {
 }
 
 class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
+    /// Mapbox map object, which is going to be initialized once the map has been created.
   MapboxMap? _mapboxMap;
+    /// Camera options for setting the initial map view
   late mb.CameraOptions _initialCameraOptions;
+    ///  Selected city to download a region.
   String _selectedCity = '';
 
+  /// Map with different cities configurations
   final Map<String, Map<String, double>> _cities = {
     'Casablanca': {
       'latitude': 33.5731104,
@@ -2288,6 +2996,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
   @override
   void initState() {
     super.initState();
+    // Sets the default camera options for the map
     _initialCameraOptions = mb.CameraOptions(
       center: mb.Point(
         coordinates: mb.Position(
@@ -2297,6 +3006,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
       ),
       zoom: AppConstants.defaultZoom,
     );
+    // Loads the downloaded regions after the first frame renders.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(offlineMapViewModelProvider.notifier).loadRegions();
     });
@@ -2304,8 +3014,10 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        // AppBar for the offline map screen
         appBar: AppBar(
           title: const Text('Offline Maps'),
+           // Action buttons for downloading regions and managing the downloaded regions.
           actions: [
             IconButton(
               icon: const Icon(Icons.download),
@@ -2317,13 +3029,16 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             ),
           ],
         ),
+        // Main body with a stack of elements.
         body: Stack(
           children: [
+             // Map widget to display offline maps
             MapWidget(
               // styleUri: MapboxStyles.STANDARD,
               cameraOptions: _initialCameraOptions,
               onMapCreated: _onMapCreated,
             ),
+             // Consumer for displaying error message
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 final errorState = ref.watch(errorProvider);
@@ -2336,6 +3051,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                     : const SizedBox();
               },
             ),
+            // Consumer for showing loading indicator while a region is being downloaded.
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 final state = ref.watch(offlineMapViewModelProvider);
@@ -2347,6 +3063,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                     : const SizedBox();
               },
             ),
+           // Consumer for displaying the map zoom and current location buttons
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 final state = ref.watch(offlineMapViewModelProvider);
@@ -2362,16 +3079,21 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         ),
       );
 
+   /// Callback called when the map has been created, updates the `_mapboxMap` variable.
   Future<void> _onMapCreated(MapboxMap mapboxMap) async {
     _mapboxMap = mapboxMap;
   }
 
+    /// Downloads the currently selected city's map region.
   Future<void> _downloadCity(BuildContext context) async {
     try {
+      // Checks if a city has been selected before starting the download process
       if (_selectedCity.isEmpty) {
         return;
       }
+      // Gets the city configurations
       final city = _cities[_selectedCity]!;
+        // Gets the coordinate bounds of the city using the current map
       final bounds = await _mapboxMap!.coordinateBoundsForCamera(
         CameraOptions(
           center: mb.Point(
@@ -2383,7 +3105,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
           zoom: city['zoom'],
         ),
       );
-
+       // Prints download information when debug mode is enabled.
       if (kDebugMode) {
         print('Downloading city: $_selectedCity');
         print(
@@ -2395,8 +3117,9 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         print('Zoom levels: min: 1, max: 20');
         print('Starting download');
       }
-
+      // Downloads the selected region, if the widget is still mounted.
       if (mounted) {
+         // Pops up the dialog if the context is mounted.
         if (context.mounted) {
           Navigator.of(context).pop();
           await ref.read(offlineMapViewModelProvider.notifier).downloadRegion(
@@ -2409,6 +3132,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                   }
                 },
                 onComplete: () async {
+                   // Prints to the console when the download is completed.
                   if (kDebugMode) {
                     final size = await ref
                         .read(offlineMapViewModelProvider.notifier)
@@ -2419,13 +3143,16 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
               );
         }
       }
+      // Catches any exception that happens during the region download process
     } on Exception catch (e) {
+      // Prints to the console if there is any error during download.
       if (kDebugMode) {
         print('Error fetching bounds or downloading region: $e');
       }
     }
   }
 
+  /// Displays a dialog for downloading map regions.
   Future<void> _showDownloadDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -2438,6 +3165,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             children: [
               const Text('Select a City to Download'),
               const SizedBox(height: 16),
+               // Dropdown button to select a city.
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'City',
@@ -2455,6 +3183,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              // Download button to trigger download of the selected city region.
               ElevatedButton(
                 onPressed: () => _downloadCity(context),
                 child: const Text('Download'),
@@ -2462,6 +3191,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             ],
           ),
         ),
+         // Action buttons to close or submit the form
         actions: [
           TextButton(
             child: const Text('Cancel'),
@@ -2474,6 +3204,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
     );
   }
 
+   /// Displays a dialog for managing downloaded map regions.
   Future<void> _showRegionsDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -2486,6 +3217,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
               final state = ref.watch(offlineMapViewModelProvider);
               return state.isLoading
                   ? const Center(child: CircularProgressIndicator())
+                   // List view that maps the downloaded regions.
                   : ListView.builder(
                       shrinkWrap: true,
                       itemCount: state.regions.length,
@@ -2501,6 +3233,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             },
           ),
         ),
+         // Action button to close the dialog.
         actions: [
           TextButton(
             child: const Text('Close'),
@@ -2513,6 +3246,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
     );
   }
 
+   /// Zooms in on the map using the flyTo method with animation.
   Future<void> _zoomIn() async {
     if (_mapboxMap == null) {
       return;
@@ -2525,6 +3259,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
     );
   }
 
+    /// Zooms out on the map using the flyTo method with animation.
   Future<void> _zoomOut() async {
     if (_mapboxMap == null) {
       return;
@@ -2537,6 +3272,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
     );
   }
 
+    /// Moves the map camera to the current device location using the `moveToCurrentLocation` method from the view model.
   Future<void> _moveToCurrentLocation() async {
     if (_mapboxMap == null) {
       return;
@@ -2546,11 +3282,18 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         .moveToCurrentLocation(_mapboxMap!);
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_screen.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_viewmodel.dart ##############
-// lib/features/offline_map/offline_map_viewmodel.dart
+///
+/// File: lib/features/offline_map/offline_map_viewmodel.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the state and business logic for the offline map screen, including downloading regions, managing tile regions, and handling location services.
+/// Updates: Initial setup with methods for loading regions, downloading regions, managing the download progress, removing tile regions, and moving to current location.
+/// Used Libraries: dart/async.dart, flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, geolocator/geolocator.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/services/map_service.dart, mobile/core/services/permission_service.dart, mobile/core/utils/app_constants.dart, mobile/core/utils/app_utils.dart, mobile/features/offline_map/offline_map_repository.dart
+///
+library;
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -2573,6 +3316,7 @@ class OfflineMapViewModelException implements Exception {
   String toString() => 'OfflineMapViewModelException: $message, $error';
 }
 
+/// Represents the state of the offline map view model.
 class OfflineMapState {
   OfflineMapState({
     this.isLoading = false,
@@ -2584,15 +3328,24 @@ class OfflineMapState {
     this.downloadProgress = 0,
     this.stylePackProgress = 0,
   });
+  /// Flag to indicate that the data is loading
   final bool isLoading;
+  /// List of TileRegion that have been downloaded
   final List<TileRegion> regions;
+  /// Error message if any error occurred.
   final String? error;
+    /// Flag to represent download status.
   final DownloadStatus downloadStatus;
+    /// Loading state for the current location
   final bool isLocationLoading;
+   /// Message to show the user after an action has been done or if an error occurred
   final String? message;
+    /// Download progress as a value between 0 and 1.
   final double downloadProgress;
+   /// Style pack download progress as a value between 0 and 1.
   final double stylePackProgress;
 
+    /// Creates a copy of the current state with optional new values.
   OfflineMapState copyWith({
     bool? isLoading,
     List<TileRegion>? regions,
@@ -2615,6 +3368,7 @@ class OfflineMapState {
       );
 }
 
+/// Provider for the OfflineMapViewModel, provides a single entry point to access the offline map functionalities
 final offlineMapViewModelProvider =
     StateNotifierProvider.autoDispose<OfflineMapViewModel, OfflineMapState>(
   (ref) => OfflineMapViewModel(
@@ -2624,35 +3378,50 @@ final offlineMapViewModelProvider =
   ),
 );
 
+/// Manages the state and logic for the offline map screen, handling downloads, location, and region management
 class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
   OfflineMapViewModel(this._repository, this.ref, this._mapService)
       : super(OfflineMapState());
+   /// Offline map repository instance for fetching, downloading and deleting data
   final OfflineMapRepository _repository;
+   /// Riverpod ref to update the state.
   final Ref ref;
+  /// Map service instance, used to handle style packs and tile downloads.
   final MapService _mapService;
+   /// Subscription object for listening to style pack loading progress.
   StreamSubscription<double>? _stylePackSubscription;
+    /// Subscription object for listening to tile region download progress.
   StreamSubscription<double>? _tileRegionSubscription;
 
+    /// Updates the state of the view model
   void updateState(OfflineMapState newState) {
     state = newState;
   }
 
+    /// Loads downloaded regions and updates the state, sets loading to true and updates when completed
   Future<void> loadRegions() async {
+      // returns if the state is not mounted.
     if (!mounted) {
       return;
     }
+    // Updates the state to loading.
     updateState(state.copyWith(isLoading: true));
     try {
+      // Gets all downloaded regions using the repository and updates the state accordingly.
       final regions = await _repository.getDownloadedRegions();
+      // Returns when the state is not mounted.
       if (!mounted) {
         return;
       }
+      // Updates the state with the loaded regions and sets loading to false.
       updateState(state.copyWith(regions: regions, isLoading: false));
+       // Catches any exceptions and calls the utility error handler.
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
   }
 
+   /// Downloads a specified map region, showing the progress and updating the state accordingly.
   Future<void> downloadRegion({
     required CoordinateBounds bounds,
     required int minZoom,
@@ -2660,9 +3429,11 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     required void Function(double) onProgress,
     required void Function() onComplete,
   }) async {
+       // returns if the state is not mounted.
     if (!mounted) {
       return;
     }
+    // Updates the state to downloading state and also sets the progress to zero.
     updateState(
       state.copyWith(
         downloadStatus: DownloadStatus.downloading,
@@ -2670,23 +3441,30 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
         stylePackProgress: 0,
       ),
     );
+       // Subscribes to the style pack progress stream
     _stylePackSubscription = _mapService.stylePackProgress.listen((progress) {
+      //Updates the style pack progress when the state is mounted
       if (mounted) {
         updateState(state.copyWith(stylePackProgress: progress));
       }
+      // Prints the style pack progress to the console in debug mode
       if (kDebugMode) {
         print('Style pack progress: ${progress * 100}%');
       }
     });
+        // Subscribes to the tile region download progress stream.
     _tileRegionSubscription = _mapService.tileRegionProgress.listen((progress) {
+       //Updates the tile download progress only if the state is mounted
       if (mounted) {
         updateState(state.copyWith(downloadProgress: progress));
       }
+        // Prints the download progress to the console in debug mode
       if (kDebugMode) {
         print('Tile region progress: ${progress * 100}%');
       }
     });
     try {
+       // Downloads the region using the repository and callbacks for success and failure
       await _repository.downloadRegion(
         regionName: 'region_${DateTime.now().millisecondsSinceEpoch}',
         bounds: bounds,
@@ -2696,60 +3474,84 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
           }
         },
         onComplete: () {
+          // Update the state when the download is completed.
           if (mounted) {
             updateState(
               state.copyWith(downloadStatus: DownloadStatus.completed),
             );
+            // Loads all the regions after completion.
             loadRegions();
           }
         },
         onError: (e) {
+           // Calls a helper function for handling errors.
           AppUtils.handleStateError(this, ref, state, e, e.toString());
         },
         minZoom: minZoom,
         maxZoom: maxZoom,
       );
+    // Catches any exceptions during the download process
     } on Exception catch (e) {
+       // Calls a helper function to handle errors.
       AppUtils.handleStateError(this, ref, state, e, e.toString());
+      // Disposes subscriptions
     } finally {
+       // Cancels all of the subscriptions
       await _stylePackSubscription?.cancel();
       await _tileRegionSubscription?.cancel();
     }
   }
 
+    /// Deletes a specified tile region and reloads all regions.
   Future<void> deleteRegion(String regionId) async {
+       // Return if the state is not mounted.
     if (!mounted) {
       return;
     }
+    // Updates the state to loading
     updateState(state.copyWith(isLoading: true));
     try {
+      // Removes a tile region using the repository and loads all regions
       await _repository.removeTileRegion(regionId);
       await loadRegions();
+      // Returns if the state is not mounted.
       if (!mounted) {
         return;
       }
+      //Updates the state to stop loading
       updateState(state.copyWith(isLoading: false));
+      // Catch any exception that occurs while deleting the tile region.
     } on Exception catch (e) {
+       // Calls a helper function to handle errors.
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
   }
 
+    /// Clears all locally stored tiles.
   Future<void> clearAllTiles() async {
     try {
+      // Clear all the locally stored tiles
       await _repository.clearOldTiles();
+     // Handles exceptions by calling the error handler
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
   }
 
+   /// Moves the map camera to the current device location
   Future<void> moveToCurrentLocation(MapboxMap map) async {
+    // Returns if the state is not mounted.
     if (!mounted) {
       return;
     }
+    // updates the state to is location loading
     updateState(state.copyWith(isLocationLoading: true));
     try {
+      // Requests location permissions from the user.
       final permission = await PermissionService.requestLocationPermissions();
+     // Handles the case when the user has permanently denied the permissions.
       if (permission == geo.LocationPermission.deniedForever) {
+         // Updates the state and shows message to the user
         updateState(
           state.copyWith(
             isLocationLoading: false,
@@ -2759,14 +3561,16 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
         );
         return;
       }
-
+      // Handles the case when the user denies the permission and sets the default location on the map.
       if (permission == geo.LocationPermission.denied) {
+           // Updates the state and shows message to the user
         updateState(
           state.copyWith(
             isLocationLoading: false,
             message: 'Location permissions denied, using default location.',
           ),
         );
+        // Moves the map to the default location
         await map.flyTo(
           CameraOptions(
             center: Point(
@@ -2782,10 +3586,11 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
 
         return;
       }
-
+       // Gets current position from the geolocator plugin.
       final position = await geo.Geolocator.getCurrentPosition(
         desiredAccuracy: geo.LocationAccuracy.high,
       );
+      // Moves the map to the user's current location
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -2795,18 +3600,20 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
         ),
         MapAnimationOptions(duration: 200),
       );
+       // Catches any exception that occurs while getting current location.
     } on Exception catch (e, stackTrace) {
-      // Added on Exception here
-      // Do nothing. Use default location.
+       // Logs any error while getting the user's current location in debug mode
       if (kDebugMode) {
         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
+      // Updates the state and shows a message to the user.
       updateState(
         state.copyWith(
           isLocationLoading: false,
           message: 'Error getting current location, using default location.',
         ),
       );
+        // Moves the map to default location if error getting location.
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -2819,46 +3626,65 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
         ),
         MapAnimationOptions(duration: 200),
       );
+     // Runs this block after the try and catch block regardless.
     } finally {
+        // Updates the state to stop loading.
       if (mounted) {
         updateState(state.copyWith(isLocationLoading: false));
       }
     }
   }
 
+   /// Retrieves the size of a specified region
   Future<String> getRegionSize(CoordinateBounds bounds) async {
     try {
+       // Gets region size using the repository
       return await _repository.getRegionSize(bounds);
+      // Catches any exception that occurred during getting region size.
     } on Exception catch (e) {
+       // Prints to console if there is an error when getting the region size.
       if (kDebugMode) {
         print('Error getting region size from viewmodel: $e');
       }
+       // Throws an exception for errors during getting the region size
       throw OfflineMapViewModelException('Error getting region size', e);
     }
   }
 
   @override
   void dispose() {
+    // Cancels all of the stream subscriptions before disposing the view model.
     _stylePackSubscription?.cancel();
     _tileRegionSubscription?.cancel();
     super.dispose();
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_viewmodel.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_repository.dart ##############
-// lib/features/offline_map/offline_map_repository.dart
+///
+/// File: lib/features/offline_map/offline_map_repository.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Data layer responsible for handling offline map operations, such as downloading regions, managing tile data, and retrieving downloaded regions.
+/// Updates: Initial setup with methods to download regions, retrieve downloaded regions, remove tile regions, clear old tiles, and get region size.
+/// Used Libraries: flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/services/tile_service.dart, mobile/core/utils/app_utils.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mobile/core/services/tile_service.dart';
 import 'package:mobile/core/utils/app_utils.dart';
 
+/// OfflineMapRepository class provides data handling methods for offline map related functionalities.
 class OfflineMapRepository {
+  /// Constructor for the `OfflineMapRepository` which requires a `TileService`
   OfflineMapRepository(this._tileService);
+  /// Tile service instance for managing offline tiles
   final TileService _tileService;
 
+   /// Downloads the specified map region using the `TileService`.
   Future<void> downloadRegion({
     required String regionName,
     required CoordinateBounds bounds,
@@ -2869,98 +3695,134 @@ class OfflineMapRepository {
     int? minZoom,
   }) async {
     try {
+      // Downloads the tiles for a region with the provided parameters using the TileService.
       await _tileService.downloadTiles(
         bounds,
         minZoom ?? 10,
         maxZoom ?? 15,
         'mapbox://styles/mapbox/streets-v12',
       );
+      // Triggers the onComplete callback when the download completes
       onComplete();
+       // Catches any exception that occurs during download
     } on Exception catch (e, stackTrace) {
+        // Prints to console the exception message in debug mode if the download fails.
       if (kDebugMode) {
         print(
           'Error downloading region from repo $regionName: $e, StackTrace: $stackTrace',
         );
       }
+      // Triggers the onError callback, passing in the error.
       onError(e);
     }
   }
 
+    /// Retrieves all downloaded tile regions from the `TileService`.
   Future<List<TileRegion>> getDownloadedRegions() async {
     try {
+      // Gets all available tile regions from the TileService.
       return await _tileService.getAllTileRegions();
+    // Catches any exception that occurs while getting all the tile regions.
     } on Exception catch (e, stackTrace) {
+       // Prints to the console the error message in debug mode.
       if (kDebugMode) {
         print(
           'Error getting all tile regions from repo: $e, StackTrace: $stackTrace',
         );
       }
+       // Re-throws the exception with additional context.
       throw Exception(
         'Error getting all tile regions: $e, StackTrace: $stackTrace',
       );
     }
   }
 
+   /// Removes a specific tile region by its ID using the `TileService`.
   Future<void> removeTileRegion(String regionId) async {
     try {
+      // Removes the tile region using the provided id in the tile service.
       await _tileService.removeTileRegion(regionId);
+       // Catches any exception that occurs while removing the tile region.
     } on Exception catch (e, stackTrace) {
+         // Prints the error to console when it fails to delete the tile region.
       if (kDebugMode) {
         print(
           'Error deleting tile region $regionId from repo: $e, StackTrace: $stackTrace',
         );
       }
+       // Re-throws the exception with additional context.
       throw Exception(
         'Error deleting tile region $regionId: $e, StackTrace: $stackTrace',
       );
     }
   }
 
+    /// Clears all locally stored old tiles using the `TileService`.
   Future<void> clearOldTiles() async {
     try {
+        // Clears all the old tiles using tile service
       await _tileService.clearOldTiles();
+         // Catches any exception that occurs during clearing old tiles
     } on Exception catch (e, stackTrace) {
+        // Prints error to the console when cleaning the tiles fails.
       if (kDebugMode) {
         print('Error clear all tiles from repo: $e, StackTrace: $stackTrace');
       }
+       // Re-throws the exception with additional context.
       throw Exception('Error clear all tiles: $e, StackTrace: $stackTrace');
     }
   }
 
+    /// Gets the size of a specified region using its bounds from the `TileService`
   Future<String> getRegionSize(CoordinateBounds bounds) async {
     try {
+      // Creates the region id using the bounds
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
+      // Get the tile region from the tile service with given region id.
       final tileRegion = await _tileService.getTileRegion(regionId);
+       // Returns "0 B" if no tile region is available.
       if (tileRegion == null) {
         return '0 B';
       }
+        // Gets the complete resource size of the region.
       final sizeBytes = tileRegion.completedResourceSize;
-
+      // Formats the size to a human readable format and returns it
       return AppUtils.formatFileSize(sizeBytes);
+        // Catches any exception that occurs during getting region size
     } on Exception catch (e, stackTrace) {
+         // Prints to the console in debug mode when there is an error when getting region size.
       if (kDebugMode) {
         print(
           'Error getting region size from repo: $e, StackTrace: $stackTrace',
         );
       }
+      // Re-throws exception when it failed to get the region size.
       throw Exception('Error getting region size: $e, StackTrace: $stackTrace');
     }
   }
 }
 
+/// Provider for the OfflineMapRepository, provides a single entry point for the offline map data.
 final offlineMapRepositoryProvider = Provider<OfflineMapRepository>(
   (ref) => OfflineMapRepository(
     ref.watch(tileServiceProvider),
   ),
 );
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_repository.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_repository.dart ##############
-// lib/features/map/map_repository.dart
+///
+/// File: lib/features/map/map_repository.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Data layer responsible for fetching map markers from a REST API and managing local storage.
+/// Updates: Initial setup with methods to retrieve map markers from API, handle caching, and update markers.
+/// Used Libraries: dartz/dartz.dart, dio/dio.dart, flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, mobile/core/config/app_config.dart, mobile/core/services/network_service.dart, mobile/core/services/storage_service.dart, mobile/core/utils/app_constants.dart, mobile/shared/models/map_marker.dart
+///
+library;
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -2971,21 +3833,34 @@ import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/shared/models/map_marker.dart';
 
+/// MapRepository class provides data handling methods for map related functionalities.
 class MapRepository {
+  /// Constructor for the `MapRepository`, it takes instances of `NetworkService` and `Storage`.
   MapRepository(this._network, this._storage);
+    /// Network service instance for making api calls.
   final NetworkService _network;
+  /// Storage service for managing the local storage.
   final Storage _storage;
+
+    /// Fetches map markers from the API or local storage based on refresh status, returning an Either type.
   Future<Either<MapRepositoryException, List<MapMarker>>> getMarkers({
     bool forceRefresh = false,
   }) async {
+    // Gets last update for markers from local storage
     final lastUpdate = await _storage.getInt(AppConstants.markersKey);
+    //  Checks if force refresh is false and if there is a last update in local storage.
     if (!forceRefresh) {
       if (lastUpdate != null) {
+        // Calculates the time difference
         final now = DateTime.now().millisecondsSinceEpoch;
         final diff = now - lastUpdate;
+         //Checks if the cache is valid by checking if the last update was within the last 10 minutes.
         if (diff < const Duration(minutes: 10).inMilliseconds) {
+             // Gets the markers from local storage if the cache is valid.
           final cached = await _storage.getMarkers();
+             // Returns the cached markers if they are not empty.
           if (cached.isNotEmpty) {
+             // Prints a message to console if it is returning cached markers in debug mode.
             if (kDebugMode) {
               print('Returning cached markers');
             }
@@ -2994,15 +3869,21 @@ class MapRepository {
         }
       }
     }
+      // Try to retrieve the data from the API
     try {
+       // Prints the get request to console in debug mode
       if (kDebugMode) {
         print('Request: GET ${AppConfig.locationsPath}');
       }
+      // Makes the request to retrieve the data
       final response = await _network.get(AppConfig.locationsPath);
+      // Prints the response status code and the url
       if (kDebugMode) {
         print('Response: ${response.statusCode} ${response.realUri}');
       }
+      // Validates the status code
       if (response.statusCode != 200) {
+         // Returns an error if the status code is different than 200
         return Left(
           MapRepositoryException(
             'Error getting markers from API - Status code: ${response.statusCode}',
@@ -3010,55 +3891,76 @@ class MapRepository {
           ),
         );
       }
+       // Gets the response data
       final responseData = response.data;
+       // Returns an error if the response format is not correct.
       if (responseData == null || responseData is! Map<String, dynamic>) {
         return Left(
           MapRepositoryException('Invalid response format', responseData),
         );
       }
+       // Parses the result to a map and a list of map markers
       final results = responseData['results'] as List<dynamic>;
       final markers = <MapMarker>[];
       var validMarkers = 0;
+      // Iterates over the results and creates map marker models.
       for (final json in results) {
         try {
           final marker = _parseMapMarker(json as Map<String, dynamic>);
+          // Validates that a marker has valid coordinates before adding it to the list
           if (marker.geometry.coordinates.isNotEmpty) {
             markers.add(marker);
             validMarkers++;
+            // Logs to the console in debug mode when a marker has null coordinates
           } else {
             if (kDebugMode) {
               print('Marker with null coordinates, id: ${marker.id}');
             }
           }
+        // Catches any exception during the parsing of a marker
         } on Exception catch (e, stackTrace) {
+           // Prints to console when parsing of a marker fails.
           if (kDebugMode) {
             print('Error parsing marker: $e, StackTrace: $stackTrace');
           }
         }
       }
+       // Check if there are valid markers to save
       if (markers.isNotEmpty) {
+         // Saves the markers to local storage
         await _storage.saveMarkers(markers);
+        // Prints the number of the markers to the console
         if (kDebugMode) {
           print('Returning $validMarkers markers from API');
         }
+          // Returns a list of valid markers
         return Right(markers);
+          // Returns empty list when there are no valid markers
       } else {
+         // Prints a log message to the console if there are no valid markers available from API
         if (kDebugMode) {
           print('No valid markers available from API');
         }
+         // Returns an empty array if there are no valid markers from the api.
         return const Right([]);
       }
+     // Catches any exception that happens during fetching the markers from api
     } on DioException catch (e, stackTrace) {
+        // Prints to console in debug mode that the data is going to be retrieved from cache
       if (kDebugMode) {
         print('Error getting markers from API, loading from cache');
       }
+      // Gets the cached markers.
       final cached = await _storage.getMarkers();
+      // If cache isn't empty, returns cached markers.
       if (cached.isNotEmpty) {
         return Right(cached);
       }
+        // Prints an error message in debug mode
       if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
+      // Returns an error exception
       return Left(
         MapRepositoryException(
           'Error getting markers from API',
@@ -3066,17 +3968,23 @@ class MapRepository {
           stackTrace,
         ),
       );
+       // Catches any exception that happens during fetching the markers from api or cache
     } on Exception catch (e, stackTrace) {
+      //Prints to console in debug mode that there is an error getting the data, and trying to load from cache
       if (kDebugMode) {
         print('Error getting markers from API, loading from cache');
       }
+      // Get's the markers from local storage
       final cached = await _storage.getMarkers();
+      // Returns the markers if the cached markers is not empty.
       if (cached.isNotEmpty) {
         return Right(cached);
       }
+        // Prints the exception to the console.
       if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
+      // Returns a generic exception.
       return Left(
         MapRepositoryException(
           'Error getting markers from API',
@@ -3087,9 +3995,13 @@ class MapRepository {
     }
   }
 
+  /// Parses a map marker from a JSON object
   MapMarker _parseMapMarker(Map<String, dynamic> json) {
+    // Gets the geometry from the json
     final dynamic geometry = json['geometry'];
+    // Returns a MapMarker object with default coordinates if geometry is null.
     if (geometry == null) {
+        // Prints to console when geometry is null for a marker in debug mode
       if (kDebugMode) {
         print('Geometry is null for marker: ${json['id']}');
       }
@@ -3107,11 +4019,13 @@ class MapRepository {
       );
     }
 
+      // Throws an error if the geometry is not a Map.
     if (geometry is! Map<String, dynamic>) {
       throw ArgumentError(
         'Invalid geometry format, the value was not a object: $geometry',
       );
     }
+      // Returns a MapMarker from a JSON object.
     return MapMarker(
       id: json['id'] as String,
       title: json['name'] as String,
@@ -3120,23 +4034,34 @@ class MapRepository {
     );
   }
 
+   /// Updates a map marker using the provided data.
   Future<void> updateMarker(MapMarker marker) async {
     try {
+       // Send a put request to update the given marker using it's id.
       await _network.put('/locations/${marker.id}', marker.toJson());
+      // Gets the markers from the storage.
       final markers = await _storage.getMarkers();
+       // Convert the list of markers into a map using their ids as a key.
       final markersMap = {for (final m in markers) m.id: m};
+       // Updates the marker from the map.
       markersMap[marker.id] = marker;
+       // Convert the updated markers back to a list
       final updatedMarkers = markersMap.values.toList();
+        // Save the markers to the storage.
       await _storage.saveMarkers(updatedMarkers);
+        // Catch any exceptions while updating the marker.
     } on Exception catch (e, stackTrace) {
+      // Prints an error to the console if it fails to update the marker in debug mode.
       if (kDebugMode) {
         print('Error updating marker: $e, StackTrace: $stackTrace');
       }
+      // Throw a custom exception if there is a failure updating the marker.
       throw MapRepositoryException('Error updating marker', e, stackTrace);
     }
   }
 }
 
+/// Provider for the MapRepository, provides a single entry point to access map marker functionalities.
 final mapRepositoryProvider = Provider<MapRepository>(
   (ref) => MapRepository(
     ref.watch(networkServiceProvider),
@@ -3162,11 +4087,18 @@ class MapRepositoryException implements Exception {
   String toString() =>
       'MapRepositoryException: $message, $error, stackTrace: $stackTrace';
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_repository.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_viewmodel.dart ##############
-// lib/features/map/map_viewmodel.dart
+///
+/// File: lib/features/map/map_viewmodel.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Manages the state and logic for the map screen, including loading markers, handling location services, and moving the map to the first marker or current location.
+/// Updates: Initial setup with loading markers, moving to first marker, clearing markers, and handling location services with current location functionality.
+/// Used Libraries: flutter/foundation.dart, flutter_riverpod/flutter_riverpod.dart, geolocator/geolocator.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/services/map_service.dart, mobile/core/services/permission_service.dart, mobile/core/utils/app_constants.dart, mobile/core/utils/app_utils.dart, mobile/core/utils/context_provider.dart, mobile/features/map/map_repository.dart, mobile/shared/models/map_marker.dart
+///
+library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -3191,6 +4123,7 @@ class MapViewModelException implements Exception {
       'MapViewModelException: $message, $error, stackTrace: $stackTrace';
 }
 
+/// Represents the state of the map view model
 class MapState {
   MapState({
     this.isLoading = false,
@@ -3201,14 +4134,22 @@ class MapState {
     this.isLocationLoading = false,
     this.message,
   });
+  ///  Flag to represent the loading state
   final bool isLoading;
+    /// List of map markers to display on the map
   final List<map_marker.MapMarker> markers;
+   /// Error message if any error has occurred
   final String? error;
+    /// Flag indicating if the app is in offline mode
   final bool isOffline;
+   /// Flag indicating if the markers were successfully fetched
   final bool didFetchSuccessfully;
+    ///  Loading state for the current location functionality
   final bool isLocationLoading;
+    /// Message for feedback to the user, like success or error messages
   final String? message;
 
+    /// Create a copy of the state with updated values.
   MapState copyWith({
     bool? isLoading,
     List<map_marker.MapMarker>? markers,
@@ -3229,6 +4170,7 @@ class MapState {
       );
 }
 
+/// Provider for the MapViewModel to manage the state and logic for the map screen.
 final mapViewModelProvider = StateNotifierProvider<MapViewModel, MapState>(
   (ref) => MapViewModel(
     ref.watch(mapRepositoryProvider),
@@ -3237,39 +4179,58 @@ final mapViewModelProvider = StateNotifierProvider<MapViewModel, MapState>(
   ),
 );
 
+/// MapViewModel manages the state and business logic for the map screen.
 class MapViewModel extends StateNotifier<MapState> {
+  /// Constructor for `MapViewModel`, it takes an instance of `MapRepository`, `MapService`, and a `Ref`
   MapViewModel(this._repository, this._mapService, this.ref)
       : super(MapState());
+   /// Map repository instance for fetching and updating data.
   final MapRepository _repository;
+   /// Map service instance for tile downloads and style management
   final MapService _mapService;
+    /// Riverpod ref to update the state
   final Ref<MapState> ref;
+   /// Mapbox map instance to perform map related operations.
   MapboxMap? _map;
+  
+    ///  Sets the MapboxMap instance for the view model.
   void setMap(MapboxMap map) {
     _map = map;
+    // Initializes map service
     _mapService.init();
   }
 
+    /// Loads the map markers from the API or local storage, handles errors and loading states, using an Either type.
   Future<void> loadMarkers({bool forceRefresh = false}) async {
+     // return if the state is not mounted
     if (!mounted) {
       return;
     }
+    // Prints a message to the console before getting the markers.
     if (kDebugMode) {
       print(
         'MapViewModel: loadMarkers started with forceRefresh: $forceRefresh',
       );
     }
+    // Sets the state to loading.
     state = state.copyWith(isLoading: true);
     try {
+       // Fetches the markers from the repository
       final result = await _repository.getMarkers(forceRefresh: forceRefresh);
+       // Returns if the state is not mounted
       if (!mounted) {
         return;
       }
 
+      // Handles the Either type (Right(data) or Left(error))
       result.fold((error) {
+        // Prints the error message to the console in debug mode.
         if (kDebugMode) {
           print('MapViewModel: MapRepositoryException: $error');
         }
+          // Handles the error using the utility class and shows snackbar to the user if the context is available
         if (mounted && ref.read(contextProvider) != null) {
+           // Prints to console before calling the app utils helper to handle the errors
           if (kDebugMode) {
             print('MapViewModel: Calling AppUtils.handleStateError');
           }
@@ -3281,18 +4242,23 @@ class MapViewModel extends StateNotifier<MapState> {
             '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
           );
         }
+        // Prints the error to the console in debug mode
         if (kDebugMode) {
           print('MapViewModel: setting error state: ${error.toString()}');
         }
+        // Updates the state with an error message and stop loading.
         state = state.copyWith(
           isLoading: false,
           error:
               '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
         );
+        // Handles the markers in the Right of Either type.
       }, (data) {
+        // Prints to the console the number of markers when using API
         if (kDebugMode) {
           print('MapViewModel: Loaded markers: ${data.length} from API');
         }
+        // Updates the state with the markers, setting the offline status, load status and message.
         state = state.copyWith(
           isLoading: false,
           markers: data,
@@ -3302,16 +4268,20 @@ class MapViewModel extends StateNotifier<MapState> {
               ? '${data.length} markers added from a total of ${data.length} results'
               : null,
         );
-
+          // Moves the camera to the first marker in the markers list
         if (data.isNotEmpty) {
           moveToFirstMarker();
         }
       });
+        // Catches any exceptions and handles them using the utility function for errors
     } on Exception catch (e) {
+        // Prints the exception to the console in debug mode
       if (kDebugMode) {
         print('MapViewModel: Generic Exception: $e');
       }
+        // Handles the error using the app utility class.
       if (mounted && ref.read(contextProvider) != null) {
+          // Prints to console that it's calling the error helper function.
         if (kDebugMode) {
           print(
             'MapViewModel: Calling AppUtils.handleStateError on Generic Exception',
@@ -3325,9 +4295,11 @@ class MapViewModel extends StateNotifier<MapState> {
           '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
         );
       }
+      // Prints to the console that is setting the error state
       if (kDebugMode) {
         print('MapViewModel: setting error state: ${e.toString()}');
       }
+      // Updates the state with an error message
       state = state.copyWith(
         isLoading: false,
         error: '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
@@ -3335,14 +4307,20 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
+  /// Moves the camera to the first marker in the list, if any exist
   Future<void> moveToFirstMarker() async {
+     // return if map is null
     if (_map == null) {
       return;
     }
+      // Checks if there is any marker in the list
     if (state.markers.isNotEmpty) {
+         // gets the first marker.
       final firstMarker = state.markers.first;
+       // Validates that there are coordinates before moving the map camera.
       if (firstMarker.geometry.coordinates.isNotEmpty &&
           firstMarker.geometry.type == map_marker.GeometryType.point) {
+        // Moves the map to the first marker
         await _map?.flyTo(
           CameraOptions(
             center: Point(
@@ -3359,21 +4337,30 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 
+   /// Clears the current markers from the state.
   Future<void> clearMarkers() async {
+      // Return if state is not mounted
     if (!mounted) {
       return;
     }
+    // Sets the markers to empty list
     state = state.copyWith(markers: []);
   }
 
+  /// Moves the map camera to the current device location using the `MapService` or default coordinates when the permission has been denied.
   Future<void> moveToCurrentLocation(MapboxMap map) async {
+     // Returns when the state is not mounted.
     if (!mounted) {
       return;
     }
+      // Sets isLocationLoading to true.
     state = state.copyWith(isLocationLoading: true);
     try {
+       // Requests permission for location from the user
       final permission = await PermissionService.requestLocationPermissions();
+       // Handles the case when location permission has been permanently denied
       if (permission == geo.LocationPermission.deniedForever) {
+         // Updates the state with a specific message when the location is permanently denied
         state = state.copyWith(
           isLocationLoading: false,
           message:
@@ -3381,12 +4368,14 @@ class MapViewModel extends StateNotifier<MapState> {
         );
         return;
       }
-
+      // Handles the case when the location permissions have been denied by the user.
       if (permission == geo.LocationPermission.denied) {
+         // Updates the state to show the message to the user.
         state = state.copyWith(
           isLocationLoading: false,
           message: 'Location permissions denied, using default location.',
         );
+        // Moves the map to the default position
         await map.flyTo(
           CameraOptions(
             center: Point(
@@ -3402,10 +4391,11 @@ class MapViewModel extends StateNotifier<MapState> {
 
         return;
       }
-
+      // Get's current position with high accuracy using the geolocator plugin.
       final position = await geo.Geolocator.getCurrentPosition(
         desiredAccuracy: geo.LocationAccuracy.high,
       );
+      // Moves the map to the user's current location.
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -3416,13 +4406,16 @@ class MapViewModel extends StateNotifier<MapState> {
         MapAnimationOptions(duration: 200),
       );
     } on Exception catch (e, stackTrace) {
+      // Logs the exception to the console in debug mode.
       if (kDebugMode) {
         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
+        // Updates the state with the error message when the current location cannot be obtained.
       state = state.copyWith(
         isLocationLoading: false,
         message: 'Error getting current location, using default location.',
       );
+        // Moves the map to the default location if there is an error while getting the user location.
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -3435,6 +4428,7 @@ class MapViewModel extends StateNotifier<MapState> {
         ),
         MapAnimationOptions(duration: 200),
       );
+       // Finally, update the state to not loading when the operation has finished
     } finally {
       if (mounted) {
         state = state.copyWith(isLocationLoading: false);
@@ -3442,11 +4436,18 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_viewmodel.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_screen.dart ##############
-// lib/features/map/map_screen.dart
+///
+/// File: lib/features/map/map_screen.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays the main map screen, including rendering the map, handling map events, and showing markers.
+/// Updates: Initial setup with Mapbox integration, dynamic marker display, and UI controls such as clear, settings, offline and refresh buttons. Also provides support for showing map markers info, zoom in, zoom out and move to the current location
+/// Used Libraries: dart/async.dart, dart/typed_data.dart, dart/ui.dart, flutter/foundation.dart, flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart, mobile/core/config/app_routes.dart, mobile/core/utils/app_constants.dart, mobile/features/map/map_viewmodel.dart, mobile/shared/models/map_marker.dart, mobile/shared/widgets/custom_error_widget.dart, mobile/shared/widgets/loading_overlay.dart, mobile/shared/widgets/map_controls.dart, mobile/shared/widgets/map_widget.dart, mobile/shared/widgets/offline_banner.dart
+///
+library;
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -3465,6 +4466,7 @@ import 'package:mobile/shared/widgets/map_controls.dart';
 import 'package:mobile/shared/widgets/map_widget.dart' as mapwidget;
 import 'package:mobile/shared/widgets/offline_banner.dart';
 
+/// MapScreen displays the main map with markers and provides UI elements for different actions.
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
@@ -3473,17 +4475,25 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
+   /// Mapbox map object for map interaction
   mb.MapboxMap? _mapboxMap;
+   ///  Point annotation manager used for managing markers on the map.
   mb.PointAnnotationManager? _pointAnnotationManager;
+   ///  Camera options for setting the initial map view
   late mb.CameraOptions _initialCameraOptions;
+   /// Default map style url.
   final String mapStyle = AppConstants.mapboxStreets;
+   /// List for managing point annotations for map markers.
   final List<mb.PointAnnotation> _pointAnnotations = [];
+    /// Subscription for connectivity changes.
   StreamSubscription<bool>? _connectivitySubscription;
+  /// Listener for clicks on map markers
   late final mb.OnPointAnnotationClickListener _pointAnnotationClickListener;
+  
   @override
   void initState() {
     super.initState();
-
+    // Sets the default camera options
     _initialCameraOptions = mb.CameraOptions(
       center: mb.Point(
         coordinates: mb.Position(
@@ -3493,11 +4503,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       zoom: AppConstants.defaultZoom,
     );
+    // Setting up point click listener
     _pointAnnotationClickListener = _PointAnnotationClickListener(this);
   }
 
   @override
   void dispose() {
+      //Cancels the connectivity subscription when the screen is disposed
     _connectivitySubscription?.cancel();
     // _pointAnnotationManager?.removeClickListener(_pointAnnotationClickListener);
     super.dispose();
@@ -3505,27 +4517,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+      // AppBar of the application
         appBar: AppBar(
           title: const Text('Online Maps'),
+           // List of action buttons for the map screen.
           actions: [
             IconButton(
+               // Button to clear the map markers.
               icon: const Icon(Icons.clear_all),
               onPressed: () {
                 ref.read(mapViewModelProvider.notifier).clearMarkers();
               },
             ),
             IconButton(
+              // Button to open the settings screen.
               icon: const Icon(Icons.settings),
               onPressed: () {
                 Navigator.of(context).pushNamed(AppRoutes.settings);
               },
             ),
+             // Button to open the offline map screen.
             IconButton(
               icon: const Icon(Icons.offline_bolt),
               onPressed: () {
                 Navigator.of(context).pushNamed(AppRoutes.offlineMap);
               },
             ),
+              // Button to refresh map markers
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () => ref
@@ -3534,21 +4552,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ],
         ),
+        // Main body of the app
         body: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             final state = ref.watch(mapViewModelProvider);
+             // Sets a listener to show a snack bar if a message is added to the state, also updates the markers if a change has occurred
             ref.listen(mapViewModelProvider, (previous, next) {
+                // Checks if there is a new message from the state, and if so shows a snack bar
               if (next.message != null && next.message!.isNotEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(next.message!)),
                 );
               }
+                // Check if there are any errors that have been set and shows a snackbar if there is any.
               if (next.error != null && next.error!.isNotEmpty) {
                 // ScaffoldMessenger.of(context).showSnackBar(
                 //   SnackBar(content: Text(next.error!)),
                 // );
               }
 
+              // Add's markers if there has been any changes
               if (previous?.markers != next.markers) {
                 _addMarkers();
               }
@@ -3556,26 +4579,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
             return Stack(
               children: [
+                 // Map widget to display the map
                 mapwidget.CustomMapWidget(
                   styleUri: mapStyle,
                   cameraOptions: _initialCameraOptions,
                   onMapCreated: _onMapCreated,
                 ),
+                // Shows the banner if the app is offline
                 OfflineBanner(
                   isOffline: state.isOffline,
                 ),
+                 // Displays map controls to zoom in, zoom out and move to the current location.
                 MapControls(
                   onZoomIn: _zoomIn,
                   onZoomOut: _zoomOut,
                   onMoveToCurrentLocation: _moveToCurrentLocation,
                   isLocationLoading: state.isLocationLoading,
                 ),
+                // Custom error widget for displaying errors from the view model.
                 if (state.error != null && state.error!.isNotEmpty)
                   CustomErrorWidget(
                     error: state.error!,
                     onClose: () =>
                         ref.read(mapViewModelProvider.notifier).clearMarkers(),
                   ),
+                 // Loading overlay for displaying while the markers are loading.
                 if (state.isLoading)
                   const LoadingOverlay(message: 'Loading Markers...'),
               ],
@@ -3584,23 +4612,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       );
 
+   /// Callback when map has been created, initializes point annotation manager, sets map to view model and adds all markers
   Future<void> _onMapCreated(mb.MapboxMap mapboxMap) async {
     _mapboxMap = mapboxMap;
+     // Sets the map instance into the view model.
     ref.read(mapViewModelProvider.notifier).setMap(mapboxMap);
+    // Creates the point annotation manager to manage the map markers
     _pointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
+    // Sets the point annotation click listener
     _pointAnnotationManager
         ?.addOnPointAnnotationClickListener(_pointAnnotationClickListener);
+        // Add's the markers to the map.
     await _addMarkers();
   }
 
+    /// Adds the markers to the map, using point annotation manager.
   Future<void> _addMarkers() async {
+      // Returns early if the manager is null
     if (_pointAnnotationManager == null || _mapboxMap == null) {
       return;
     }
 
     final state = ref.read(mapViewModelProvider);
 
+     // Remove all existing annotations before adding new ones.
     if (_pointAnnotations.isNotEmpty) {
       for (final annotation in _pointAnnotations) {
         await _pointAnnotationManager?.delete(annotation);
@@ -3608,8 +4644,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _pointAnnotations.clear();
     }
 
+     // Iterates over the markers in the state and adds them to the map
     for (final marker in state.markers) {
       if (marker.geometry.type == map_marker.GeometryType.point) {
+         //  Creates an annotation using the given coordinates.
         final annotation = mb.PointAnnotationOptions(
           geometry: mb.Point(
             coordinates: mb.Position(
@@ -3620,6 +4658,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           iconImage: 'circle',
           iconColor: Colors.red.r.toInt(),
         );
+        // Creates the annotation to the map, using the annotation manager
         final createdAnnotation =
             await _pointAnnotationManager?.create(annotation);
         if (createdAnnotation != null) {
@@ -3628,12 +4667,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         }
       }
     }
+       // Adds the custom circle image to the map.
     if (_mapboxMap != null) {
       await addCustomCircleImage();
     }
   }
 
+   /// Adds a custom circle image for the markers, used for map annotation icons.
   Future<void> addCustomCircleImage() async {
+    // Create the custom circle image using a helper function.
     final imageBytes = await _createCircleIcon(Colors.red);
 
     // Create MbxImage from bytes
@@ -3655,6 +4697,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+   /// Creates a circle icon as a Uint8List, used to display a custom icon on the map.
   Future<Uint8List> _createCircleIcon(Color color) async {
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -3667,6 +4710,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return bytes!.buffer.asUint8List();
   }
 
+   /// Shows information about the selected marker in an alert dialog
   void _showMarkerInfo(BuildContext context, map_marker.MapMarker marker) {
     showDialog(
       context: context,
@@ -3685,6 +4729,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  /// Zooms in on the map using the flyTo method with animation.
   Future<void> _zoomIn() async {
     if (_mapboxMap == null) {
       return;
@@ -3697,6 +4742,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+   /// Zooms out on the map using the flyTo method with animation.
   Future<void> _zoomOut() async {
     if (_mapboxMap == null) {
       return;
@@ -3709,6 +4755,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+   /// Moves the map to the current device location using the view model
   Future<void> _moveToCurrentLocation() async {
     if (_mapboxMap == null) {
       return;
@@ -3719,21 +4766,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 }
 
+/// Listener class for clicks on point annotations, it shows a dialog when clicked.
 class _PointAnnotationClickListener extends mb.OnPointAnnotationClickListener {
+    ///  Constructor takes the state of the map screen as an argument.
   _PointAnnotationClickListener(this._state);
+   /// State of the map screen, allowing the listener to access to the methods and view models of the map screen
   final _MapScreenState _state;
   @override
   void onPointAnnotationClick(mb.PointAnnotation annotation) {
+      // Checks if the annotation has an id before showing the marker info.
     if (annotation.id.isNotEmpty) {
+       // Get the marker associated to the current annotation, using it's id.
       final marker = _state.ref
           .read(mapViewModelProvider)
           .markers
           .firstWhere((element) => element.id == annotation.id);
+          // Shows the marker info in a dialog.
       _state._showMarkerInfo(_state.context, marker);
     }
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_screen.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map ##############
@@ -3876,35 +4928,49 @@ class GeometryTypeAdapter extends TypeAdapter<GeometryType> {
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.g.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.dart ##############
-// lib/features/map/models/map_marker.dart
+///
+/// File: lib/shared/models/map_marker.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Defines the data models for map markers and their geometry, used for handling and storing geospatial data.
+/// Updates: Initial setup with MapMarker, Geometry, and GeometryType models for managing geospatial data, added json parsing functionality.
+/// Used Libraries: hive/hive.dart
+///
+library;
 import 'package:hive/hive.dart';
 part 'map_marker.g.dart';
 
+/// Represents a map marker with an ID, title, description, and geometry.
 @HiveType(typeId: 0)
 class MapMarker {
+   /// Constructor for the MapMarker class, requires `id`, `title`, `description` and `geometry`
   MapMarker({
     required this.id,
     required this.title,
     required this.description,
     required this.geometry,
   });
+  /// Validates the JSON data and creates the MapMarker model.
   factory MapMarker._validateAndCreateMapMarker(Map<String, dynamic> json) {
     final String? id = json['id'];
     final String? title = json['title'];
     final String? description = json['description'];
     final dynamic geometry = json['geometry'];
+    // Throws errors if the id or title is null or empty.
     if (id == null || id.isEmpty) {
       throw ArgumentError('MapMarker id cannot be null or empty.');
     }
     if (title == null || title.isEmpty) {
       throw ArgumentError('MapMarker title cannot be null or empty.');
     }
+      // Throws an error if the description or the geometry is null
     if (description == null) {
       throw ArgumentError('MapMarker description cannot be null.');
     }
     if (geometry == null) {
       throw ArgumentError('MapMarker geometry cannot be null.');
     }
+       // Creates and return the new `MapMarker`.
     return MapMarker(
       id: id,
       title: title,
@@ -3912,21 +4978,27 @@ class MapMarker {
       geometry: Geometry.fromJson(geometry),
     );
   }
+   /// Creates a `MapMarker` instance from a JSON object, validates the data and calls the `_validateAndCreateMapMarker` function.
   factory MapMarker.fromJson(Map<String, dynamic> json) =>
       MapMarker._validateAndCreateMapMarker(json);
 
+  /// Unique identifier for the map marker
   @HiveField(0)
   final String id;
 
+  ///  Title of the map marker
   @HiveField(1)
   final String title;
 
+  /// Description of the map marker
   @HiveField(2)
   final String description;
 
+  /// Geometry of the map marker.
   @HiveField(3)
   final Geometry geometry;
 
+   /// Converts MapMarker object to a JSON object
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
@@ -3935,80 +5007,107 @@ class MapMarker {
       };
 }
 
+/// Enum representing the type of geometry (point, linestring, polygon).
 @HiveType(typeId: 2)
 enum GeometryType {
+  /// Point geometry type.
   @HiveField(0)
   point,
+  /// LineString geometry type.
   @HiveField(1)
   lineString,
+  /// Polygon geometry type.
   @HiveField(2)
   polygon
 }
 
+/// Represents the geometry of a map marker, can be of type point, linestring or polygon
 @HiveType(typeId: 1)
 class Geometry {
+  /// Constructor for the geometry class, takes the `type` and `coordinates` as a parameter.
   Geometry({
     required this.type,
     required this.coordinates,
   });
+  /// Creates a `Geometry` object from JSON data, includes validation for geometry type and coordinates
   factory Geometry.fromJson(Map<String, dynamic> json) {
     final type = json['type'];
     final coordinates = json['coordinates'];
+       // Checks if type is null or not string.
     if (type == null || type is! String) {
       throw ArgumentError('Invalid geometry type: $type');
     }
+    // Checks if the coordinates is null or not a List.
     if (coordinates == null || coordinates is! List) {
       throw ArgumentError('Invalid geometry coordinates: $coordinates');
     }
+        // Parses the coordinates to a GeometryType
     return Geometry(
       type: _parseType(type),
       coordinates: coordinates,
     );
   }
+    /// Creates a JSON object from a `Geometry` model
   Map<String, dynamic> toJson() => {
         'type': type.name,
         'coordinates': coordinates,
       };
+  /// Parses a geometry type from a string, throws exception when not a valid type.
   static GeometryType _parseType(String type) {
     switch (type) {
       case 'Point':
         return GeometryType.point;
       case 'LineString':
         return GeometryType.lineString;
-      case 'Polygon':
+            case 'Polygon':
         return GeometryType.polygon;
       default:
         throw ArgumentError('Invalid geometry type: $type');
     }
   }
 
+  /// Type of the geometry, it can be `Point`, `LineString` or `Polygon`.
   @HiveField(0)
   late final GeometryType type;
+   /// Coordinates of the geometry, it's a list of dynamic values.
   @HiveField(1)
   late final List<dynamic> coordinates;
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/theme_picker.dart ##############
-// lib/shared/widgets/theme_picker.dart
+///
+/// File: lib/shared/widgets/theme_picker.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays a theme picker that allows users to select between light and dark themes.
+/// Updates: Initial setup with radio buttons for theme selection.
+/// Used Libraries: flutter/material.dart, flutter_riverpod/flutter_riverpod.dart, mobile/main.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/main.dart';
 
+/// ThemePicker widget enables users to switch between light and dark themes using radio buttons.
 class ThemePicker extends ConsumerWidget {
+    /// Constructor for the `ThemePicker` widget, takes `onThemeChanged` callback as a parameter
   const ThemePicker({required this.onThemeChanged, super.key});
+   /// Callback function that is called when a theme has changed.
   final Function(ThemeMode) onThemeChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+      // Gets the current selected theme.
     final theme = ref.watch(themeModeProvider);
     return Column(
       children: [
         ListTile(
+           // ListTile that shows the label for light theme.
           title: const Text('Light Theme'),
+           // Radio button for the light theme.
           trailing: Radio<ThemeMode>(
             value: ThemeMode.light,
             groupValue: theme,
@@ -4017,8 +5116,10 @@ class ThemePicker extends ConsumerWidget {
             },
           ),
         ),
+         // ListTile that shows the label for dark theme.
         ListTile(
           title: const Text('Dark Theme'),
+            // Radio button for dark theme.
           trailing: Radio<ThemeMode>(
             value: ThemeMode.dark,
             groupValue: theme,
@@ -4031,26 +5132,39 @@ class ThemePicker extends ConsumerWidget {
     );
   }
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/theme_picker.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/region_item.dart ##############
-// lib/features/offline_map/widgets/region_item.dart
+///
+/// File: lib/shared/widgets/region_item.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays a single item representing a downloaded map region, including an option to delete it.
+/// Updates: Initial setup for listing tile regions with delete capabilities.
+/// Used Libraries: flutter/material.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+/// RegionItem widget displays a single downloaded region with a delete button.
 class RegionItem extends StatelessWidget {
+    /// Constructor for the region item takes `region` and `deleteRegion` callback.
   const RegionItem({
     required this.region,
     required this.deleteRegion,
     super.key,
   });
+  /// Tile region for showing details
   final TileRegion region;
+   /// Callback for deleting the current region.
   final Function(String) deleteRegion;
 
   @override
   Widget build(BuildContext context) => ListTile(
+        // Region id as the title
         title: Text(region.id),
+        // Button to trigger the delete functionality
         trailing: IconButton(
           onPressed: () {
             deleteRegion(region.id);
@@ -4059,14 +5173,23 @@ class RegionItem extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/region_item.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_controls.dart ##############
-// lib/features/map/widgets/map_controls.dart
+///
+/// File: lib/shared/widgets/map_controls.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays map controls such as zoom in, zoom out, and move to current location on the map.
+/// Updates: Initial setup of map controls with zoom in, zoom out, and current location actions.
+/// Used Libraries: flutter/material.dart
+///
+library;
 import 'package:flutter/material.dart';
 
+/// MapControls widget provides the UI controls for map zoom and current location.
 class MapControls extends StatelessWidget {
+    /// Constructor for the MapControls widget, takes callbacks for zoom in, zoom out and move to current location.
   const MapControls({
     required this.onZoomIn,
     required this.onZoomOut,
@@ -4074,9 +5197,13 @@ class MapControls extends StatelessWidget {
     super.key,
     this.isLocationLoading = false,
   });
+   /// Callback function called when the zoom in button is clicked.
   final VoidCallback onZoomIn;
+    /// Callback function called when the zoom out button is clicked.
   final VoidCallback onZoomOut;
+  /// Callback function called when the move to current location button is clicked.
   final VoidCallback onMoveToCurrentLocation;
+    /// Location loading state to disable location button and show loader.
   final bool isLocationLoading;
 
   @override
@@ -4086,6 +5213,7 @@ class MapControls extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+              //  Floating action button for zoom in.
             FloatingActionButton(
               heroTag: 'zoom_in',
               mini: true,
@@ -4093,6 +5221,7 @@ class MapControls extends StatelessWidget {
               child: const Icon(Icons.add),
             ),
             const SizedBox(height: 8), // space
+             //  Floating action button for zoom out.
             FloatingActionButton(
               heroTag: 'zoom_out',
               mini: true,
@@ -4100,6 +5229,7 @@ class MapControls extends StatelessWidget {
               child: const Icon(Icons.remove),
             ),
             const SizedBox(height: 8),
+              //  Floating action button for the move to the current location functionality.
             FloatingActionButton(
               heroTag: 'my_location',
               mini: true,
@@ -4118,13 +5248,22 @@ class MapControls extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_controls.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_widget.dart ##############
+///
+/// File: lib/shared/widgets/map_widget.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays the Mapbox map with provided configurations.
+/// Updates: Initial setup with Mapbox MapWidget and camera options.
+/// Used Libraries: flutter/material.dart, mapbox_maps_flutter/mapbox_maps_flutter.dart
+///
+library;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+/// CustomMapWidget is a wrapper around the Mapbox MapWidget to specify custom configurations.
 class CustomMapWidget extends StatelessWidget {
   const CustomMapWidget({
     required this.cameraOptions,
@@ -4132,8 +5271,11 @@ class CustomMapWidget extends StatelessWidget {
     required this.styleUri,
     super.key,
   });
+  /// Camera options for setting the initial map view
   final CameraOptions cameraOptions;
+   /// Callback for when the map has been created
   final void Function(MapboxMap) onMapCreated;
+   /// Style uri for mapbox map to display
   final String styleUri;
 
   @override
@@ -4144,16 +5286,27 @@ class CustomMapWidget extends StatelessWidget {
         androidHostingMode: AndroidPlatformViewHostingMode.TLHC_HC,
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_widget.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/loading_overlay.dart ##############
-// lib/shared/widgets/loading_overlay.dart
+///
+/// File: lib/shared/widgets/loading_overlay.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays a loading overlay with a progress indicator and optional message, used during long processes.
+/// Updates: Initial setup for loading overlay with optional message and cancel option.
+/// Used Libraries: flutter/material.dart
+///
+library;
 import 'package:flutter/material.dart';
 
+/// LoadingOverlay widget displays a loading indicator, an optional message, and an optional cancel button.
 class LoadingOverlay extends StatelessWidget {
+    /// Constructor for the `LoadingOverlay` widget, it takes a message and a cancel callback as optional parameters.
   const LoadingOverlay({super.key, this.message, this.onCancel});
+   /// Message to display under the loading indicator.
   final String? message;
+    /// Callback when the cancel button is clicked.
   final VoidCallback? onCancel;
 
   @override
@@ -4163,9 +5316,11 @@ class LoadingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              //Circular loading indicator with white color.
               const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
+                // Shows the message if there is any, otherwise, it's not shown.
               if (message != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
@@ -4174,6 +5329,7 @@ class LoadingOverlay extends StatelessWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                //Shows the cancel button when the callback is provided.
               if (onCancel != null)
                 TextButton(
                   onPressed: onCancel,
@@ -4187,14 +5343,23 @@ class LoadingOverlay extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/loading_overlay.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/custom_error_widget.dart ##############
-// lib/shared/widgets/custom_error_widget.dart
+///
+/// File: lib/shared/widgets/custom_error_widget.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays a custom error message widget with a close button.
+/// Updates: Initial setup for displaying errors with custom background and text colors.
+/// Used Libraries: flutter/material.dart
+///
+library;
 import 'package:flutter/material.dart';
 
+/// CustomErrorWidget displays an error message with a close button and customizable styles.
 class CustomErrorWidget extends StatelessWidget {
+    /// Constructor for the `CustomErrorWidget`, it takes the error message, background color, text color and a close callback as a parameter.
   const CustomErrorWidget({
     required this.error,
     super.key,
@@ -4202,9 +5367,13 @@ class CustomErrorWidget extends StatelessWidget {
     this.textColor,
     this.onClose,
   });
+   /// Error message to show in the error widget
   final String error;
+    /// Background color for error widget, defaults to red if no color is given.
   final Color? backgroundColor;
+    /// Color of the text in the error widget, defaults to red[900] if no color is provided.
   final Color? textColor;
+  /// Callback function that's called when the close button is pressed.
   final VoidCallback? onClose;
 
   @override
@@ -4223,6 +5392,7 @@ class CustomErrorWidget extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                 // SingleChildScrollView to make sure that the text doesn't overflows the available space
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
@@ -4231,6 +5401,7 @@ class CustomErrorWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+                     // Button to close the error dialog.
                   Align(
                     alignment: Alignment.bottomRight,
                     child: TextButton(
@@ -4245,15 +5416,25 @@ class CustomErrorWidget extends StatelessWidget {
         ),
       );
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/custom_error_widget.dart ##############
 
 ############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/offline_banner.dart ##############
-// lib/features/map/widgets/offline_banner.dart
+///
+/// File: lib/shared/widgets/offline_banner.dart
+/// Author: Adil AJDAA
+/// Email: a.ajdaa@outlook.com
+/// Purpose: Displays a banner when the application is in offline mode.
+/// Updates: Initial setup for displaying the banner when the offline flag is true.
+/// Used Libraries: flutter/material.dart
+///
+library;
 import 'package:flutter/material.dart';
 
+/// OfflineBanner widget is displayed when the app is in offline mode.
 class OfflineBanner extends StatelessWidget {
+    /// Constructor for the `OfflineBanner` widget, takes `isOffline` boolean as a parameter.
   const OfflineBanner({super.key, this.isOffline = false});
+    /// Boolean flag to indicate if the application is offline.
   final bool isOffline;
   @override
   Widget build(BuildContext context) => isOffline
@@ -4276,11 +5457,9 @@ class OfflineBanner extends StatelessWidget {
         )
       : const SizedBox();
 }
-
 ############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/offline_banner.dart ##############
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets ##############
-
 
 ############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test ##############
 
