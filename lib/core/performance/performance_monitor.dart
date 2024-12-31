@@ -36,14 +36,26 @@ class PerformanceMonitor {
       _methodTimer(
         'Raster',
         () {
-          // Method code here.
+          // Example of a raster method being timed.
+          // You can replace this with any raster method you want to measure
+          // const Color color = Colors.red; // Example action
+          // final paint = Paint()..color = color;
+          // if (kDebugMode) {
+          // print('doing some raster work');
+          // }
         },
         rasterTime,
       );
       _methodTimer(
         'Build',
         () {
-          // Method code here.
+          // Example of a build method being timed.
+          // You can replace this with any build method you want to measure
+          // Example of a method being timed.
+          // final container = Container(color: Colors.blue,); // Example Action
+          // if (kDebugMode) {
+          //   // print('doing some build work');
+          // }
         },
         buildTime,
       );
@@ -52,7 +64,13 @@ class PerformanceMonitor {
 
   static void _methodTimer(String methodName, Function method, int time) {
     if (kDebugMode) {
-      debugPrint('$methodName time: ${time}ms');
+      final stopwatch = Stopwatch()..start();
+      // method();
+      // stopwatch.stop();
+
+      debugPrint(
+        '$methodName time: ${time}ms, actual method time: ${stopwatch.elapsedMilliseconds}ms',
+      );
     }
   }
 

@@ -1,4 +1,5 @@
 // lib/features/map/map_repository.dart
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,8 @@ class MapRepository {
   MapRepository(this._network, this._storage);
   final NetworkService _network;
   final Storage _storage;
-  Future<List<MapMarker>> getMarkers({bool forceRefresh = false}) async {
+  Future<Either<MapRepositoryException, List<MapMarker>>> getMarkers(
+      {bool forceRefresh = false,}) async {
     final lastUpdate = await _storage.getInt(AppConstants.markersKey);
     if (!forceRefresh) {
       if (lastUpdate != null) {
@@ -24,7 +26,7 @@ class MapRepository {
             if (kDebugMode) {
               print('Returning cached markers');
             }
-            return cached;
+            return Right(cached);
           }
         }
       }
@@ -38,14 +40,18 @@ class MapRepository {
         print('Response: ${response.statusCode} ${response.realUri}');
       }
       if (response.statusCode != 200) {
-        throw MapRepositoryException(
-          AppConstants.networkError,
-          response.statusCode,
+        return Left(
+          MapRepositoryException(
+            'Error getting markers from API - Status code: ${response.statusCode}',
+            response.statusCode,
+          ),
         );
       }
       final responseData = response.data;
       if (responseData == null || responseData is! Map<String, dynamic>) {
-        throw MapRepositoryException('Invalid response format', responseData);
+        return Left(
+          MapRepositoryException('Invalid response format', responseData),
+        );
       }
       final results = responseData['results'] as List<dynamic>;
       final markers = <MapMarker>[];
@@ -72,56 +78,50 @@ class MapRepository {
         if (kDebugMode) {
           print('Returning $validMarkers markers from API');
         }
-        return markers;
+        return Right(markers);
       } else {
         if (kDebugMode) {
           print('No valid markers available from API');
         }
-        return [];
+        return const Right([]);
       }
+    } on DioException catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error getting markers from API, loading from cache');
       }
-    on DioException catch (e, stackTrace) {
-            final cached = await _storage.getMarkers();
+      final cached = await _storage.getMarkers();
       if (cached.isNotEmpty) {
-        if (kDebugMode) {
-          print('Returning markers from Cache');
-        }
-         throw MapRepositoryException(
-              'Error getting markers from API, loading from cache',
-              e,
-              stackTrace,
-            );
+        return Right(cached);
       }
       if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
-          throw MapRepositoryException(
-              'Error getting markers from API',
-              e,
-              stackTrace,
-            );
-    }
-    on Exception catch (e, stackTrace) {
-          final cached = await _storage.getMarkers();
-      if (cached.isNotEmpty) {
-          if (kDebugMode) {
-              print('Returning markers from Cache');
-            }
-         throw MapRepositoryException(
-              'Error getting markers from API, loading from cache',
-              e,
-              stackTrace,
-            );
-        }
-       if (kDebugMode) {
-          print('Error getting markers: $e, StackTrace: $stackTrace');
-        }
-          throw MapRepositoryException(
-            'Error getting markers from API',
-            e,
-             stackTrace,
-            );
+      return Left(
+        MapRepositoryException(
+          'Error getting markers from API',
+          e,
+          stackTrace,
+        ),
+      );
+    } on Exception catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error getting markers from API, loading from cache');
       }
+      final cached = await _storage.getMarkers();
+      if (cached.isNotEmpty) {
+        return Right(cached);
+      }
+      if (kDebugMode) {
+        print('Error getting markers: $e, StackTrace: $stackTrace');
+      }
+      return Left(
+        MapRepositoryException(
+          'Error getting markers from API',
+          e,
+          stackTrace,
+        ),
+      );
+    }
   }
 
   MapMarker _parseMapMarker(Map<String, dynamic> json) {
@@ -194,7 +194,7 @@ class MapRepositoryException implements Exception {
   MapRepositoryException(this.message, this.error, [this.stackTrace]);
   final String message;
   final dynamic error;
-   final StackTrace? stackTrace;
+  final StackTrace? stackTrace;
   @override
   String toString() =>
       'MapRepositoryException: $message, $error, stackTrace: $stackTrace';

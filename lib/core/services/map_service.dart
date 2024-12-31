@@ -28,10 +28,10 @@ class MapService {
   OfflineManager? _offlineManager;
   final StreamController<double> _stylePackProgress =
       StreamController<double>.broadcast();
-    Stream<double> get stylePackProgress => _stylePackProgress.stream;
+  Stream<double> get stylePackProgress => _stylePackProgress.stream;
   final StreamController<double> _tileRegionLoadProgress =
       StreamController<double>.broadcast();
-     Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
+  Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
 
   Future<void> init() async {
     try {
@@ -146,21 +146,23 @@ class MapService {
         print('Zoom levels: min=$minZoomLevel, max=$maxZoomLevel');
       }
 
-       final stylePackLoadOptions = StylePackLoadOptions(
+      final stylePackLoadOptions = StylePackLoadOptions(
         glyphsRasterizationMode:
             GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
         metadata: {'tag': regionName},
-        acceptExpired: true,);
-       await _offlineManager?.loadStylePack(AppConstants.mapboxStreets, stylePackLoadOptions,
-        (progress) {
-              final percentage = progress.completedResourceCount / progress.requiredResourceCount;
-                if (!_stylePackProgress.isClosed) {
-                  _stylePackProgress.sink.add(percentage);
-                }
-        }).then((value) {
-            _stylePackProgress.sink.add(1);
-            _stylePackProgress.sink.close();
-         });
+        acceptExpired: true,
+      );
+      await _offlineManager?.loadStylePack(
+          AppConstants.mapboxStreets, stylePackLoadOptions, (progress) {
+        final percentage =
+            progress.completedResourceCount / progress.requiredResourceCount;
+        if (!_stylePackProgress.isClosed) {
+          _stylePackProgress.sink.add(percentage);
+        }
+      }).then((value) {
+        _stylePackProgress.sink.add(1);
+        _stylePackProgress.sink.close();
+      });
 
       final geometry = {
         'type': 'Polygon',
@@ -215,28 +217,28 @@ class MapService {
 
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-     
-        await _tileStore?.loadTileRegion(
+
+      await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
         (progress) {
-           final percentage = progress.completedResourceCount / progress.requiredResourceCount;
-            if (!_tileRegionLoadProgress.isClosed) {
-               _tileRegionLoadProgress.sink.add(percentage);
-           }
+          final percentage =
+              progress.completedResourceCount / progress.requiredResourceCount;
+          if (!_tileRegionLoadProgress.isClosed) {
+            _tileRegionLoadProgress.sink.add(percentage);
+          }
           if (kDebugMode) {
-             print('progress.completedResourceCount');
+            print('progress.completedResourceCount');
             print(progress.completedResourceCount);
             print(progress.completedResourceSize);
             print(progress.erroredResourceCount);
             print(progress.loadedResourceCount);
             print(progress.loadedResourceSize);
           }
-         
         },
-      ).then((value){
-           _tileRegionLoadProgress.sink.add(1);
-          _tileRegionLoadProgress.sink.close();
+      ).then((value) {
+        _tileRegionLoadProgress.sink.add(1);
+        _tileRegionLoadProgress.sink.close();
       });
 
       if (kDebugMode) {
@@ -316,7 +318,7 @@ class MapService {
 
   void dispose() {
     _tileRegionLoadProgress.close();
-        _stylePackProgress.close();
+    _stylePackProgress.close();
   }
 }
 

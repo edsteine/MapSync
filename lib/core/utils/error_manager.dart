@@ -12,12 +12,24 @@ class ErrorState {
 class ErrorNotifier extends StateNotifier<ErrorState> {
   ErrorNotifier() : super(ErrorState());
 
+  set mapState(ErrorState newState) {
+    state = newState;
+  }
+
+  ErrorState get mapState => state;
+
+  // void updateState(ErrorState newState) {
+  //   state = newState;
+  // }
+
   void setError(String message) {
-    state = state.copyWith(message: message);
+    // updateState(state.copyWith(message: message));
+    state.copyWith(message: message);
   }
 
   void clearError() {
-    state = state.copyWith();
+    // updateState(state.copyWith());
+    state.copyWith();
   }
 }
 

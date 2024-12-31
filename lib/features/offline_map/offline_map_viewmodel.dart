@@ -10,6 +10,7 @@ import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/app_utils.dart';
 import 'package:mobile/features/offline_map/offline_map_repository.dart';
+
 // Custom exception for OfflineMapViewModel errors
 class OfflineMapViewModelException implements Exception {
   OfflineMapViewModelException(this.message, this.error);
@@ -27,38 +28,38 @@ class OfflineMapState {
     this.error,
     this.downloadStatus = DownloadStatus.idle,
     this.isLocationLoading = false,
-      this.message,
-     this.downloadProgress = 0,
-         this.stylePackProgress = 0,
+    this.message,
+    this.downloadProgress = 0,
+    this.stylePackProgress = 0,
   });
   final bool isLoading;
   final List<TileRegion> regions;
   final String? error;
   final DownloadStatus downloadStatus;
-    final bool isLocationLoading;
+  final bool isLocationLoading;
   final String? message;
-    final double downloadProgress;
-    final double stylePackProgress;
+  final double downloadProgress;
+  final double stylePackProgress;
 
   OfflineMapState copyWith({
     bool? isLoading,
     List<TileRegion>? regions,
     String? error,
-     DownloadStatus? downloadStatus,
-     bool? isLocationLoading,
-      String? message,
-     double? downloadProgress,
-        double? stylePackProgress,
+    DownloadStatus? downloadStatus,
+    bool? isLocationLoading,
+    String? message,
+    double? downloadProgress,
+    double? stylePackProgress,
   }) =>
       OfflineMapState(
         isLoading: isLoading ?? this.isLoading,
         regions: regions ?? this.regions,
         error: error,
         downloadStatus: downloadStatus ?? this.downloadStatus,
-         isLocationLoading: isLocationLoading ?? this.isLocationLoading,
-          message: message,
-            downloadProgress: downloadProgress ?? this.downloadProgress,
-              stylePackProgress: stylePackProgress ?? this.stylePackProgress,
+        isLocationLoading: isLocationLoading ?? this.isLocationLoading,
+        message: message,
+        downloadProgress: downloadProgress ?? this.downloadProgress,
+        stylePackProgress: stylePackProgress ?? this.stylePackProgress,
       );
 }
 
@@ -66,32 +67,37 @@ final offlineMapViewModelProvider =
     StateNotifierProvider.autoDispose<OfflineMapViewModel, OfflineMapState>(
   (ref) => OfflineMapViewModel(
     ref.watch(offlineMapRepositoryProvider),
-     ref as StateNotifierProviderRef<OfflineMapViewModel, OfflineMapState>,
-     ref.watch(mapServiceProvider),
+    ref,
+    ref.watch(mapServiceProvider),
   ),
 );
 
 class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
-  OfflineMapViewModel(this._repository, this.ref, this._mapService) : super(OfflineMapState());
+  OfflineMapViewModel(this._repository, this.ref, this._mapService)
+      : super(OfflineMapState());
   final OfflineMapRepository _repository;
-    final StateNotifierProviderRef<OfflineMapViewModel, OfflineMapState> ref;
+  final Ref ref;
   final MapService _mapService;
-   StreamSubscription<double>? _stylePackSubscription;
-   StreamSubscription<double>? _tileRegionSubscription;
+  StreamSubscription<double>? _stylePackSubscription;
+  StreamSubscription<double>? _tileRegionSubscription;
+
+  void updateState(OfflineMapState newState) {
+    state = newState;
+  }
 
   Future<void> loadRegions() async {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+    updateState(state.copyWith(isLoading: true));
     try {
       final regions = await _repository.getDownloadedRegions();
       if (!mounted) {
         return;
       }
-      state = state.copyWith(regions: regions, isLoading: false);
+      updateState(state.copyWith(regions: regions, isLoading: false));
     } on Exception catch (e) {
-     AppUtils.handleStateError(this, ref, state, e, e.toString());
+      AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
   }
 
@@ -105,49 +111,57 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     if (!mounted) {
       return;
     }
-     state = state.copyWith(downloadStatus: DownloadStatus.downloading, downloadProgress: 0, stylePackProgress: 0);
-        _stylePackSubscription = _mapService.stylePackProgress.listen((progress) {
-            if(mounted){
-                  state = state.copyWith(stylePackProgress: progress);
-           }
-           if (kDebugMode) {
-                print('Style pack progress: ${progress * 100}%');
-             }
-        });
-         _tileRegionSubscription = _mapService.tileRegionProgress.listen((progress) {
-            if(mounted){
-                 state = state.copyWith(downloadProgress: progress);
-             }
-              if (kDebugMode) {
-                print('Tile region progress: ${progress * 100}%');
-             }
-        });
+    updateState(
+      state.copyWith(
+        downloadStatus: DownloadStatus.downloading,
+        downloadProgress: 0,
+        stylePackProgress: 0,
+      ),
+    );
+    _stylePackSubscription = _mapService.stylePackProgress.listen((progress) {
+      if (mounted) {
+        updateState(state.copyWith(stylePackProgress: progress));
+      }
+      if (kDebugMode) {
+        print('Style pack progress: ${progress * 100}%');
+      }
+    });
+    _tileRegionSubscription = _mapService.tileRegionProgress.listen((progress) {
+      if (mounted) {
+        updateState(state.copyWith(downloadProgress: progress));
+      }
+      if (kDebugMode) {
+        print('Tile region progress: ${progress * 100}%');
+      }
+    });
     try {
       await _repository.downloadRegion(
         regionName: 'region_${DateTime.now().millisecondsSinceEpoch}',
         bounds: bounds,
-         onProgress: (progress) {
-            if (kDebugMode) {
-                print('Download progress: ${progress * 100}%');
-              }
-            },
-         onComplete: () {
-           if(mounted){
-              state = state.copyWith(downloadStatus: DownloadStatus.completed);
-               loadRegions();
-            }
-          },
-            onError: (e) {
-                AppUtils.handleStateError(this, ref, state, e, e.toString());
-            },
-           minZoom: minZoom,
-            maxZoom: maxZoom,
+        onProgress: (progress) {
+          if (kDebugMode) {
+            print('Download progress: ${progress * 100}%');
+          }
+        },
+        onComplete: () {
+          if (mounted) {
+            updateState(
+              state.copyWith(downloadStatus: DownloadStatus.completed),
+            );
+            loadRegions();
+          }
+        },
+        onError: (e) {
+          AppUtils.handleStateError(this, ref, state, e, e.toString());
+        },
+        minZoom: minZoom,
+        maxZoom: maxZoom,
       );
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     } finally {
-       await _stylePackSubscription?.cancel();
-       await _tileRegionSubscription?.cancel();
+      await _stylePackSubscription?.cancel();
+      await _tileRegionSubscription?.cancel();
     }
   }
 
@@ -155,14 +169,14 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+    updateState(state.copyWith(isLoading: true));
     try {
       await _repository.removeTileRegion(regionId);
       await loadRegions();
       if (!mounted) {
         return;
       }
-      state = state.copyWith(isLoading: false);
+      updateState(state.copyWith(isLoading: false));
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
@@ -177,19 +191,30 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
   }
 
   Future<void> moveToCurrentLocation(MapboxMap map) async {
-      if (!mounted) {
-        return;
-      }
-      state = state.copyWith(isLocationLoading: true);
+    if (!mounted) {
+      return;
+    }
+    updateState(state.copyWith(isLocationLoading: true));
     try {
       final permission = await PermissionService.requestLocationPermissions();
       if (permission == geo.LocationPermission.deniedForever) {
-          state = state.copyWith(isLocationLoading: false, message: 'Location permissions permanently denied, please enable in settings.');
+        updateState(
+          state.copyWith(
+            isLocationLoading: false,
+            message:
+                'Location permissions permanently denied, please enable in settings.',
+          ),
+        );
         return;
       }
 
       if (permission == geo.LocationPermission.denied) {
-          state = state.copyWith(isLocationLoading: false,  message: 'Location permissions denied, using default location.');
+        updateState(
+          state.copyWith(
+            isLocationLoading: false,
+            message: 'Location permissions denied, using default location.',
+          ),
+        );
         await map.flyTo(
           CameraOptions(
             center: Point(
@@ -221,10 +246,15 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     } on Exception catch (e, stackTrace) {
       // Added on Exception here
       // Do nothing. Use default location.
-       if (kDebugMode) {
+      if (kDebugMode) {
         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
-      state = state.copyWith(isLocationLoading: false, message: 'Error getting current location, using default location.');
+      updateState(
+        state.copyWith(
+          isLocationLoading: false,
+          message: 'Error getting current location, using default location.',
+        ),
+      );
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -239,26 +269,26 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
       );
     } finally {
       if (mounted) {
-        state = state.copyWith(isLocationLoading: false);
+        updateState(state.copyWith(isLocationLoading: false));
       }
     }
   }
 
-    Future<String> getRegionSize(CoordinateBounds bounds) async {
-      try{
-        return await _repository.getRegionSize(bounds);
-     }on Exception catch(e) {
-       if (kDebugMode) {
-            print('Error getting region size from viewmodel: $e');
-          }
-            throw OfflineMapViewModelException('Error getting region size', e);
-     }
-
+  Future<String> getRegionSize(CoordinateBounds bounds) async {
+    try {
+      return await _repository.getRegionSize(bounds);
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Error getting region size from viewmodel: $e');
+      }
+      throw OfflineMapViewModelException('Error getting region size', e);
+    }
   }
-     @override
+
+  @override
   void dispose() {
-      _stylePackSubscription?.cancel();
-       _tileRegionSubscription?.cancel();
+    _stylePackSubscription?.cancel();
+    _tileRegionSubscription?.cancel();
     super.dispose();
   }
 }

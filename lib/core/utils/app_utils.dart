@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/context_provider.dart';
 import 'package:mobile/core/utils/error_manager.dart';
 
@@ -17,6 +18,7 @@ class AppUtils {
     final i = (log(bytes) / log(1024)).floor();
     return '${(bytes / pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
   }
+// lib/core/utils/app_utils.dart
 
   static void handleStateError<T extends StateNotifier<S>, S, R extends Ref>(
     T notifier,
@@ -29,7 +31,7 @@ class AppUtils {
       return;
     }
     final newState = (state as dynamic).copyWith(
-      isLoading: false,
+      downloadStatus: DownloadStatus.idle,
       error: errorMessage,
     );
 

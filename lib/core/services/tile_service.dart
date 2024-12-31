@@ -55,12 +55,12 @@ class TileService {
       if (kDebugMode) {
         print('Region ID: $regionId');
       }
-      
+
       final tileRegionLoadOptions = TileRegionLoadOptions(
         // geometry: Point(coordinates: Position(-80.1263, 25.7845)).toJson(),
         geometry: Point(coordinates: Position(34.020882, -6.832477)).toJson(),
         // geometry: Point(coordinates: Position( -6.832477,34.020882)).toJson(),
-        
+
         descriptorsOptions: [
           TilesetDescriptorOptions(
             styleURI: styleUri,
@@ -91,9 +91,13 @@ class TileService {
       }
       final tileRegion = await getTileRegion(regionId);
       if (kDebugMode) {
-        print('Tile Region Completed Size: ${tileRegion?.completedResourceSize}');
+        print(
+          'Tile Region Completed Size: ${tileRegion?.completedResourceSize}',
+        );
         print('Tile Region Loaded Size: ${tileRegion?.completedResourceCount}');
-        print('Tile Region Errored Count: ${tileRegion?.completedResourceSize}');
+        print(
+          'Tile Region Errored Count: ${tileRegion?.completedResourceSize}',
+        );
       }
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
@@ -104,7 +108,7 @@ class TileService {
   }
 
   Future<void> clearOldTiles() async {
-      if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     if (kDebugMode) {
@@ -133,7 +137,7 @@ class TileService {
   }
 
   Future<void> removeTileRegion(String regionId) async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -156,7 +160,7 @@ class TileService {
   }
 
   Future<TileRegion?> getTileRegion(String regionId) async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -177,7 +181,7 @@ class TileService {
   }
 
   Future<List<TileRegion>> getAllTileRegions() async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -195,7 +199,7 @@ class TileService {
   }
 
   Future<bool> isRegionDownloaded(CoordinateBounds bounds) async {
-      if (_tileStore == null) {
+    if (_tileStore == null) {
       return false;
     }
 

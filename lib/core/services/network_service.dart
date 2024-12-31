@@ -69,6 +69,10 @@ class NetworkService {
     }
   }
 
+  DioException _handleError(DioException error, StackTrace? stackTrace) {
+    throw NetworkErrorHandler.handle(error, stackTrace);
+  }
+
   Future<Response> getWithPages(
     String path, {
     int page = 1,
@@ -107,10 +111,6 @@ class NetworkService {
     } on DioException catch (e, stackTrace) {
       throw _handleError(e, stackTrace);
     }
-  }
-
-  DioException _handleError(DioException error, StackTrace? stackTrace) {
-    throw NetworkErrorHandler.handle(error, stackTrace);
   }
 }
 

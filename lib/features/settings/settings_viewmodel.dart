@@ -48,16 +48,34 @@ class SettingsState {
 }
 
 final settingsViewModelProvider =
-    StateNotifierProvider.autoDispose<SettingsViewModel, SettingsState>((ref) {
+    StateNotifierProvider<SettingsViewModel, SettingsState>((ref) {
   final storageAsyncValue = ref.watch(storageProvider); // watch the AsyncValue
   final storage = storageAsyncValue.when(
-    data: (data) => data,
-    error: (error, stack) =>
-        throw SettingsViewModelException('Error loading storage', error),
-    loading: () => null, // Or some other default
+    data: (data) {
+      if (kDebugMode) {
+        print('SettingsViewModel: Storage loaded successfully');
+      }
+      return data;
+    },
+    error: (error, stack) {
+      if (kDebugMode) {
+        print(
+            'SettingsViewModel: Error loading storage: $error, Stacktrace: $stack',);
+      }
+      throw SettingsViewModelException('Error loading storage', error);
+    },
+    loading: () {
+      if (kDebugMode) {
+        print('SettingsViewModel: Loading storage...');
+      }
+      return null;
+    }, // Or some other default
   );
 
   if (storage == null) {
+    if (kDebugMode) {
+      print('SettingsViewModel: Storage is null, using default view model');
+    }
     return SettingsViewModel(
       ref.watch(settingsRepositoryProvider),
       ref.watch(tileServiceProvider),
@@ -88,6 +106,9 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       if (value != null) {
         loadRegions();
       }
+      if (kDebugMode) {
+        print('SettingsViewModel: Storage is not null, loading regions');
+      }
     });
   }
   final SettingsRepository _repository;
@@ -96,15 +117,28 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   late final Future<Storage> _storage;
   final Ref ref;
 
-  void changeTheme(ThemeMode themeMode) {
+  Future<void> changeTheme(ThemeMode themeMode) async {
+    if (kDebugMode) {
+      print(
+          'SettingsViewModel: Attempting to change theme to: ${themeMode.name}',);
+    }
     if (!mounted) {
       return;
     }
     _themeModeNotifier.state = themeMode;
-    _storage.then(
-      (storage) =>
-          storage.saveString(AppConstants.themeModeKey, themeMode.name),
-    );
+
+    final storage = await _storage;
+    if (kDebugMode) {
+      print('SettingsViewModel: Saving theme to storage: ${themeMode.name}');
+    }
+    await storage.saveString(AppConstants.themeModeKey, themeMode.name);
+    if (kDebugMode) {
+      print('SettingsViewModel: Saved theme to storage: ${themeMode.name}');
+    }
+      if (kDebugMode) {
+      print(
+          'SettingsViewModel: Theme changed to: ${themeMode.name} setting state',);
+    }
     state = state.copyWith(themeMode: themeMode);
   }
 

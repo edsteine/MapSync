@@ -76,11 +76,12 @@ class OfflineMapRepository {
       throw Exception('Error clear all tiles: $e, StackTrace: $stackTrace');
     }
   }
+
   Future<String> getRegionSize(CoordinateBounds bounds) async {
     try {
-         final regionId =
+      final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-       final tileRegion = await _tileService.getTileRegion(regionId);
+      final tileRegion = await _tileService.getTileRegion(regionId);
       if (tileRegion == null) {
         return '0 B';
       }
@@ -88,10 +89,12 @@ class OfflineMapRepository {
 
       return AppUtils.formatFileSize(sizeBytes);
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
-        print('Error getting region size from repo: $e, StackTrace: $stackTrace');
+      if (kDebugMode) {
+        print(
+          'Error getting region size from repo: $e, StackTrace: $stackTrace',
+        );
       }
-        throw Exception('Error getting region size: $e, StackTrace: $stackTrace');
+      throw Exception('Error getting region size: $e, StackTrace: $stackTrace');
     }
   }
 }

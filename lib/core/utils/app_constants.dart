@@ -26,11 +26,10 @@ class AppConstants {
   static const String unableToLoadMarkersError = 'Unable to load markers';
   static const String downloadFailedError = 'Download failed: ';
   static const String failedToDownloadRegion = 'Failed to download region: ';
-  static const int defaultMaxZoomLevel = 13;
-  static const int defaultMinZoomLevel = 10;
+  // static const int defaultMaxZoomLevel = 13;
+  // static const int defaultMinZoomLevel = 10;
   static const String mapboxStreets = MapboxStyles.MAPBOX_STREETS;
 }
-
 
 enum DownloadStatus {
   idle,

@@ -6,7 +6,6 @@ class CustomMapWidget extends StatelessWidget {
     required this.cameraOptions,
     required this.onMapCreated,
     required this.styleUri,
-    
     super.key,
   });
   final CameraOptions cameraOptions;
@@ -20,6 +19,4 @@ class CustomMapWidget extends StatelessWidget {
         onMapCreated: onMapCreated,
         androidHostingMode: AndroidPlatformViewHostingMode.TLHC_HC,
       );
-
-      
 }

@@ -10,7 +10,6 @@ import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
-import 'package:mobile/core/utils/context_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,17 +26,16 @@ void main() async {
   );
 }
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(contextProvider.notifier, (previous, next) {
-      ref.read(contextProvider.notifier).update((state) => context);
-    });
-
     final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Offline Maps',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -62,7 +60,6 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
   if (storage == null) {
     return ThemeMode.light;
   }
-  final themeString =  storage.getString(AppConstants.themeModeKey);
-  // ignore: unrelated_type_equality_checks
+  final themeString = storage.getString(AppConstants.themeModeKey);
   return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
 });

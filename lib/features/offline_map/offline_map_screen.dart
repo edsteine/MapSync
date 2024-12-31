@@ -30,7 +30,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
       'longitude': -7.5898434,
       'zoom': 11.0,
     },
-        'Rabat': {
+    'Rabat': {
       'latitude': 34.020882,
       'longitude': -6.832477,
       'zoom': 11.0,
@@ -88,7 +88,6 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             ),
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                final state = ref.watch(offlineMapViewModelProvider);
                 final errorState = ref.watch(errorProvider);
                 return errorState.message != null
                     ? CustomErrorWidget(
@@ -99,11 +98,14 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                     : const SizedBox();
               },
             ),
-             Consumer(
+            Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 final state = ref.watch(offlineMapViewModelProvider);
                 return state.downloadStatus == DownloadStatus.downloading
-                    ?  LoadingOverlay(message: 'Downloading Style Pack... ${(state.stylePackProgress * 100).toInt()}% \n Downloading Tiles... ${(state.downloadProgress * 100).toInt()}%' )
+                    ? LoadingOverlay(
+                        message:
+                            'Downloading Style Pack... ${(state.stylePackProgress * 100).toInt()}% \n Downloading Tiles... ${(state.downloadProgress * 100).toInt()}%',
+                      )
                     : const SizedBox();
               },
             ),
@@ -144,38 +146,44 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         ),
       );
 
-       if(kDebugMode){
-      print('Downloading city: $_selectedCity');
-         print('Southwest: lng: ${bounds.southwest.coordinates.lng}, lat: ${bounds.southwest.coordinates.lat}');
-         print('Northeast: lng: ${bounds.northeast.coordinates.lng}, lat: ${bounds.northeast.coordinates.lat}');
-      print('Zoom levels: min: 1, max: 20');
-         print('Starting download');
-    }
+      if (kDebugMode) {
+        print('Downloading city: $_selectedCity');
+        print(
+          'Southwest: lng: ${bounds.southwest.coordinates.lng}, lat: ${bounds.southwest.coordinates.lat}',
+        );
+        print(
+          'Northeast: lng: ${bounds.northeast.coordinates.lng}, lat: ${bounds.northeast.coordinates.lat}',
+        );
+        print('Zoom levels: min: 1, max: 20');
+        print('Starting download');
+      }
 
       if (mounted) {
-        Navigator.of(context).pop();
-        await ref.read(offlineMapViewModelProvider.notifier).downloadRegion(
-              bounds: bounds,
-               minZoom: 1,
-            maxZoom: 20,
-             onProgress: (progress) {
-              if (kDebugMode) {
-                print('Download progress: ${progress * 100}%');
-             }
-           },
-              onComplete: () async {
-                  if(kDebugMode){
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          await ref.read(offlineMapViewModelProvider.notifier).downloadRegion(
+                bounds: bounds,
+                minZoom: 1,
+                maxZoom: 20,
+                onProgress: (progress) {
+                  if (kDebugMode) {
+                    print('Download progress: ${progress * 100}%');
+                  }
+                },
+                onComplete: () async {
+                  if (kDebugMode) {
                     final size = await ref
                         .read(offlineMapViewModelProvider.notifier)
                         .getRegionSize(bounds);
                     print('Download complete. Approximate size: $size');
                   }
                 },
-            );
+              );
+        }
       }
     } on Exception catch (e) {
-       if (kDebugMode) {
-         print('Error fetching bounds or downloading region: $e');
+      if (kDebugMode) {
+        print('Error fetching bounds or downloading region: $e');
       }
     }
   }
@@ -197,10 +205,13 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                   labelText: 'City',
                 ),
                 items: _cities.keys
-                    .map<DropdownMenuItem<String>>((String value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  ),).toList(),
+                    .map<DropdownMenuItem<String>>(
+                      (String value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (value) {
                   _selectedCity = value ?? '';
                 },

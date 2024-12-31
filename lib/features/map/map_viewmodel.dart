@@ -1,6 +1,4 @@
 // lib/features/map/map_viewmodel.dart
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -9,6 +7,7 @@ import 'package:mobile/core/services/map_service.dart';
 import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/app_utils.dart';
+import 'package:mobile/core/utils/context_provider.dart';
 import 'package:mobile/features/map/map_repository.dart';
 import 'package:mobile/shared/models/map_marker.dart' as map_marker;
 
@@ -32,7 +31,7 @@ class MapState {
     this.isOffline = false,
     this.didFetchSuccessfully = false,
     this.isLocationLoading = false,
-       this.message,
+    this.message,
   });
   final bool isLoading;
   final List<map_marker.MapMarker> markers;
@@ -40,7 +39,7 @@ class MapState {
   final bool isOffline;
   final bool didFetchSuccessfully;
   final bool isLocationLoading;
-   final String? message;
+  final String? message;
 
   MapState copyWith({
     bool? isLoading,
@@ -57,16 +56,16 @@ class MapState {
         error: error,
         isOffline: isOffline ?? this.isOffline,
         didFetchSuccessfully: didFetchSuccessfully ?? this.didFetchSuccessfully,
-         isLocationLoading: isLocationLoading ?? this.isLocationLoading,
-           message: message,
+        isLocationLoading: isLocationLoading ?? this.isLocationLoading,
+        message: message,
       );
 }
 
 final mapViewModelProvider = StateNotifierProvider<MapViewModel, MapState>(
   (ref) => MapViewModel(
     ref.watch(mapRepositoryProvider),
-     ref.watch(mapServiceProvider),
-     ref,
+    ref.watch(mapServiceProvider),
+    ref,
   ),
 );
 
@@ -74,164 +73,130 @@ class MapViewModel extends StateNotifier<MapState> {
   MapViewModel(this._repository, this._mapService, this.ref)
       : super(MapState());
   final MapRepository _repository;
-    final MapService _mapService;
-    final Ref ref;
-    MapboxMap? _map;
-      void setMap(MapboxMap map) {
-        _map = map;
-        _mapService.init();
+  final MapService _mapService;
+  final StateNotifierProviderRef<MapViewModel, MapState> ref;
+  MapboxMap? _map;
+  void setMap(MapboxMap map) {
+    _map = map;
+    _mapService.init();
   }
-   Future<void> loadMarkers({bool forceRefresh = false}) async {
+
+  Future<void> loadMarkers({bool forceRefresh = false}) async {
     if (!mounted) {
       return;
     }
-     state = state.copyWith(isLoading: true);
-    var retryCount = 0;
-     const maxRetries = 2;
-      while (retryCount <= maxRetries) {
-          try {
-              final markers = await _repository.getMarkers(forceRefresh: forceRefresh);
-               if (!mounted) {
-                return;
-               }
-                state = state.copyWith(
-                  isLoading: false,
-                  markers: markers,
-                  isOffline: false,
-                  didFetchSuccessfully: markers.isNotEmpty,
-                  message: markers.isNotEmpty
-                    ? '${markers.length} markers added from a total of ${markers.length} results'
-                     : null,
-                );
-                if (kDebugMode) {
-                     print('Loaded markers: ${markers.length}');
-                }
-               if (markers.isNotEmpty) {
-                   await moveToFirstMarker();
-                }
-               return;
-          } on MapRepositoryException catch (e) {
-             if (e.message.contains('loading from cache')) {
-              final markers = await _repository.getMarkers();
-              if (!mounted) {
-                  return;
-               }
-               state = state.copyWith(
-                  isLoading: false,
-                  markers: markers,
-                 isOffline: true,
-                  didFetchSuccessfully: markers.isNotEmpty,
-                  error: e.message,
-                     message: '${markers.length} markers added from cache',
-                 );
-                 if (kDebugMode) {
-                    print('Error fetching data from server, loading from cache');
-                  }
-                  if (markers.isNotEmpty) {
-                     await moveToFirstMarker();
-                   }
-                return;
-            } else{
-                 if(retryCount < maxRetries){
-                   retryCount++;
-                   if (kDebugMode) {
-                        print('Retrying fetching markers, attempt: $retryCount');
-                    }
-                    await Future.delayed(const Duration(seconds: 1));
-              }else{
-                     final markers = await _repository.getMarkers();
-                      if (!mounted) {
-                        return;
-                      }
-                       state = state.copyWith(
-                        isLoading: false,
-                        markers: markers,
-                        isOffline: true,
-                        didFetchSuccessfully: markers.isNotEmpty,
-                         error: e.message,
-                         message: '${markers.length} markers added from cache',
-                      );
-                     AppUtils.handleStateError(
-                      this,
-                      ref,
-                      state,
-                      e,
-                    e.message,
-                      );
-                    if (kDebugMode) {
-                       print('Error fetching data from server, loading from cache');
-                    }
-                    if (markers.isNotEmpty) {
-                     await moveToFirstMarker();
-                    }
-                    return;
-                 }
-            }
+    if (kDebugMode) {
+      print(
+          'MapViewModel: loadMarkers started with forceRefresh: $forceRefresh',);
+    }
+    state = state.copyWith(isLoading: true);
+    try {
+      final result = await _repository.getMarkers(forceRefresh: forceRefresh);
+      if (!mounted) {
+        return;
+      }
+
+      result.fold((error) {
+        if (kDebugMode) {
+          print('MapViewModel: MapRepositoryException: $error');
         }
-     on Exception catch (e){
-           if(retryCount < maxRetries){
-               retryCount++;
-                 if (kDebugMode) {
-                    print('Retrying fetching markers, attempt: $retryCount');
-                  }
-                 await Future.delayed(const Duration(seconds: 1));
-           }else{
-                  final markers = await _repository.getMarkers();
-                   if (!mounted) {
-                       return;
-                   }
-                   state = state.copyWith(
-                       isLoading: false,
-                       markers: markers,
-                       isOffline: true,
-                       didFetchSuccessfully: markers.isNotEmpty,
-                          error: '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
-                         message: '${markers.length} markers added from cache',
-                   );
-                   AppUtils.handleStateError(
-                      this,
-                      ref,
-                      state,
-                     e,
-                     '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
-                  );
-                  if (markers.isNotEmpty) {
-                     await moveToFirstMarker();
-                  }
-                 return;
-           }
-     }
-   }
-  }
-   Future<void> moveToFirstMarker() async {
-       if(_map == null) {
-         return;
-       }
-      if (state.markers.isNotEmpty) {
-        final firstMarker = state.markers.first;
-        if (firstMarker.geometry.coordinates.isNotEmpty && firstMarker.geometry.type == map_marker.GeometryType.point) {
-          await _map?.flyTo(
-            CameraOptions(
-              center: Point(
-                  coordinates: Position(
-                      firstMarker.geometry.coordinates[0],
-                      firstMarker.geometry.coordinates[1],
-                    ),
-              ),
-              zoom: AppConstants.defaultZoom,
-            ),
-            MapAnimationOptions(duration: 200),
+        if (mounted && ref.read(contextProvider) != null) {
+          if (kDebugMode) {
+            print('MapViewModel: Calling AppUtils.handleStateError');
+          }
+          AppUtils.handleStateError(
+            this,
+            ref,
+            state,
+            error,
+            '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
+          );
+        }
+        if (kDebugMode) {
+          print('MapViewModel: setting error state: ${error.toString()}');
+        }
+        state = state.copyWith(
+          isLoading: false,
+          error:
+              '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
         );
-       }
-     }
+      }, (data) {
+        if (kDebugMode) {
+          print('MapViewModel: Loaded markers: ${data.length} from API');
+        }
+        state = state.copyWith(
+          isLoading: false,
+          markers: data,
+          isOffline: false,
+          didFetchSuccessfully: data.isNotEmpty,
+          message: data.isNotEmpty
+              ? '${data.length} markers added from a total of ${data.length} results'
+              : null,
+        );
+
+        if (data.isNotEmpty) {
+          moveToFirstMarker();
+        }
+      });
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('MapViewModel: Generic Exception: $e');
+      }
+      if (mounted && ref.read(contextProvider) != null) {
+        if (kDebugMode) {
+          print(
+              'MapViewModel: Calling AppUtils.handleStateError on Generic Exception',);
+        }
+        AppUtils.handleStateError(
+          this,
+          ref,
+          state,
+          e,
+          '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
+        );
+      }
+      if (kDebugMode) {
+        print('MapViewModel: setting error state: ${e.toString()}');
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
+      );
     }
-   Future<void> clearMarkers() async {
-        if (!mounted) {
-         return;
-       }
-       state = state.copyWith(markers: []);
+  }
+
+  Future<void> moveToFirstMarker() async {
+    if (_map == null) {
+      return;
     }
-   Future<void> moveToCurrentLocation(MapboxMap map) async {
+    if (state.markers.isNotEmpty) {
+      final firstMarker = state.markers.first;
+      if (firstMarker.geometry.coordinates.isNotEmpty &&
+          firstMarker.geometry.type == map_marker.GeometryType.point) {
+        await _map?.flyTo(
+          CameraOptions(
+            center: Point(
+              coordinates: Position(
+                firstMarker.geometry.coordinates[0],
+                firstMarker.geometry.coordinates[1],
+              ),
+            ),
+            zoom: AppConstants.defaultZoom,
+          ),
+          MapAnimationOptions(duration: 200),
+        );
+      }
+    }
+  }
+
+  Future<void> clearMarkers() async {
+    if (!mounted) {
+      return;
+    }
+    state = state.copyWith(markers: []);
+  }
+
+  Future<void> moveToCurrentLocation(MapboxMap map) async {
     if (!mounted) {
       return;
     }
@@ -281,9 +246,9 @@ class MapViewModel extends StateNotifier<MapState> {
         MapAnimationOptions(duration: 200),
       );
     } on Exception catch (e, stackTrace) {
-        if (kDebugMode) {
-           print('Error getting current location: $e, StackTrace: $stackTrace');
-         }
+      if (kDebugMode) {
+        print('Error getting current location: $e, StackTrace: $stackTrace');
+      }
       state = state.copyWith(
         isLocationLoading: false,
         message: 'Error getting current location, using default location.',

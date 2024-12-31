@@ -7,10 +7,10 @@ class MapControls extends StatelessWidget {
     required this.onZoomOut,
     required this.onMoveToCurrentLocation,
     super.key,
-     this.isLocationLoading = false,
+    this.isLocationLoading = false,
   });
-   final VoidCallback onZoomIn;
-   final VoidCallback onZoomOut;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
   final VoidCallback onMoveToCurrentLocation;
   final bool isLocationLoading;
 
@@ -34,12 +34,20 @@ class MapControls extends StatelessWidget {
               onPressed: onZoomOut,
               child: const Icon(Icons.remove),
             ),
-              const SizedBox(height: 8),
+            const SizedBox(height: 8),
             FloatingActionButton(
               heroTag: 'my_location',
-                mini: true,
-               onPressed: onMoveToCurrentLocation,
-               child: isLocationLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2,)) : const Icon(Icons.my_location),
+              mini: true,
+              onPressed: onMoveToCurrentLocation,
+              child: isLocationLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.my_location),
             ),
           ],
         ),
