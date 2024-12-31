@@ -6,11 +6,11 @@ import 'package:flutter/scheduler.dart';
 
 // ignore: avoid_classes_with_only_static_members
 class PerformanceMonitor {
-  static bool _isMonitoring = false;
+  static bool isMonitoring = false;
 
   static void startMonitoring() {
-    if (kDebugMode && !_isMonitoring) {
-      _isMonitoring = true;
+    if (kDebugMode && !isMonitoring) {
+      isMonitoring = true;
       debugPrintRebuildDirtyWidgets = true;
       debugPrintLayouts = true;
       debugPrintBeginFrameBanner = true;
@@ -92,8 +92,8 @@ class PerformanceMonitor {
   }
 
   static void stopMonitoring() {
-    if (_isMonitoring) {
-      _isMonitoring = false;
+    if (isMonitoring) {
+      isMonitoring = false;
       debugPrintRebuildDirtyWidgets = false;
       debugPrintLayouts = false;
       debugPrintBeginFrameBanner = false;

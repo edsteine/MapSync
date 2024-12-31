@@ -37,6 +37,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   mockito: ^5.4.5
   patrol: ^3.13.2
+  mocktail: ^1.0.0
 
 flutter:
   uses-material-design: true

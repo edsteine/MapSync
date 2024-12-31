@@ -1,292 +1,172 @@
-Okay, this is an excellent and comprehensive README.md! It's well-structured, clear, and provides all the necessary information for someone to understand and use your project. Here's a breakdown of why it's good and a few minor suggestions:
+Here's the polished and corrected final version of your README:
 
-Strengths:
-
-Clear and Concise: The language is easy to understand and avoids jargon.
-
-Well-Organized: The sections are logically laid out, making it easy to find information.
-
-Comprehensive: Covers all the crucial aspects of the project: features, architecture, setup, testing, contribution, and troubleshooting.
-
-Detailed Instructions: Provides precise commands and steps for setup, testing, and contributing.
-
-Code Snippets: Includes relevant code snippets for configuration and testing, making it easy to get started.
-
-Emphasis on Standards: Highlights the code standards and Git workflow for contributions.
-
-Security and Error Handling: Includes crucial security and troubleshooting tips.
-
-Minor Suggestions (Optional):
-
-Specific Versioning: While it's good to use latest for dependencies, you might want to specify a version range (e.g., ^2.5.0 instead of latest) to avoid potential compatibility issues when new versions are released. This approach provides a balance of flexibility and stability.
-
-dart format: You've mentioned running dart format before committing, it is good practice to also mention running flutter analyze for code analysis and flutter pub get in case of missing dependencies.
-
-Final README.md:
-
-Here's the README.md incorporating these minor suggestions:
+---
 
 # Offline Maps Flutter Application
 
-A Flutter application demonstrating offline map capabilities using Mapbox SDK and FMTC.
+A Flutter application demonstrating offline map capabilities using the Mapbox SDK.
+
+---
 
 ## Overview
 
-This Flutter application allows users to download map regions for offline use, manage downloaded regions, and customize the app's theme. It is built with a focus on clean architecture, efficient state management, and robust offline data handling.
+This app provides offline map functionality, enabling users to download regions, manage offline data, and fetch dynamic map markers from a REST API. Built on clean architecture principles, it ensures optimized performance and maintainability.
+
+---
 
 ## Features
 
 ### Core Features
-- Offline map support with tile caching
-- Clean Architecture with MVVM pattern
-- Performance optimized map loading and display
-- Comprehensive test coverage
+- Offline maps with tile caching.
+- MVVM pattern using Riverpod.
+- Optimized map rendering and interaction.
+- Extensive testing suite.
 
 ### Map Features
-- Interactive maps using Mapbox SDK
-- Map markers from remote API endpoints
-- User location tracking
-- Download management with progress indicators
-- Offline region management
+- Interactive maps using the Mapbox SDK.
+- Dynamic markers fetched via API.
+- Offline region download with progress tracking.
+- Offline region and cache management.
 
-### Settings & Customization
-- Theme switching (light/dark)
-- Application cache management
-- Downloaded regions management
-- System cache access
-- Push notification support for download status
+### Customization
+- Light/dark theme support.
+- Push notifications for download updates.
+
+---
+
+## API for Map Markers
+
+The app dynamically fetches map markers from the following endpoint:
+
+```http
+GET /api/markers
+Host: https://w-project-u75x.onrender.com/api/v1/locations/?page=1&page_size=10
+```
+
+### Sample Response:
+```json
+{
+  "count": 142,
+  "next": "https://w-project-u75x.onrender.com/api/v1/locations/?page=2&page_size=10",
+  "previous": null,
+  "results": [
+    {
+      "id": "93694f80-2cc7-46b4-9d92-58f68e39da1c",
+      "name": "Résidence El Majd",
+      "description": "",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -7.6350943,
+          33.5726499
+        ]
+      },
+      "created_at": "2024-12-31T03:50:28.721740Z",
+      "updated_at": "2024-12-31T03:50:28.721749Z",
+      "is_deleted": false
+    },
+]
+}
+```
+
+---
 
 ## Architecture
 
-The project follows Clean Architecture principles organized into layers:
+### Layered Design
+1. **Presentation Layer:** MVVM pattern with Riverpod for state management.
+2. **Domain Layer:** Encapsulates business logic and entities.
+3. **Data Layer:** Manages data sources and repositories.
 
-### Layer Structure
-- **Presentation Layer**: MVVM pattern with Riverpod
-- **Domain Layer**: Business logic and entities
-- **Data Layer**: Repositories and data sources
-
-### Project Organization
-content_copy
-download
-Use code with caution.
-Markdown
-
+### Folder Organization
+```plaintext
 lib/
 ├── core/
-│ ├── config/
-│ ├── constants/
-│ │ └── app_constants.dart
-│ ├── utils/
-│ ├── performance/
-│ └── services/
+│   ├── config/
+│   ├── utils/
+│   ├── performance/
+│   └── services/
 ├── features/
-│ ├── map/
-│ └── settings/
+│   ├── map/
+│   ├── settings/
+│   └── offline_map/
 └── shared/
+```
+
+---
 
 ## Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <project-directory>
-    ```
-2.  **Add your Mapbox token:**
-    Navigate to `lib/core/constants/app_constants.dart` and update the Mapbox token:
-    ```dart
-    class AppConstants {
-      static const String mapboxAccessToken = '<YOUR_MAPBOX_ACCESS_TOKEN>';
-
-      // Other constants
-      static const String baseUrl = 'https://api.example.com';
-      static const int cacheDuration = 7; // days
-      static const double defaultZoom = 14.0;
-      static const double maxZoom = 18.0;
-      static const double minZoom = 4.0;
-    }
-    ```
-3.  **Install dependencies:**
-    ```bash
-    flutter pub get
-    ```
-4.  **Run the app:**
-    ```bash
-    flutter run
-    ```
-
-## Dependencies
-
-```yaml
-dependencies:
-  flutter_map_tile_caching: ^7.0.0
-  flutter_image_compress: ^2.0.0
-  path_provider: ^2.0.15
-  shared_preferences: ^2.2.0
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  mapbox_maps_flutter: ^2.5.0
-  flutter_riverpod: ^2.6.0
-  dio: ^5.4.0
-  permission_handler: ^11.3.0
-  geolocator: ^10.1.0
-  flutter_local_notifications: ^18.0.0
-  flutter_material_app_theme: ^1.0.0
-  android_intent_plus: ^5.2.0
-
-dev_dependencies:
-  integration_test: ^2.0.0
-  mockito: ^5.4.0
-  build_runner: ^2.4.6
-content_copy
-download
-Use code with caution.
-Performance Optimization
-
-Lazy loading of map tiles
-
-Image compression
-
-Efficient caching strategies
-
-Memory management
-
-Progress update throttling
-
-Performance monitoring integration
-
-Testing
-Unit Tests
-flutter test
-content_copy
-download
-Use code with caution.
-Bash
-Integration Tests
-
-Located in integration_test/app_test.dart, covering:
-
-Map loading verification
-
-Marker display
-
-Offline functionality
-
-Manual Testing Checklist
-
-Verify offline map functionality
-
-Test cache management
-
-Verify theme switching
-
-Test network conditions
-
-Verify permissions handling
-
-Error Handling
-
-The application implements comprehensive error handling:
-
-Network connectivity issues
-
-Map tile download failures
-
-Permission denials
-
-Cache management errors
-
-Contributing
-Git Workflow
-
-Fork the repository
-
-Clone your fork
-
-Create a feature branch
-
-Make changes
-
-Stage changes: git add .
-
-Commit with meaningful messages:
-
-fix: for bug fixes
-
-feat: for new features
-
-refactor: for code improvements
-
-docs: for documentation
-
-Push to your branch
-
-Create Pull Request
-
-Code Standards
-
-Meaningful variable names
-
-Documented public APIs
-
-Unit tests for new features
-
-Flutter style guide compliance
-
-Feature branch development
-
-Run dart format lib, flutter analyze, and flutter pub get before committing.
-
-Security
-
-Don't commit sensitive tokens
-
-Add lib/core/constants/app_constants.dart to .gitignore if using sensitive tokens
-
-Use appropriate permission requests
-
-Implement secure storage for sensitive data
-
-Troubleshooting
-
-Common issues and solutions:
-
-Map not loading
-
-Check Mapbox token validity
-
-Verify internet connection
-
-Check permissions
-
-Download failures
-
-Verify storage permissions
-
-Check available storage space
-
-Ensure stable internet connection
-
-Cache issues
-
-Clear app cache
-
-Reinstall if persistence issues continue
-
-Check device storage
-
-License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-Acknowledgments
-
-Mapbox for their mapping platform
-
-Flutter team for the SDK
-
-Contributors to the project
-
-This is a comprehensive `README.md`, and it's ready to be included in your project. This will make it easy for you and others to understand, use, and contribute to your project.
-content_copy
-download
-Use code with caution.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/edsteine/wmobile.git
+   cd wmobile
+   ```
+
+2. **Configure Mapbox Token and API Endpoint:**
+   Update `lib/core/config/app_config.dart`:
+   ```dart
+   class AppConfig {
+       static String get mapboxAccessToken =>
+           dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? '<YOUR_MAPBOX_ACCESS_TOKEN>';
+       static String get apiBaseUrl =>
+           dotenv.env['API_BASE_URL'] ?? '<YOUR_API_BASE_URL>';
+   }
+   ```
+   Add the following to a `.env` file:
+   ```plaintext
+   MAPBOX_ACCESS_TOKEN=<YOUR_MAPBOX_ACCESS_TOKEN>
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+4. **Run the app:**
+   ```bash
+   flutter run
+   ```
+
+---
+
+## Testing
+
+### Unit Tests
+Run specific module tests:
+```bash
+flutter test test/core/services
+flutter test test/core/utils
+flutter test test/core/performance
+flutter test test/features/map
+flutter test test/features/settings
+flutter test test/features/offline_map
+flutter test test/shared/widgets
+```
+
+### Integration Tests
+Test offline features and map functionality:
+```bash
+flutter test test/integration/
+```
+
+### Manual Testing Checklist
+- Offline map downloading and region management.
+- API marker fetching.
+- Theme and cache management.
+
+---
+
+## Troubleshooting
+
+- **Maps not loading:** Verify your Mapbox token and app permissions.
+- **Download issues:** Check storage space and device permissions.
+- **Marker issues:** Ensure API connectivity and valid JSON responses.
+- **Offline notifications:** Functional but may need enhancement for improved user experience.
+
+---
+
+## Acknowledgments
+
+Gratitude to:
+- Google AI Studio, and Claude for assistance in code and documentation.

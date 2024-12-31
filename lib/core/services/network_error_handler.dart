@@ -19,17 +19,19 @@ class NetworkErrorHandler {
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
         return DioException(
-            requestOptions: error.requestOptions,
-            error: AppConstants.networkError,
-            type: error.type,);
+          requestOptions: error.requestOptions,
+          error: AppConstants.networkError,
+          type: error.type,
+        );
 
       case DioExceptionType.badResponse:
         return error;
       default:
         return DioException(
-            requestOptions: error.requestOptions,
-            error: 'Unexpected error occurred',
-            type: error.type,);
+          requestOptions: error.requestOptions,
+          error: 'Unexpected error occurred',
+          type: error.type,
+        );
     }
   }
 }

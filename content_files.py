@@ -53,4 +53,4 @@ def write_directory_contents(directory, output_file, ignore_extensions=None, ign
 
 if __name__ == "__main__":
     # Example usage
-    write_directory_contents('/Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib', '/Users/edsteine/Documents/Projects/PortfolioProjects/wproject/output.txt')
+    write_directory_contents('/Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test', '/Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/output.txt')

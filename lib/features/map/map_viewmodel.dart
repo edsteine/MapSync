@@ -74,7 +74,7 @@ class MapViewModel extends StateNotifier<MapState> {
       : super(MapState());
   final MapRepository _repository;
   final MapService _mapService;
-  final StateNotifierProviderRef<MapViewModel, MapState> ref;
+  final Ref<MapState> ref;
   MapboxMap? _map;
   void setMap(MapboxMap map) {
     _map = map;
@@ -87,7 +87,8 @@ class MapViewModel extends StateNotifier<MapState> {
     }
     if (kDebugMode) {
       print(
-          'MapViewModel: loadMarkers started with forceRefresh: $forceRefresh',);
+        'MapViewModel: loadMarkers started with forceRefresh: $forceRefresh',
+      );
     }
     state = state.copyWith(isLoading: true);
     try {
@@ -145,7 +146,8 @@ class MapViewModel extends StateNotifier<MapState> {
       if (mounted && ref.read(contextProvider) != null) {
         if (kDebugMode) {
           print(
-              'MapViewModel: Calling AppUtils.handleStateError on Generic Exception',);
+            'MapViewModel: Calling AppUtils.handleStateError on Generic Exception',
+          );
         }
         AppUtils.handleStateError(
           this,

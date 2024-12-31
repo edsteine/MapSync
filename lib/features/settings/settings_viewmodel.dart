@@ -60,7 +60,8 @@ final settingsViewModelProvider =
     error: (error, stack) {
       if (kDebugMode) {
         print(
-            'SettingsViewModel: Error loading storage: $error, Stacktrace: $stack',);
+          'SettingsViewModel: Error loading storage: $error, Stacktrace: $stack',
+        );
       }
       throw SettingsViewModelException('Error loading storage', error);
     },
@@ -120,7 +121,8 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   Future<void> changeTheme(ThemeMode themeMode) async {
     if (kDebugMode) {
       print(
-          'SettingsViewModel: Attempting to change theme to: ${themeMode.name}',);
+        'SettingsViewModel: Attempting to change theme to: ${themeMode.name}',
+      );
     }
     if (!mounted) {
       return;
@@ -135,9 +137,10 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
     if (kDebugMode) {
       print('SettingsViewModel: Saved theme to storage: ${themeMode.name}');
     }
-      if (kDebugMode) {
+    if (kDebugMode) {
       print(
-          'SettingsViewModel: Theme changed to: ${themeMode.name} setting state',);
+        'SettingsViewModel: Theme changed to: ${themeMode.name} setting state',
+      );
     }
     state = state.copyWith(themeMode: themeMode);
   }

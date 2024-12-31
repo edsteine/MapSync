@@ -1,4 +1,3 @@
-// lib/core/config/app_routes.dart
 import 'package:flutter/material.dart';
 import 'package:mobile/features/map/map_screen.dart';
 import 'package:mobile/features/offline_map/offline_map_screen.dart';

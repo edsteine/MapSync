@@ -13,8 +13,9 @@ class MapRepository {
   MapRepository(this._network, this._storage);
   final NetworkService _network;
   final Storage _storage;
-  Future<Either<MapRepositoryException, List<MapMarker>>> getMarkers(
-      {bool forceRefresh = false,}) async {
+  Future<Either<MapRepositoryException, List<MapMarker>>> getMarkers({
+    bool forceRefresh = false,
+  }) async {
     final lastUpdate = await _storage.getInt(AppConstants.markersKey);
     if (!forceRefresh) {
       if (lastUpdate != null) {

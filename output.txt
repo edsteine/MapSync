@@ -1,4 +1,4 @@
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/main.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/main.dart ##############
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -11,7 +11,6 @@ import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
-import 'package:mobile/core/utils/context_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,17 +27,16 @@ void main() async {
   );
 }
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(contextProvider.notifier, (previous, next) {
-      ref.read(contextProvider.notifier).update((state) => context);
-    });
-
     final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Offline Maps',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -67,13 +65,13 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
   return themeString == 'dark' ? ThemeMode.dark : ThemeMode.light;
 });
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/main.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/main.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_config.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_config.dart ##############
 // lib/core/config/app_config.dart
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,9 +118,9 @@ class AppConfig {
 
 final configProvider = Provider<AppConfig>((ref) => AppConfig());
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_config.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_config.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_routes.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_routes.dart ##############
 // lib/core/config/app_routes.dart
 import 'package:flutter/material.dart';
 import 'package:mobile/features/map/map_screen.dart';
@@ -142,9 +140,9 @@ class AppRoutes {
   };
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_routes.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_routes.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_theme.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_theme.dart ##############
 // lib/core/config/theme.dart
 import 'package:flutter/material.dart';
 
@@ -194,11 +192,11 @@ class AppTheme {
   );
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config/app_theme.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config/app_theme.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/config ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/config ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_constants.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_constants.dart ##############
 // lib/core/utils/constants.dart
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -227,11 +225,10 @@ class AppConstants {
   static const String unableToLoadMarkersError = 'Unable to load markers';
   static const String downloadFailedError = 'Download failed: ';
   static const String failedToDownloadRegion = 'Failed to download region: ';
-  static const int defaultMaxZoomLevel = 13;
-  static const int defaultMinZoomLevel = 10;
+  // static const int defaultMaxZoomLevel = 13;
+  // static const int defaultMinZoomLevel = 10;
   static const String mapboxStreets = MapboxStyles.MAPBOX_STREETS;
 }
-
 
 enum DownloadStatus {
   idle,
@@ -239,9 +236,9 @@ enum DownloadStatus {
   completed,
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_constants.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_constants.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_utils.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_utils.dart ##############
 // lib/core/utils/app_utils.dart
 import 'dart:math';
 
@@ -262,6 +259,7 @@ class AppUtils {
     final i = (log(bytes) / log(1024)).floor();
     return '${(bytes / pow(1024, i)).toStringAsFixed(2)} ${suffixes[i]}';
   }
+// lib/core/utils/app_utils.dart
 
   static void handleStateError<T extends StateNotifier<S>, S, R extends Ref>(
     T notifier,
@@ -274,7 +272,6 @@ class AppUtils {
       return;
     }
     final newState = (state as dynamic).copyWith(
-      isLoading: false,
       downloadStatus: DownloadStatus.idle,
       error: errorMessage,
     );
@@ -293,18 +290,18 @@ class AppUtils {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/app_utils.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/app_utils.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/context_provider.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/context_provider.dart ##############
 // lib/core/utils/context_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final contextProvider = StateProvider<BuildContext?>((ref) => null);
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/context_provider.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/context_provider.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_utils.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/map_utils.dart ##############
 // lib/core/utils/map_utils.dart
 import 'dart:math' as math;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -348,9 +345,9 @@ class MapUtils {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/map_utils.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/map_utils.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/error_manager.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/error_manager.dart ##############
 // lib/core/utils/error_manager.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -365,12 +362,24 @@ class ErrorState {
 class ErrorNotifier extends StateNotifier<ErrorState> {
   ErrorNotifier() : super(ErrorState());
 
+  set mapState(ErrorState newState) {
+    state = newState;
+  }
+
+  ErrorState get mapState => state;
+
+  // void updateState(ErrorState newState) {
+  //   state = newState;
+  // }
+
   void setError(String message) {
-    state = state.copyWith(message: message);
+    // updateState(state.copyWith(message: message));
+    state.copyWith(message: message);
   }
 
   void clearError() {
-    state = state.copyWith();
+    // updateState(state.copyWith());
+    state.copyWith();
   }
 }
 
@@ -378,11 +387,11 @@ final errorProvider = StateNotifierProvider<ErrorNotifier, ErrorState>(
   (ref) => ErrorNotifier(),
 );
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils/error_manager.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils/error_manager.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/utils ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/utils ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/app_resource_optimizer.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/app_resource_optimizer.dart ##############
 // lib/core/performance/app_size_reducer.dart
 import 'dart:io';
 
@@ -431,9 +440,9 @@ class AppResourceOptimizer {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/app_resource_optimizer.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/app_resource_optimizer.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/performance_monitor.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/performance_monitor.dart ##############
 // lib/core/performance/performance_monitor.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -442,11 +451,11 @@ import 'package:flutter/scheduler.dart';
 
 // ignore: avoid_classes_with_only_static_members
 class PerformanceMonitor {
-  static bool _isMonitoring = false;
+  static bool isMonitoring = false;
 
   static void startMonitoring() {
-    if (kDebugMode && !_isMonitoring) {
-      _isMonitoring = true;
+    if (kDebugMode && !isMonitoring) {
+      isMonitoring = true;
       debugPrintRebuildDirtyWidgets = true;
       debugPrintLayouts = true;
       debugPrintBeginFrameBanner = true;
@@ -472,14 +481,26 @@ class PerformanceMonitor {
       _methodTimer(
         'Raster',
         () {
-          // Method code here.
+          // Example of a raster method being timed.
+          // You can replace this with any raster method you want to measure
+          // const Color color = Colors.red; // Example action
+          // final paint = Paint()..color = color;
+          // if (kDebugMode) {
+          // print('doing some raster work');
+          // }
         },
         rasterTime,
       );
       _methodTimer(
         'Build',
         () {
-          // Method code here.
+          // Example of a build method being timed.
+          // You can replace this with any build method you want to measure
+          // Example of a method being timed.
+          // final container = Container(color: Colors.blue,); // Example Action
+          // if (kDebugMode) {
+          //   // print('doing some build work');
+          // }
         },
         buildTime,
       );
@@ -488,7 +509,13 @@ class PerformanceMonitor {
 
   static void _methodTimer(String methodName, Function method, int time) {
     if (kDebugMode) {
-      debugPrint('$methodName time: ${time}ms');
+      final stopwatch = Stopwatch()..start();
+      // method();
+      // stopwatch.stop();
+
+      debugPrint(
+        '$methodName time: ${time}ms, actual method time: ${stopwatch.elapsedMilliseconds}ms',
+      );
     }
   }
 
@@ -510,8 +537,8 @@ class PerformanceMonitor {
   }
 
   static void stopMonitoring() {
-    if (_isMonitoring) {
-      _isMonitoring = false;
+    if (isMonitoring) {
+      isMonitoring = false;
       debugPrintRebuildDirtyWidgets = false;
       debugPrintLayouts = false;
       debugPrintBeginFrameBanner = false;
@@ -521,11 +548,11 @@ class PerformanceMonitor {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance/performance_monitor.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance/performance_monitor.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/performance ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/performance ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/permission_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/permission_service.dart ##############
 // lib/core/services/permission_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -583,9 +610,9 @@ class PermissionService {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/permission_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/permission_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/notification_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/notification_service.dart ##############
 // lib/core/services/notification_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -698,9 +725,9 @@ class NotificationService {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/notification_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/notification_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_service.dart ##############
 // lib/core/services/network_service.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -772,6 +799,10 @@ class NetworkService {
     }
   }
 
+  DioException _handleError(DioException error, StackTrace? stackTrace) {
+    throw NetworkErrorHandler.handle(error, stackTrace);
+  }
+
   Future<Response> getWithPages(
     String path, {
     int page = 1,
@@ -811,18 +842,14 @@ class NetworkService {
       throw _handleError(e, stackTrace);
     }
   }
-
-  DioException _handleError(DioException error, StackTrace? stackTrace) {
-    throw NetworkErrorHandler.handle(error, stackTrace);
-  }
 }
 
 final networkServiceProvider =
     Provider<NetworkService>((ref) => NetworkService());
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/tile_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/tile_service.dart ##############
 // lib/core/services/tile_service.dart
 import 'dart:io';
 
@@ -880,12 +907,12 @@ class TileService {
       if (kDebugMode) {
         print('Region ID: $regionId');
       }
-      
+
       final tileRegionLoadOptions = TileRegionLoadOptions(
         // geometry: Point(coordinates: Position(-80.1263, 25.7845)).toJson(),
         geometry: Point(coordinates: Position(34.020882, -6.832477)).toJson(),
         // geometry: Point(coordinates: Position( -6.832477,34.020882)).toJson(),
-        
+
         descriptorsOptions: [
           TilesetDescriptorOptions(
             styleURI: styleUri,
@@ -916,9 +943,13 @@ class TileService {
       }
       final tileRegion = await getTileRegion(regionId);
       if (kDebugMode) {
-        print('Tile Region Completed Size: ${tileRegion?.completedResourceSize}');
+        print(
+          'Tile Region Completed Size: ${tileRegion?.completedResourceSize}',
+        );
         print('Tile Region Loaded Size: ${tileRegion?.completedResourceCount}');
-        print('Tile Region Errored Count: ${tileRegion?.completedResourceSize}');
+        print(
+          'Tile Region Errored Count: ${tileRegion?.completedResourceSize}',
+        );
       }
     } on Exception catch (e, stackTrace) {
       if (kDebugMode) {
@@ -929,7 +960,7 @@ class TileService {
   }
 
   Future<void> clearOldTiles() async {
-      if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     if (kDebugMode) {
@@ -958,7 +989,7 @@ class TileService {
   }
 
   Future<void> removeTileRegion(String regionId) async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -981,7 +1012,7 @@ class TileService {
   }
 
   Future<TileRegion?> getTileRegion(String regionId) async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -1002,7 +1033,7 @@ class TileService {
   }
 
   Future<List<TileRegion>> getAllTileRegions() async {
-     if (_tileStore == null) {
+    if (_tileStore == null) {
       await initialize();
     }
     try {
@@ -1020,7 +1051,7 @@ class TileService {
   }
 
   Future<bool> isRegionDownloaded(CoordinateBounds bounds) async {
-      if (_tileStore == null) {
+    if (_tileStore == null) {
       return false;
     }
 
@@ -1053,19 +1084,19 @@ class TileService {
 }
 
 final tileServiceProvider = Provider<TileService>((ref) => TileService());
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/tile_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_error_handler.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/tile_service.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_error_handler.dart ##############
 // lib/core/services/network_error_handler.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mobile/core/services/network_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 
 // Custom exception for Network errors
 // ignore: avoid_classes_with_only_static_members
 class NetworkErrorHandler {
-  static NetworkServiceException handle(
+  static DioException handle(
     DioException error, [
     StackTrace? stackTrace,
   ]) {
@@ -1075,42 +1106,29 @@ class NetworkErrorHandler {
 
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
-        return NetworkServiceException(
-          AppConstants.networkError,
-          error,
-          stackTrace,
-        );
       case DioExceptionType.receiveTimeout:
-        return NetworkServiceException(
-          AppConstants.networkError,
-          error,
-          stackTrace,
-        );
       case DioExceptionType.connectionError:
-        return NetworkServiceException(
-          AppConstants.networkError,
-          error,
-          stackTrace,
+        return DioException(
+          requestOptions: error.requestOptions,
+          error: AppConstants.networkError,
+          type: error.type,
         );
+
       case DioExceptionType.badResponse:
-        return NetworkServiceException(
-          'Server error: ${error.response?.statusCode}',
-          error,
-          stackTrace,
-        );
+        return error;
       default:
-        return NetworkServiceException(
-          'Unexpected error occurred',
-          error,
-          stackTrace,
+        return DioException(
+          requestOptions: error.requestOptions,
+          error: 'Unexpected error occurred',
+          type: error.type,
         );
     }
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/network_error_handler.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/network_error_handler.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/download_manager_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/download_manager_service.dart ##############
 // // lib/core/services/download_manager_service.dart
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -1161,9 +1179,9 @@ class NetworkErrorHandler {
 //   (ref) => DownloadManager(),
 // );
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/download_manager_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/download_manager_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/map_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/map_service.dart ##############
 // lib/core/services/map_service.dart
 import 'dart:async';
 import 'dart:math';
@@ -1194,10 +1212,10 @@ class MapService {
   OfflineManager? _offlineManager;
   final StreamController<double> _stylePackProgress =
       StreamController<double>.broadcast();
-    Stream<double> get stylePackProgress => _stylePackProgress.stream;
+  Stream<double> get stylePackProgress => _stylePackProgress.stream;
   final StreamController<double> _tileRegionLoadProgress =
       StreamController<double>.broadcast();
-     Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
+  Stream<double> get tileRegionProgress => _tileRegionLoadProgress.stream;
 
   Future<void> init() async {
     try {
@@ -1312,21 +1330,23 @@ class MapService {
         print('Zoom levels: min=$minZoomLevel, max=$maxZoomLevel');
       }
 
-       final stylePackLoadOptions = StylePackLoadOptions(
+      final stylePackLoadOptions = StylePackLoadOptions(
         glyphsRasterizationMode:
             GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY,
         metadata: {'tag': regionName},
-        acceptExpired: true,);
-       await _offlineManager?.loadStylePack(AppConstants.mapboxStreets, stylePackLoadOptions,
-        (progress) {
-              final percentage = progress.completedResourceCount / progress.requiredResourceCount;
-                if (!_stylePackProgress.isClosed) {
-                  _stylePackProgress.sink.add(percentage);
-                }
-        }).then((value) {
-            _stylePackProgress.sink.add(1);
-            _stylePackProgress.sink.close();
-         });
+        acceptExpired: true,
+      );
+      await _offlineManager?.loadStylePack(
+          AppConstants.mapboxStreets, stylePackLoadOptions, (progress) {
+        final percentage =
+            progress.completedResourceCount / progress.requiredResourceCount;
+        if (!_stylePackProgress.isClosed) {
+          _stylePackProgress.sink.add(percentage);
+        }
+      }).then((value) {
+        _stylePackProgress.sink.add(1);
+        _stylePackProgress.sink.close();
+      });
 
       final geometry = {
         'type': 'Polygon',
@@ -1381,28 +1401,28 @@ class MapService {
 
       final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-     
-        await _tileStore?.loadTileRegion(
+
+      await _tileStore?.loadTileRegion(
         regionId,
         tileRegionLoadOptions,
         (progress) {
-           final percentage = progress.completedResourceCount / progress.requiredResourceCount;
-            if (!_tileRegionLoadProgress.isClosed) {
-               _tileRegionLoadProgress.sink.add(percentage);
-           }
+          final percentage =
+              progress.completedResourceCount / progress.requiredResourceCount;
+          if (!_tileRegionLoadProgress.isClosed) {
+            _tileRegionLoadProgress.sink.add(percentage);
+          }
           if (kDebugMode) {
-             print('progress.completedResourceCount');
+            print('progress.completedResourceCount');
             print(progress.completedResourceCount);
             print(progress.completedResourceSize);
             print(progress.erroredResourceCount);
             print(progress.loadedResourceCount);
             print(progress.loadedResourceSize);
           }
-         
         },
-      ).then((value){
-           _tileRegionLoadProgress.sink.add(1);
-          _tileRegionLoadProgress.sink.close();
+      ).then((value) {
+        _tileRegionLoadProgress.sink.add(1);
+        _tileRegionLoadProgress.sink.close();
       });
 
       if (kDebugMode) {
@@ -1482,16 +1502,17 @@ class MapService {
 
   void dispose() {
     _tileRegionLoadProgress.close();
-        _stylePackProgress.close();
+    _stylePackProgress.close();
   }
 }
 
 final mapServiceProvider = Provider<MapService>(
   (ref) => MapService(ref.watch(tileServiceProvider)),
 );
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/map_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/storage_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/map_service.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/storage_service.dart ##############
 // lib/core/services/storage_service.dart
 import 'package:flutter/foundation.dart'; // Import kDebugMode
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1675,9 +1696,9 @@ final storageProvider = FutureProvider<Storage>((ref) async {
   return storage;
 });
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/storage_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/storage_service.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/cache_service.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/cache_service.dart ##############
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/performance/app_resource_optimizer.dart';
@@ -1764,13 +1785,13 @@ final cacheManagerProvider = Provider<CacheService>(
   ),
 );
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services/cache_service.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services/cache_service.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/core/services ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/core/services ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_screen.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_screen.dart ##############
 // lib/features/settings/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1855,9 +1876,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_screen.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_screen.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_repository.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_repository.dart ##############
 // lib/features/settings/settings_repository.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1947,9 +1968,9 @@ final settingsRepositoryProvider = Provider<SettingsRepository>(
   ),
 );
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_repository.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_repository.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_viewmodel.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_viewmodel.dart ##############
 // lib/features/settings/settings_viewmodel.dart
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -2000,16 +2021,35 @@ class SettingsState {
 }
 
 final settingsViewModelProvider =
-    StateNotifierProvider.autoDispose<SettingsViewModel, SettingsState>((ref) {
+    StateNotifierProvider<SettingsViewModel, SettingsState>((ref) {
   final storageAsyncValue = ref.watch(storageProvider); // watch the AsyncValue
   final storage = storageAsyncValue.when(
-    data: (data) => data,
-    error: (error, stack) =>
-        throw SettingsViewModelException('Error loading storage', error),
-    loading: () => null, // Or some other default
+    data: (data) {
+      if (kDebugMode) {
+        print('SettingsViewModel: Storage loaded successfully');
+      }
+      return data;
+    },
+    error: (error, stack) {
+      if (kDebugMode) {
+        print(
+          'SettingsViewModel: Error loading storage: $error, Stacktrace: $stack',
+        );
+      }
+      throw SettingsViewModelException('Error loading storage', error);
+    },
+    loading: () {
+      if (kDebugMode) {
+        print('SettingsViewModel: Loading storage...');
+      }
+      return null;
+    }, // Or some other default
   );
 
   if (storage == null) {
+    if (kDebugMode) {
+      print('SettingsViewModel: Storage is null, using default view model');
+    }
     return SettingsViewModel(
       ref.watch(settingsRepositoryProvider),
       ref.watch(tileServiceProvider),
@@ -2040,6 +2080,9 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
       if (value != null) {
         loadRegions();
       }
+      if (kDebugMode) {
+        print('SettingsViewModel: Storage is not null, loading regions');
+      }
     });
   }
   final SettingsRepository _repository;
@@ -2048,15 +2091,30 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   late final Future<Storage> _storage;
   final Ref ref;
 
-  void changeTheme(ThemeMode themeMode) {
+  Future<void> changeTheme(ThemeMode themeMode) async {
+    if (kDebugMode) {
+      print(
+        'SettingsViewModel: Attempting to change theme to: ${themeMode.name}',
+      );
+    }
     if (!mounted) {
       return;
     }
     _themeModeNotifier.state = themeMode;
-    _storage.then(
-      (storage) =>
-          storage.saveString(AppConstants.themeModeKey, themeMode.name),
-    );
+
+    final storage = await _storage;
+    if (kDebugMode) {
+      print('SettingsViewModel: Saving theme to storage: ${themeMode.name}');
+    }
+    await storage.saveString(AppConstants.themeModeKey, themeMode.name);
+    if (kDebugMode) {
+      print('SettingsViewModel: Saved theme to storage: ${themeMode.name}');
+    }
+    if (kDebugMode) {
+      print(
+        'SettingsViewModel: Theme changed to: ${themeMode.name} setting state',
+      );
+    }
     state = state.copyWith(themeMode: themeMode);
   }
 
@@ -2173,11 +2231,11 @@ class SettingsViewModel extends StateNotifier<SettingsState> {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings/settings_viewmodel.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings/settings_viewmodel.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/settings ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/settings ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_screen.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_screen.dart ##############
 // lib/features/offline_map/offline_map_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -2210,7 +2268,7 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
       'longitude': -7.5898434,
       'zoom': 11.0,
     },
-        'Rabat': {
+    'Rabat': {
       'latitude': 34.020882,
       'longitude': -6.832477,
       'zoom': 11.0,
@@ -2268,7 +2326,6 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
             ),
             Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
-                final state = ref.watch(offlineMapViewModelProvider);
                 final errorState = ref.watch(errorProvider);
                 return errorState.message != null
                     ? CustomErrorWidget(
@@ -2279,11 +2336,14 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                     : const SizedBox();
               },
             ),
-             Consumer(
+            Consumer(
               builder: (BuildContext context, WidgetRef ref, Widget? child) {
                 final state = ref.watch(offlineMapViewModelProvider);
                 return state.downloadStatus == DownloadStatus.downloading
-                    ?  LoadingOverlay(message: 'Downloading Style Pack... ${(state.stylePackProgress * 100).toInt()}% \n Downloading Tiles... ${(state.downloadProgress * 100).toInt()}%' )
+                    ? LoadingOverlay(
+                        message:
+                            'Downloading Style Pack... ${(state.stylePackProgress * 100).toInt()}% \n Downloading Tiles... ${(state.downloadProgress * 100).toInt()}%',
+                      )
                     : const SizedBox();
               },
             ),
@@ -2324,38 +2384,44 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         ),
       );
 
-       if(kDebugMode){
-      print('Downloading city: $_selectedCity');
-         print('Southwest: lng: ${bounds.southwest.coordinates.lng}, lat: ${bounds.southwest.coordinates.lat}');
-         print('Northeast: lng: ${bounds.northeast.coordinates.lng}, lat: ${bounds.northeast.coordinates.lat}');
-      print('Zoom levels: min: 1, max: 20');
-         print('Starting download');
-    }
+      if (kDebugMode) {
+        print('Downloading city: $_selectedCity');
+        print(
+          'Southwest: lng: ${bounds.southwest.coordinates.lng}, lat: ${bounds.southwest.coordinates.lat}',
+        );
+        print(
+          'Northeast: lng: ${bounds.northeast.coordinates.lng}, lat: ${bounds.northeast.coordinates.lat}',
+        );
+        print('Zoom levels: min: 1, max: 20');
+        print('Starting download');
+      }
 
       if (mounted) {
-        Navigator.of(context).pop();
-        await ref.read(offlineMapViewModelProvider.notifier).downloadRegion(
-              bounds: bounds,
-               minZoom: 1,
-            maxZoom: 20,
-             onProgress: (progress) {
-              if (kDebugMode) {
-                print('Download progress: ${progress * 100}%');
-             }
-           },
-              onComplete: () async {
-                  if(kDebugMode){
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          await ref.read(offlineMapViewModelProvider.notifier).downloadRegion(
+                bounds: bounds,
+                minZoom: 1,
+                maxZoom: 20,
+                onProgress: (progress) {
+                  if (kDebugMode) {
+                    print('Download progress: ${progress * 100}%');
+                  }
+                },
+                onComplete: () async {
+                  if (kDebugMode) {
                     final size = await ref
                         .read(offlineMapViewModelProvider.notifier)
                         .getRegionSize(bounds);
                     print('Download complete. Approximate size: $size');
                   }
                 },
-            );
+              );
+        }
       }
     } on Exception catch (e) {
-       if (kDebugMode) {
-         print('Error fetching bounds or downloading region: $e');
+      if (kDebugMode) {
+        print('Error fetching bounds or downloading region: $e');
       }
     }
   }
@@ -2377,10 +2443,13 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
                   labelText: 'City',
                 ),
                 items: _cities.keys
-                    .map<DropdownMenuItem<String>>((String value) => DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  ),).toList(),
+                    .map<DropdownMenuItem<String>>(
+                      (String value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (value) {
                   _selectedCity = value ?? '';
                 },
@@ -2477,9 +2546,10 @@ class _OfflineMapScreenState extends ConsumerState<OfflineMapScreen> {
         .moveToCurrentLocation(_mapboxMap!);
   }
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_screen.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_viewmodel.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_screen.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_viewmodel.dart ##############
 // lib/features/offline_map/offline_map_viewmodel.dart
 import 'dart:async';
 
@@ -2492,6 +2562,7 @@ import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/app_utils.dart';
 import 'package:mobile/features/offline_map/offline_map_repository.dart';
+
 // Custom exception for OfflineMapViewModel errors
 class OfflineMapViewModelException implements Exception {
   OfflineMapViewModelException(this.message, this.error);
@@ -2510,37 +2581,37 @@ class OfflineMapState {
     this.downloadStatus = DownloadStatus.idle,
     this.isLocationLoading = false,
     this.message,
-     this.downloadProgress = 0,
-         this.stylePackProgress = 0,
+    this.downloadProgress = 0,
+    this.stylePackProgress = 0,
   });
   final bool isLoading;
   final List<TileRegion> regions;
   final String? error;
   final DownloadStatus downloadStatus;
-    final bool isLocationLoading;
+  final bool isLocationLoading;
   final String? message;
-    final double downloadProgress;
-    final double stylePackProgress;
+  final double downloadProgress;
+  final double stylePackProgress;
 
   OfflineMapState copyWith({
     bool? isLoading,
     List<TileRegion>? regions,
     String? error,
-     DownloadStatus? downloadStatus,
-     bool? isLocationLoading,
-      String? message,
-     double? downloadProgress,
-        double? stylePackProgress,
+    DownloadStatus? downloadStatus,
+    bool? isLocationLoading,
+    String? message,
+    double? downloadProgress,
+    double? stylePackProgress,
   }) =>
       OfflineMapState(
         isLoading: isLoading ?? this.isLoading,
         regions: regions ?? this.regions,
         error: error,
         downloadStatus: downloadStatus ?? this.downloadStatus,
-         isLocationLoading: isLocationLoading ?? this.isLocationLoading,
-          message: message,
-            downloadProgress: downloadProgress ?? this.downloadProgress,
-              stylePackProgress: stylePackProgress ?? this.stylePackProgress,
+        isLocationLoading: isLocationLoading ?? this.isLocationLoading,
+        message: message,
+        downloadProgress: downloadProgress ?? this.downloadProgress,
+        stylePackProgress: stylePackProgress ?? this.stylePackProgress,
       );
 }
 
@@ -2548,32 +2619,37 @@ final offlineMapViewModelProvider =
     StateNotifierProvider.autoDispose<OfflineMapViewModel, OfflineMapState>(
   (ref) => OfflineMapViewModel(
     ref.watch(offlineMapRepositoryProvider),
-     ref as StateNotifierProviderRef<OfflineMapViewModel, OfflineMapState>,
-     ref.watch(mapServiceProvider),
+    ref,
+    ref.watch(mapServiceProvider),
   ),
 );
 
 class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
-  OfflineMapViewModel(this._repository, this.ref, this._mapService) : super(OfflineMapState());
+  OfflineMapViewModel(this._repository, this.ref, this._mapService)
+      : super(OfflineMapState());
   final OfflineMapRepository _repository;
-    final StateNotifierProviderRef<OfflineMapViewModel, OfflineMapState> ref;
+  final Ref ref;
   final MapService _mapService;
-   StreamSubscription<double>? _stylePackSubscription;
-   StreamSubscription<double>? _tileRegionSubscription;
+  StreamSubscription<double>? _stylePackSubscription;
+  StreamSubscription<double>? _tileRegionSubscription;
+
+  void updateState(OfflineMapState newState) {
+    state = newState;
+  }
 
   Future<void> loadRegions() async {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+    updateState(state.copyWith(isLoading: true));
     try {
       final regions = await _repository.getDownloadedRegions();
       if (!mounted) {
         return;
       }
-      state = state.copyWith(regions: regions, isLoading: false);
+      updateState(state.copyWith(regions: regions, isLoading: false));
     } on Exception catch (e) {
-     AppUtils.handleStateError(this, ref, state, e, e.toString());
+      AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
   }
 
@@ -2587,49 +2663,57 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     if (!mounted) {
       return;
     }
-     state = state.copyWith(downloadStatus: DownloadStatus.downloading, downloadProgress: 0, stylePackProgress: 0);
-        _stylePackSubscription = _mapService.stylePackProgress.listen((progress) {
-            if(mounted){
-                  state = state.copyWith(stylePackProgress: progress);
-           }
-           if (kDebugMode) {
-                print('Style pack progress: ${progress * 100}%');
-             }
-        });
-         _tileRegionSubscription = _mapService.tileRegionProgress.listen((progress) {
-            if(mounted){
-                 state = state.copyWith(downloadProgress: progress);
-             }
-              if (kDebugMode) {
-                print('Tile region progress: ${progress * 100}%');
-             }
-        });
+    updateState(
+      state.copyWith(
+        downloadStatus: DownloadStatus.downloading,
+        downloadProgress: 0,
+        stylePackProgress: 0,
+      ),
+    );
+    _stylePackSubscription = _mapService.stylePackProgress.listen((progress) {
+      if (mounted) {
+        updateState(state.copyWith(stylePackProgress: progress));
+      }
+      if (kDebugMode) {
+        print('Style pack progress: ${progress * 100}%');
+      }
+    });
+    _tileRegionSubscription = _mapService.tileRegionProgress.listen((progress) {
+      if (mounted) {
+        updateState(state.copyWith(downloadProgress: progress));
+      }
+      if (kDebugMode) {
+        print('Tile region progress: ${progress * 100}%');
+      }
+    });
     try {
       await _repository.downloadRegion(
         regionName: 'region_${DateTime.now().millisecondsSinceEpoch}',
         bounds: bounds,
-         onProgress: (progress) {
-            if (kDebugMode) {
-                print('Download progress: ${progress * 100}%');
-              }
-            },
-         onComplete: () {
-           if(mounted){
-              state = state.copyWith(downloadStatus: DownloadStatus.completed);
-               loadRegions();
-            }
-          },
-            onError: (e) {
-                AppUtils.handleStateError(this, ref, state, e, e.toString());
-            },
-           minZoom: minZoom,
-            maxZoom: maxZoom,
+        onProgress: (progress) {
+          if (kDebugMode) {
+            print('Download progress: ${progress * 100}%');
+          }
+        },
+        onComplete: () {
+          if (mounted) {
+            updateState(
+              state.copyWith(downloadStatus: DownloadStatus.completed),
+            );
+            loadRegions();
+          }
+        },
+        onError: (e) {
+          AppUtils.handleStateError(this, ref, state, e, e.toString());
+        },
+        minZoom: minZoom,
+        maxZoom: maxZoom,
       );
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     } finally {
-       _stylePackSubscription?.cancel();
-       _tileRegionSubscription?.cancel();
+      await _stylePackSubscription?.cancel();
+      await _tileRegionSubscription?.cancel();
     }
   }
 
@@ -2637,14 +2721,14 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     if (!mounted) {
       return;
     }
-    state = state.copyWith(isLoading: true);
+    updateState(state.copyWith(isLoading: true));
     try {
       await _repository.removeTileRegion(regionId);
       await loadRegions();
       if (!mounted) {
         return;
       }
-      state = state.copyWith(isLoading: false);
+      updateState(state.copyWith(isLoading: false));
     } on Exception catch (e) {
       AppUtils.handleStateError(this, ref, state, e, e.toString());
     }
@@ -2659,19 +2743,30 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
   }
 
   Future<void> moveToCurrentLocation(MapboxMap map) async {
-      if (!mounted) {
-        return;
-      }
-      state = state.copyWith(isLocationLoading: true);
+    if (!mounted) {
+      return;
+    }
+    updateState(state.copyWith(isLocationLoading: true));
     try {
       final permission = await PermissionService.requestLocationPermissions();
       if (permission == geo.LocationPermission.deniedForever) {
-          state = state.copyWith(isLocationLoading: false, message: 'Location permissions permanently denied, please enable in settings.');
+        updateState(
+          state.copyWith(
+            isLocationLoading: false,
+            message:
+                'Location permissions permanently denied, please enable in settings.',
+          ),
+        );
         return;
       }
 
       if (permission == geo.LocationPermission.denied) {
-          state = state.copyWith(isLocationLoading: false,  message: 'Location permissions denied, using default location.');
+        updateState(
+          state.copyWith(
+            isLocationLoading: false,
+            message: 'Location permissions denied, using default location.',
+          ),
+        );
         await map.flyTo(
           CameraOptions(
             center: Point(
@@ -2703,10 +2798,15 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
     } on Exception catch (e, stackTrace) {
       // Added on Exception here
       // Do nothing. Use default location.
-       if (kDebugMode) {
+      if (kDebugMode) {
         print('Error getting current location: $e, StackTrace: $stackTrace');
       }
-      state = state.copyWith(isLocationLoading: false, message: 'Error getting current location, using default location.');
+      updateState(
+        state.copyWith(
+          isLocationLoading: false,
+          message: 'Error getting current location, using default location.',
+        ),
+      );
       await map.flyTo(
         CameraOptions(
           center: Point(
@@ -2721,32 +2821,33 @@ class OfflineMapViewModel extends StateNotifier<OfflineMapState> {
       );
     } finally {
       if (mounted) {
-        state = state.copyWith(isLocationLoading: false);
+        updateState(state.copyWith(isLocationLoading: false));
       }
     }
   }
 
-    Future<String> getRegionSize(CoordinateBounds bounds) async {
-      try{
-        return await _repository.getRegionSize(bounds);
-     }on Exception catch(e) {
-       if (kDebugMode) {
-            print('Error getting region size from viewmodel: $e');
-          }
-            throw OfflineMapViewModelException('Error getting region size', e);
-     }
-
+  Future<String> getRegionSize(CoordinateBounds bounds) async {
+    try {
+      return await _repository.getRegionSize(bounds);
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Error getting region size from viewmodel: $e');
+      }
+      throw OfflineMapViewModelException('Error getting region size', e);
+    }
   }
-     @override
+
+  @override
   void dispose() {
-      _stylePackSubscription?.cancel();
-       _tileRegionSubscription?.cancel();
+    _stylePackSubscription?.cancel();
+    _tileRegionSubscription?.cancel();
     super.dispose();
   }
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_viewmodel.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_repository.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_viewmodel.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_repository.dart ##############
 // lib/features/offline_map/offline_map_repository.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2825,11 +2926,12 @@ class OfflineMapRepository {
       throw Exception('Error clear all tiles: $e, StackTrace: $stackTrace');
     }
   }
+
   Future<String> getRegionSize(CoordinateBounds bounds) async {
     try {
-         final regionId =
+      final regionId =
           '${bounds.southwest.coordinates.lng},${bounds.southwest.coordinates.lat}-${bounds.northeast.coordinates.lng},${bounds.northeast.coordinates.lat}';
-       final tileRegion = await _tileService.getTileRegion(regionId);
+      final tileRegion = await _tileService.getTileRegion(regionId);
       if (tileRegion == null) {
         return '0 B';
       }
@@ -2837,10 +2939,12 @@ class OfflineMapRepository {
 
       return AppUtils.formatFileSize(sizeBytes);
     } on Exception catch (e, stackTrace) {
-       if (kDebugMode) {
-        print('Error getting region size from repo: $e, StackTrace: $stackTrace');
+      if (kDebugMode) {
+        print(
+          'Error getting region size from repo: $e, StackTrace: $stackTrace',
+        );
       }
-        throw Exception('Error getting region size: $e, StackTrace: $stackTrace');
+      throw Exception('Error getting region size: $e, StackTrace: $stackTrace');
     }
   }
 }
@@ -2850,12 +2954,14 @@ final offlineMapRepositoryProvider = Provider<OfflineMapRepository>(
     ref.watch(tileServiceProvider),
   ),
 );
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map/offline_map_repository.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/offline_map ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map/offline_map_repository.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_repository.dart ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/offline_map ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_repository.dart ##############
 // lib/features/map/map_repository.dart
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2869,7 +2975,9 @@ class MapRepository {
   MapRepository(this._network, this._storage);
   final NetworkService _network;
   final Storage _storage;
-  Future<List<MapMarker>> getMarkers({bool forceRefresh = false}) async {
+  Future<Either<MapRepositoryException, List<MapMarker>>> getMarkers({
+    bool forceRefresh = false,
+  }) async {
     final lastUpdate = await _storage.getInt(AppConstants.markersKey);
     if (!forceRefresh) {
       if (lastUpdate != null) {
@@ -2881,7 +2989,7 @@ class MapRepository {
             if (kDebugMode) {
               print('Returning cached markers');
             }
-            return cached;
+            return Right(cached);
           }
         }
       }
@@ -2895,14 +3003,18 @@ class MapRepository {
         print('Response: ${response.statusCode} ${response.realUri}');
       }
       if (response.statusCode != 200) {
-        throw MapRepositoryException(
-          AppConstants.networkError,
-          response.statusCode,
+        return Left(
+          MapRepositoryException(
+            'Error getting markers from API - Status code: ${response.statusCode}',
+            response.statusCode,
+          ),
         );
       }
       final responseData = response.data;
       if (responseData == null || responseData is! Map<String, dynamic>) {
-        throw MapRepositoryException('Invalid response format', responseData);
+        return Left(
+          MapRepositoryException('Invalid response format', responseData),
+        );
       }
       final results = responseData['results'] as List<dynamic>;
       final markers = <MapMarker>[];
@@ -2929,55 +3041,50 @@ class MapRepository {
         if (kDebugMode) {
           print('Returning $validMarkers markers from API');
         }
-        return markers;
+        return Right(markers);
       } else {
         if (kDebugMode) {
           print('No valid markers available from API');
         }
-        return [];
+        return const Right([]);
       }
     } on DioException catch (e, stackTrace) {
-        final cached = await _storage.getMarkers();
-      if (cached.isNotEmpty) {
-        if (kDebugMode) {
-          print('Returning markers from Cache');
-        }
-        throw MapRepositoryException(
-              'Error getting markers from API, loading from cache',
-              e,
-              stackTrace,
-            );
+      if (kDebugMode) {
+        print('Error getting markers from API, loading from cache');
       }
-         if (kDebugMode) {
+      final cached = await _storage.getMarkers();
+      if (cached.isNotEmpty) {
+        return Right(cached);
+      }
+      if (kDebugMode) {
         print('Error getting markers: $e, StackTrace: $stackTrace');
       }
-          throw MapRepositoryException(
-              'Error getting markers from API',
-              e,
-              stackTrace,
-            );
+      return Left(
+        MapRepositoryException(
+          'Error getting markers from API',
+          e,
+          stackTrace,
+        ),
+      );
+    } on Exception catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error getting markers from API, loading from cache');
+      }
+      final cached = await _storage.getMarkers();
+      if (cached.isNotEmpty) {
+        return Right(cached);
+      }
+      if (kDebugMode) {
+        print('Error getting markers: $e, StackTrace: $stackTrace');
+      }
+      return Left(
+        MapRepositoryException(
+          'Error getting markers from API',
+          e,
+          stackTrace,
+        ),
+      );
     }
-        on Exception catch (e, stackTrace) {
-        final cached = await _storage.getMarkers();
-      if (cached.isNotEmpty) {
-        if (kDebugMode) {
-          print('Returning markers from Cache');
-        }
-        throw MapRepositoryException(
-              'Error getting markers from API, loading from cache',
-              e,
-              stackTrace,
-            );
-      }
-         if (kDebugMode) {
-        print('Error getting markers: $e, StackTrace: $stackTrace');
-      }
-          throw MapRepositoryException(
-              'Error getting markers from API',
-              e,
-              stackTrace,
-            );
-        }
   }
 
   MapMarker _parseMapMarker(Map<String, dynamic> json) {
@@ -3055,12 +3162,11 @@ class MapRepositoryException implements Exception {
   String toString() =>
       'MapRepositoryException: $message, $error, stackTrace: $stackTrace';
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_repository.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_viewmodel.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_repository.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_viewmodel.dart ##############
 // lib/features/map/map_viewmodel.dart
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
@@ -3069,6 +3175,7 @@ import 'package:mobile/core/services/map_service.dart';
 import 'package:mobile/core/services/permission_service.dart';
 import 'package:mobile/core/utils/app_constants.dart';
 import 'package:mobile/core/utils/app_utils.dart';
+import 'package:mobile/core/utils/context_provider.dart';
 import 'package:mobile/features/map/map_repository.dart';
 import 'package:mobile/shared/models/map_marker.dart' as map_marker;
 
@@ -3135,62 +3242,82 @@ class MapViewModel extends StateNotifier<MapState> {
       : super(MapState());
   final MapRepository _repository;
   final MapService _mapService;
-  final StateNotifierProviderRef<MapViewModel, MapState> ref;
+  final Ref<MapState> ref;
   MapboxMap? _map;
-    void setMap(MapboxMap map) {
+  void setMap(MapboxMap map) {
     _map = map;
     _mapService.init();
   }
+
   Future<void> loadMarkers({bool forceRefresh = false}) async {
     if (!mounted) {
       return;
     }
+    if (kDebugMode) {
+      print(
+        'MapViewModel: loadMarkers started with forceRefresh: $forceRefresh',
+      );
+    }
     state = state.copyWith(isLoading: true);
     try {
-      final markers = await _repository.getMarkers(forceRefresh: forceRefresh);
+      final result = await _repository.getMarkers(forceRefresh: forceRefresh);
       if (!mounted) {
         return;
       }
-      state = state.copyWith(
-        isLoading: false,
-        markers: markers,
-        isOffline: false,
-        didFetchSuccessfully: markers.isNotEmpty,
-        message: markers.isNotEmpty
-            ? '${markers.length} markers added from a total of ${markers.length} results'
-            : null,
-      );
-       if (kDebugMode) {
-          print('Loaded markers: ${markers.length}');
+
+      result.fold((error) {
+        if (kDebugMode) {
+          print('MapViewModel: MapRepositoryException: $error');
         }
-         if (markers.isNotEmpty) {
-           await moveToFirstMarker();
-        }
-    } on MapRepositoryException catch (e) {
-      if(e.message.contains('loading from cache')){
-          final markers = await _repository.getMarkers();
-          if (!mounted) {
-            return;
+        if (mounted && ref.read(contextProvider) != null) {
+          if (kDebugMode) {
+            print('MapViewModel: Calling AppUtils.handleStateError');
           }
+          AppUtils.handleStateError(
+            this,
+            ref,
+            state,
+            error,
+            '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
+          );
+        }
+        if (kDebugMode) {
+          print('MapViewModel: setting error state: ${error.toString()}');
+        }
         state = state.copyWith(
           isLoading: false,
-          markers: markers,
-          isOffline: true,
-          didFetchSuccessfully: markers.isNotEmpty,
-          message: '${markers.length} markers added from cache',
+          error:
+              '${AppConstants.unableToLoadMarkersError}: ${error.toString()}',
         );
-           AppUtils.handleStateError(
-          this,
-          ref,
-          state,
-          e,
-          e.message,
-        );
-          if (markers.isNotEmpty) {
-           await moveToFirstMarker();
+      }, (data) {
+        if (kDebugMode) {
+          print('MapViewModel: Loaded markers: ${data.length} from API');
         }
-      } else {
-          AppUtils.handleStateError(
+        state = state.copyWith(
+          isLoading: false,
+          markers: data,
+          isOffline: false,
+          didFetchSuccessfully: data.isNotEmpty,
+          message: data.isNotEmpty
+              ? '${data.length} markers added from a total of ${data.length} results'
+              : null,
+        );
+
+        if (data.isNotEmpty) {
+          moveToFirstMarker();
+        }
+      });
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('MapViewModel: Generic Exception: $e');
+      }
+      if (mounted && ref.read(contextProvider) != null) {
+        if (kDebugMode) {
+          print(
+            'MapViewModel: Calling AppUtils.handleStateError on Generic Exception',
+          );
+        }
+        AppUtils.handleStateError(
           this,
           ref,
           state,
@@ -3198,44 +3325,44 @@ class MapViewModel extends StateNotifier<MapState> {
           '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
         );
       }
-
-    }
-     on Exception catch (e) {
-      AppUtils.handleStateError(
-        this,
-        ref,
-        state,
-        e,
-        '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
+      if (kDebugMode) {
+        print('MapViewModel: setting error state: ${e.toString()}');
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: '${AppConstants.unableToLoadMarkersError}: ${e.toString()}',
       );
     }
   }
-   Future<void> moveToFirstMarker() async {
-     if(_map == null) {
-         return;
-     }
-      if (state.markers.isNotEmpty) {
+
+  Future<void> moveToFirstMarker() async {
+    if (_map == null) {
+      return;
+    }
+    if (state.markers.isNotEmpty) {
       final firstMarker = state.markers.first;
-       if (firstMarker.geometry.coordinates.isNotEmpty && firstMarker.geometry.type == map_marker.GeometryType.point) {
-          await _map?.flyTo(
-            CameraOptions(
-              center: Point(
-                  coordinates: Position(
-                      firstMarker.geometry.coordinates[0],
-                      firstMarker.geometry.coordinates[1],
-                  ),
+      if (firstMarker.geometry.coordinates.isNotEmpty &&
+          firstMarker.geometry.type == map_marker.GeometryType.point) {
+        await _map?.flyTo(
+          CameraOptions(
+            center: Point(
+              coordinates: Position(
+                firstMarker.geometry.coordinates[0],
+                firstMarker.geometry.coordinates[1],
               ),
-              zoom: AppConstants.defaultZoom,
             ),
-            MapAnimationOptions(duration: 200),
+            zoom: AppConstants.defaultZoom,
+          ),
+          MapAnimationOptions(duration: 200),
         );
       }
     }
   }
-   Future<void> clearMarkers() async {
-        if (!mounted) {
-        return;
-       }
+
+  Future<void> clearMarkers() async {
+    if (!mounted) {
+      return;
+    }
     state = state.copyWith(markers: []);
   }
 
@@ -3315,20 +3442,21 @@ class MapViewModel extends StateNotifier<MapState> {
     }
   }
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_viewmodel.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_screen.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_viewmodel.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_screen.dart ##############
 // lib/features/map/map_screen.dart
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mb;
 import 'package:mobile/core/config/app_routes.dart';
 import 'package:mobile/core/utils/app_constants.dart';
-import 'package:mobile/core/utils/error_manager.dart';
 import 'package:mobile/features/map/map_viewmodel.dart';
 import 'package:mobile/shared/models/map_marker.dart' as map_marker;
 import 'package:mobile/shared/widgets/custom_error_widget.dart';
@@ -3351,7 +3479,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final String mapStyle = AppConstants.mapboxStreets;
   final List<mb.PointAnnotation> _pointAnnotations = [];
   StreamSubscription<bool>? _connectivitySubscription;
-    late final mb.OnPointAnnotationClickListener _pointAnnotationClickListener;
+  late final mb.OnPointAnnotationClickListener _pointAnnotationClickListener;
   @override
   void initState() {
     super.initState();
@@ -3365,8 +3493,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       zoom: AppConstants.defaultZoom,
     );
-    _pointAnnotationClickListener =
-        _PointAnnotationClickListener(this);
+    _pointAnnotationClickListener = _PointAnnotationClickListener(this);
   }
 
   @override
@@ -3379,7 +3506,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('Offline Maps'),
+          title: const Text('Online Maps'),
           actions: [
             IconButton(
               icon: const Icon(Icons.clear_all),
@@ -3410,17 +3537,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         body: Consumer(
           builder: (BuildContext context, WidgetRef ref, Widget? child) {
             final state = ref.watch(mapViewModelProvider);
-            final errorState = ref.watch(errorProvider);
             ref.listen(mapViewModelProvider, (previous, next) {
               if (next.message != null && next.message!.isNotEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(next.message!)),
                 );
               }
+              if (next.error != null && next.error!.isNotEmpty) {
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(content: Text(next.error!)),
+                // );
+              }
+
               if (previous?.markers != next.markers) {
                 _addMarkers();
               }
             });
+
             return Stack(
               children: [
                 mapwidget.CustomMapWidget(
@@ -3437,11 +3570,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   onMoveToCurrentLocation: _moveToCurrentLocation,
                   isLocationLoading: state.isLocationLoading,
                 ),
-                if (errorState.message != null)
+                if (state.error != null && state.error!.isNotEmpty)
                   CustomErrorWidget(
-                    error: errorState.message!,
+                    error: state.error!,
                     onClose: () =>
-                        ref.read(errorProvider.notifier).clearError(),
+                        ref.read(mapViewModelProvider.notifier).clearMarkers(),
                   ),
                 if (state.isLoading)
                   const LoadingOverlay(message: 'Loading Markers...'),
@@ -3456,7 +3589,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref.read(mapViewModelProvider.notifier).setMap(mapboxMap);
     _pointAnnotationManager =
         await mapboxMap.annotations.createPointAnnotationManager();
-    _pointAnnotationManager?.addOnPointAnnotationClickListener(_pointAnnotationClickListener);
+    _pointAnnotationManager
+        ?.addOnPointAnnotationClickListener(_pointAnnotationClickListener);
     await _addMarkers();
   }
 
@@ -3476,7 +3610,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     for (final marker in state.markers) {
       if (marker.geometry.type == map_marker.GeometryType.point) {
-         final annotation = mb.PointAnnotationOptions(
+        final annotation = mb.PointAnnotationOptions(
           geometry: mb.Point(
             coordinates: mb.Position(
               marker.geometry.coordinates[0],
@@ -3484,7 +3618,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
           iconImage: 'circle',
-           iconColor: Colors.red.value,
+          iconColor: Colors.red.r.toInt(),
         );
         final createdAnnotation =
             await _pointAnnotationManager?.create(annotation);
@@ -3494,34 +3628,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         }
       }
     }
-    if(_mapboxMap != null){
-           addCustomCircleImage();
-      }
+    if (_mapboxMap != null) {
+      await addCustomCircleImage();
+    }
   }
-Future<void> addCustomCircleImage() async {
-  final imageBytes = await _createCircleIcon(Colors.red);
 
-  // Create MbxImage from bytes
-  final mbxImage = mb.MbxImage(
-    width: 20, // Diameter of the circle (10 radius x 2)
-    height: 20,
-    data: imageBytes,
-  );
+  Future<void> addCustomCircleImage() async {
+    final imageBytes = await _createCircleIcon(Colors.red);
 
-  // Add style image to the Mapbox style
-  await _mapboxMap!.style.addStyleImage(
-    'circle', // Unique ID
-    1, // Scale factor
-    mbxImage, // MbxImage created above
-    false, // Not using SDF
-    [], // No stretchX
-    [], // No stretchY
-    null, // Full image content
-  );
-}
+    // Create MbxImage from bytes
+    final mbxImage = mb.MbxImage(
+      width: 20,
+      height: 20,
+      data: imageBytes,
+    );
 
+    // Add style image to the Mapbox style
+    await _mapboxMap!.style.addStyleImage(
+      'circle',
+      1,
+      mbxImage,
+      false,
+      [],
+      [],
+      null,
+    );
+  }
 
-  
   Future<Uint8List> _createCircleIcon(Color color) async {
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -3531,26 +3664,26 @@ Future<void> addCustomCircleImage() async {
     final picture = recorder.endRecording();
     final image = await picture.toImage(radius.toInt() * 2, radius.toInt() * 2);
     final bytes = await image.toByteData(format: ImageByteFormat.png);
-      return bytes!.buffer.asUint8List();
+    return bytes!.buffer.asUint8List();
   }
-    void _showMarkerInfo(BuildContext context, map_marker.MapMarker marker) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: Text(marker.title),
-            content: Text(marker.description),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Close'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-    }
 
+  void _showMarkerInfo(BuildContext context, map_marker.MapMarker marker) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(marker.title),
+        content: Text(marker.description),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _zoomIn() async {
     if (_mapboxMap == null) {
@@ -3585,25 +3718,29 @@ Future<void> addCustomCircleImage() async {
         .moveToCurrentLocation(_mapboxMap!);
   }
 }
- class _PointAnnotationClickListener
-    extends mb.OnPointAnnotationClickListener {
-        _PointAnnotationClickListener(this._state);
-         final _MapScreenState _state;
+
+class _PointAnnotationClickListener extends mb.OnPointAnnotationClickListener {
+  _PointAnnotationClickListener(this._state);
+  final _MapScreenState _state;
   @override
   void onPointAnnotationClick(mb.PointAnnotation annotation) {
-     if (annotation.id.isNotEmpty){
-        final marker =  _state.ref.read(mapViewModelProvider).markers.firstWhere((element) => element.id == annotation.id);
-        _state._showMarkerInfo(_state.context, marker);
-      }
+    if (annotation.id.isNotEmpty) {
+      final marker = _state.ref
+          .read(mapViewModelProvider)
+          .markers
+          .firstWhere((element) => element.id == annotation.id);
+      _state._showMarkerInfo(_state.context, marker);
+    }
   }
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map/map_screen.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/features/map ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map/map_screen.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/features/map ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/models/map_marker.g.dart ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.g.dart ##############
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'map_marker.dart';
@@ -3736,9 +3873,9 @@ class GeometryTypeAdapter extends TypeAdapter<GeometryType> {
           typeId == other.typeId;
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/models/map_marker.g.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.g.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/models/map_marker.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.dart ##############
 // lib/features/map/models/map_marker.dart
 import 'package:hive/hive.dart';
 part 'map_marker.g.dart';
@@ -3851,11 +3988,11 @@ class Geometry {
   late final List<dynamic> coordinates;
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/models/map_marker.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models/map_marker.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/models ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/models ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/theme_picker.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/theme_picker.dart ##############
 // lib/shared/widgets/theme_picker.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -3895,9 +4032,9 @@ class ThemePicker extends ConsumerWidget {
   }
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/theme_picker.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/theme_picker.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/region_item.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/region_item.dart ##############
 // lib/features/offline_map/widgets/region_item.dart
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -3923,9 +4060,9 @@ class RegionItem extends StatelessWidget {
       );
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/region_item.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/region_item.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/map_controls.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_controls.dart ##############
 // lib/features/map/widgets/map_controls.dart
 import 'package:flutter/material.dart';
 
@@ -3935,10 +4072,10 @@ class MapControls extends StatelessWidget {
     required this.onZoomOut,
     required this.onMoveToCurrentLocation,
     super.key,
-     this.isLocationLoading = false,
+    this.isLocationLoading = false,
   });
-   final VoidCallback onZoomIn;
-   final VoidCallback onZoomOut;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
   final VoidCallback onMoveToCurrentLocation;
   final bool isLocationLoading;
 
@@ -3962,20 +4099,29 @@ class MapControls extends StatelessWidget {
               onPressed: onZoomOut,
               child: const Icon(Icons.remove),
             ),
-              const SizedBox(height: 8),
+            const SizedBox(height: 8),
             FloatingActionButton(
               heroTag: 'my_location',
-                mini: true,
-               onPressed: onMoveToCurrentLocation,
-               child: isLocationLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2,)) : const Icon(Icons.my_location),
+              mini: true,
+              onPressed: onMoveToCurrentLocation,
+              child: isLocationLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.my_location),
             ),
           ],
         ),
       );
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/map_controls.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/map_widget.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_controls.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_widget.dart ##############
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -3984,7 +4130,6 @@ class CustomMapWidget extends StatelessWidget {
     required this.cameraOptions,
     required this.onMapCreated,
     required this.styleUri,
-    
     super.key,
   });
   final CameraOptions cameraOptions;
@@ -3996,14 +4141,13 @@ class CustomMapWidget extends StatelessWidget {
         styleUri: styleUri,
         cameraOptions: cameraOptions,
         onMapCreated: onMapCreated,
-
+        androidHostingMode: AndroidPlatformViewHostingMode.TLHC_HC,
       );
-
-      
 }
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/map_widget.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/loading_overlay.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/map_widget.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/loading_overlay.dart ##############
 // lib/shared/widgets/loading_overlay.dart
 import 'package:flutter/material.dart';
 
@@ -4044,9 +4188,9 @@ class LoadingOverlay extends StatelessWidget {
       );
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/loading_overlay.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/loading_overlay.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/custom_error_widget.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/custom_error_widget.dart ##############
 // lib/shared/widgets/custom_error_widget.dart
 import 'package:flutter/material.dart';
 
@@ -4102,9 +4246,9 @@ class CustomErrorWidget extends StatelessWidget {
       );
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/custom_error_widget.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/custom_error_widget.dart ##############
 
-############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/offline_banner.dart ##############
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/offline_banner.dart ##############
 // lib/features/map/widgets/offline_banner.dart
 import 'package:flutter/material.dart';
 
@@ -4133,7 +4277,2161 @@ class OfflineBanner extends StatelessWidget {
       : const SizedBox();
 }
 
-############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets/offline_banner.dart ##############
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets/offline_banner.dart ##############
 
-############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject/lib/shared/widgets ##############
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/lib/shared/widgets ##############
+
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/map_utils_unit_test.dart ##############
+// test/core/utils/map_utils_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/utils/map_utils.dart';
+
+void main() {
+  group('map_utils_unit_test', () {
+    test('isPointInBounds true', () {
+      final point = Point(coordinates: Position(1, 1));
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(2, 2)),
+        infiniteBounds: true,
+      );
+      expect(MapUtils.isPointInBounds(point, bounds), true);
+    });
+    test('isPointInBounds false', () {
+      final point = Point(coordinates: Position(3, 3));
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(2, 2)),
+        infiniteBounds: true,
+      );
+      expect(MapUtils.isPointInBounds(point, bounds), false);
+    });
+
+    test('calculateDistance', () {
+      final point1 = Point(coordinates: Position(0, 0));
+      final point2 = Point(coordinates: Position(1, 1));
+      final distance = MapUtils.calculateDistance(point1, point2);
+
+      expect(distance, isNonZero);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/map_utils_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/app_utils_unit_test.dart ##############
+// test/core/utils/app_utils_unit_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/utils/app_constants.dart';
+import 'package:mobile/core/utils/app_utils.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockStateNotifier<T> extends Mock implements StateNotifier<T> {}
+
+class MockRef<S> extends Mock implements Ref<S> {}
+
+class MockBuildContext extends Mock implements BuildContext {}
+
+void main() {
+  group('app_utils_unit_test', () {
+    test('formatFileSize', () {
+      expect(AppUtils.formatFileSize(0), '0 B');
+      expect(AppUtils.formatFileSize(1023), '1023.00 B');
+      expect(AppUtils.formatFileSize(1024), '1.00 KB');
+      expect(AppUtils.formatFileSize(1500), '1.46 KB');
+      expect(AppUtils.formatFileSize(1048576), '1.00 MB');
+    });
+
+    test('handleStateError with context', () {
+      final mockNotifier = MockStateNotifier<dynamic>();
+      final mockRef = MockRef<dynamic>();
+      final mockContext = MockBuildContext();
+      registerFallbackValue(StateController(DownloadStatus.idle));
+      when(() => mockNotifier.mounted).thenReturn(true);
+      when(() => mockRef.read(any())).thenReturn(mockContext);
+      when(() => ScaffoldMessenger.of(mockContext))
+          .thenReturn(ScaffoldMessengerState());
+      when(
+        () => (mockNotifier.state as dynamic).copyWith(
+          downloadStatus: any(named: 'downloadStatus'),
+          error: any(named: 'error'),
+        ),
+      ).thenReturn(StateController(DownloadStatus.idle));
+      AppUtils.handleStateError(
+        mockNotifier,
+        mockRef,
+        StateController(DownloadStatus.idle),
+        'error',
+        'error message',
+      );
+
+      verify(
+        () => (mockNotifier.state as dynamic).copyWith(
+          downloadStatus: any(named: 'downloadStatus'),
+          error: any(named: 'error'),
+        ),
+      ).called(1);
+      verify(() => mockRef.read(any())).called(1);
+    });
+    test('handleStateError no context', () {
+      final mockNotifier = MockStateNotifier<dynamic>();
+      final mockRef = MockRef<dynamic>();
+      registerFallbackValue(StateController(DownloadStatus.idle));
+
+      when(() => mockNotifier.mounted).thenReturn(true);
+      when(() => mockRef.read(any())).thenReturn(null);
+      when(
+        () => (mockNotifier.state as dynamic).copyWith(
+          downloadStatus: any(named: 'downloadStatus'),
+          error: any(named: 'error'),
+        ),
+      ).thenReturn(StateController(DownloadStatus.idle));
+      AppUtils.handleStateError(
+        mockNotifier,
+        mockRef,
+        StateController(DownloadStatus.idle),
+        'error',
+        'error message',
+      );
+
+      verify(
+        () => (mockNotifier.state as dynamic).copyWith(
+          downloadStatus: any(named: 'downloadStatus'),
+          error: any(named: 'error'),
+        ),
+      ).called(1);
+      verifyNever(() => mockRef.read(any()));
+    });
+    test('handleStateError not mounted', () {
+      final mockNotifier = MockStateNotifier<dynamic>();
+      final mockRef = MockRef<dynamic>();
+      registerFallbackValue(StateController(DownloadStatus.idle));
+
+      when(() => mockNotifier.mounted).thenReturn(false);
+      AppUtils.handleStateError(
+        mockNotifier,
+        mockRef,
+        StateController(DownloadStatus.idle),
+        'error',
+        'error message',
+      );
+      verifyNever(
+        () => (mockNotifier.state as dynamic).copyWith(
+          downloadStatus: any(named: 'downloadStatus'),
+          error: any(named: 'error'),
+        ),
+      );
+      verifyNever(() => mockRef.read(any()));
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/app_utils_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/error_manager_unit_test.dart ##############
+// test/core/utils/error_manager_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/utils/error_manager.dart';
+
+void main() {
+  group('error_manager_unit_test', () {
+    test('setError', () {
+      final errorNotifier = ErrorNotifier();
+      errorNotifier.setError('test error');
+      expect(errorNotifier.mapState.message, 'test error');
+    });
+
+    test('clearError', () {
+      final errorNotifier = ErrorNotifier();
+      errorNotifier.setError('test error');
+      errorNotifier.clearError();
+      expect(errorNotifier.mapState.message, null);
+    });
+    test('copyWith', () {
+      final errorState = ErrorState(message: 'test error');
+      final newState = errorState.copyWith(message: 'new error');
+      expect(newState.message, 'new error');
+      final newStateNull = errorState.copyWith();
+      expect(newStateNull.message, 'test error');
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils/error_manager_unit_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/utils ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/performance/app_resource_optimizer_unit_test.dart ##############
+// test/core/performance/app_resource_optimizer_unit_test.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/performance/app_resource_optimizer.dart';
+
+void main() {
+  group('app_resource_optimizer_unit_test', () {
+    test('compressImage returns null for empty list', () async {
+      final result = await AppResourceOptimizer.compressImage(Uint8List(0));
+      expect(result, null);
+    });
+    test('clearTempFiles success', () async {
+      // Test not possible because of dependency on getTempDirectory
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/performance/app_resource_optimizer_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/performance/performance_monitor_unit_test.dart ##############
+// test/core/performance/performance_monitor_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/performance/performance_monitor.dart';
+
+void main() {
+  group('performance_monitor_unit_test', () {
+    test('startMonitoring and stopMonitoring', () {
+      PerformanceMonitor.startMonitoring();
+      expect(PerformanceMonitor.isMonitoring, true);
+      PerformanceMonitor.stopMonitoring();
+      expect(PerformanceMonitor.isMonitoring, false);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/performance/performance_monitor_unit_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/performance ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/permission_service_unit_test.dart ##############
+// test/core/services/permission_service_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:mobile/core/services/permission_service.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+class MockPermission extends Mock implements Permission {}
+
+class MockGeolocator extends Mock implements geo.Geolocator {}
+
+void main() {
+  group('permission_service_unit_test', () {
+    late MockPermission mockPermission;
+    late MockGeolocator mockGeolocator;
+
+    setUp(() {
+      mockPermission = MockPermission();
+      mockGeolocator = MockGeolocator();
+    });
+    test('requestNotificationPermissions granted', () async {
+      when(() => mockPermission.request())
+          .thenAnswer((_) async => PermissionStatus.granted);
+      when(() => Permission.notification).thenReturn(mockPermission);
+
+      await PermissionService.requestNotificationPermissions();
+      verify(() => mockPermission.request()).called(1);
+    });
+
+    test('requestNotificationPermissions denied', () async {
+      when(() => mockPermission.request())
+          .thenAnswer((_) async => PermissionStatus.denied);
+      when(() => Permission.notification).thenReturn(mockPermission);
+
+      await PermissionService.requestNotificationPermissions();
+      verify(() => mockPermission.request()).called(1);
+    });
+
+    test('requestNotificationPermissions permanentlyDenied', () async {
+      when(() => mockPermission.request())
+          .thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+      when(() => Permission.notification).thenReturn(mockPermission);
+      when(openAppSettings).thenAnswer((_) async => true);
+      await PermissionService.requestNotificationPermissions();
+      verify(() => mockPermission.request()).called(1);
+      verify(openAppSettings).called(1);
+    });
+    test('requestLocationPermissions whileInUse', () async {
+      when(geo.Geolocator.requestPermission)
+          .thenAnswer((_) async => geo.LocationPermission.whileInUse);
+
+      final result = await PermissionService.requestLocationPermissions();
+
+      expect(result, geo.LocationPermission.whileInUse);
+    });
+
+    test('requestLocationPermissions always', () async {
+      when(geo.Geolocator.requestPermission)
+          .thenAnswer((_) async => geo.LocationPermission.always);
+
+      final result = await PermissionService.requestLocationPermissions();
+
+      expect(result, geo.LocationPermission.always);
+    });
+    test('requestLocationPermissions denied', () async {
+      when(geo.Geolocator.requestPermission)
+          .thenAnswer((_) async => geo.LocationPermission.denied);
+
+      final result = await PermissionService.requestLocationPermissions();
+      expect(result, geo.LocationPermission.denied);
+    });
+    test('requestLocationPermissions permanentlyDenied', () async {
+      when(geo.Geolocator.requestPermission)
+          .thenAnswer((_) async => geo.LocationPermission.deniedForever);
+      when(geo.Geolocator.openAppSettings).thenAnswer((_) async => true);
+      final result = await PermissionService.requestLocationPermissions();
+      expect(result, geo.LocationPermission.deniedForever);
+      verify(geo.Geolocator.openAppSettings).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/permission_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/tile_service_unit_test.dart ##############
+// test/core/services/tile_service_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/tile_service.dart';
+
+void main() {
+  group('tile_service_unit_test', () {
+    late TileService tileService;
+
+    setUp(() async {
+      tileService = TileService();
+      await tileService.initialize();
+    });
+    test('initialize success', () async {});
+    test('downloadTiles success', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: false,
+      );
+      await tileService.downloadTiles(bounds, 1, 5, 'test');
+    });
+
+    test('removeTileRegion success', () async {
+      await tileService.removeTileRegion('test');
+    });
+
+    test('getTileRegion success', () async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+      final result = await tileService.getTileRegion('test');
+      expect(result, region);
+    });
+
+    test('getAllTileRegions success', () async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      final result = await tileService.getAllTileRegions();
+      expect(result, [region]);
+    });
+    test('isRegionDownloaded true', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: false,
+      );
+
+      final region = TileRegion(
+        id: '0,0-1,1',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      final result = await tileService.isRegionDownloaded(bounds);
+      expect(result, true);
+    });
+    test('isRegionDownloaded false', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: false,
+      );
+
+      final result = await tileService.isRegionDownloaded(bounds);
+      expect(result, false);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/tile_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/cache_service_unit_test.dart ##############
+// test/core/services/cache_service_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/cache_service.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockStorage extends Mock implements Storage {}
+
+class MockMapService extends Mock implements MapService {}
+
+class MockTileService extends Mock implements TileService {}
+
+void main() {
+  group('cache_service_unit_test', () {
+    late CacheService cacheService;
+    late MockStorage mockStorage;
+    late MockMapService mockMapService;
+    late MockTileService mockTileService;
+
+    setUp(() {
+      mockStorage = MockStorage();
+      mockMapService = MockMapService();
+      mockTileService = MockTileService();
+      cacheService = CacheService(mockStorage, mockMapService, mockTileService);
+    });
+
+    test('clearCache success', () async {
+      when(() => mockMapService.removeAllTileRegions())
+          .thenAnswer((_) async {});
+      when(() => mockTileService.clearOldTiles()).thenAnswer((_) async {});
+      when(() => mockStorage.clearAll()).thenAnswer((_) async {});
+
+      await cacheService.clearCache();
+
+      verify(() => mockMapService.removeAllTileRegions()).called(1);
+      verify(() => mockTileService.clearOldTiles()).called(1);
+      verify(() => mockStorage.clearAll()).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/cache_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/network_service_unit_test.dart ##############
+// test/core/services/network_service_unit_test.dart
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/network_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockDio extends Mock implements Dio {}
+
+void main() {
+  group('network_service_unit_test', () {
+    late NetworkService networkService;
+    late MockDio mockDio;
+
+    setUp(() {
+      mockDio = MockDio();
+      networkService = NetworkService();
+      // Replace the _dio instance with mockDio
+    });
+
+    test('get success', () async {
+      when(() => mockDio.get(any())).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(),
+          data: {'test': 'data'},
+          statusCode: 200,
+        ),
+      );
+
+      final response = await networkService.get('/test');
+      expect(response.statusCode, 200);
+      expect(response.data, {'test': 'data'});
+    });
+
+    test('get failure', () async {
+      when(() => mockDio.get(any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+          response: Response(requestOptions: RequestOptions(), statusCode: 404),
+        ),
+      );
+
+      expect(
+        () async => networkService.get('/test'),
+        throwsA(isA<DioException>()),
+      );
+    });
+    test('post success', () async {
+      when(() => mockDio.post(any(), data: any(named: 'data'))).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(),
+          data: {'test': 'data'},
+          statusCode: 201,
+        ),
+      );
+      final response = await networkService.post('/test', {'test': 'data'});
+      expect(response.statusCode, 201);
+      expect(response.data, {'test': 'data'});
+    });
+    test('post failure', () async {
+      when(() => mockDio.post(any(), data: any(named: 'data'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+          response: Response(requestOptions: RequestOptions(), statusCode: 400),
+        ),
+      );
+      expect(
+        () async => networkService.post('/test', {'test': 'data'}),
+        throwsA(isA<DioException>()),
+      );
+    });
+    test('put success', () async {
+      when(() => mockDio.put(any(), data: any(named: 'data'))).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(),
+          data: {'test': 'data'},
+          statusCode: 200,
+        ),
+      );
+
+      final response = await networkService.put('/test', {'test': 'data'});
+      expect(response.statusCode, 200);
+      expect(response.data, {'test': 'data'});
+    });
+    test('put failure', () async {
+      when(() => mockDio.put(any(), data: any(named: 'data'))).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+          response: Response(requestOptions: RequestOptions(), statusCode: 404),
+        ),
+      );
+      expect(
+        () async => networkService.put('/test', {'test': 'data'}),
+        throwsA(isA<DioException>()),
+      );
+    });
+    test('delete success', () async {
+      when(() => mockDio.delete(any())).thenAnswer(
+        (_) async =>
+            Response(requestOptions: RequestOptions(), statusCode: 204),
+      );
+      final response = await networkService.delete('/test');
+      expect(response.statusCode, 204);
+    });
+    test('delete failure', () async {
+      when(() => mockDio.delete(any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+          response: Response(requestOptions: RequestOptions(), statusCode: 400),
+        ),
+      );
+      expect(
+        () async => networkService.delete('/test'),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/network_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/notification_service_unit_test.dart ##############
+// test/core/services/notification_service_unit_test.dart
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/notification_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockFlutterLocalNotificationsPlugin extends Mock
+    implements FlutterLocalNotificationsPlugin {}
+
+void main() {
+  group('notification_service_unit_test', () {
+    late NotificationService notificationService;
+    late MockFlutterLocalNotificationsPlugin mockPlugin;
+
+    setUp(() async {
+      mockPlugin = MockFlutterLocalNotificationsPlugin();
+      when(
+        () => mockPlugin.initialize(
+          any(),
+          onDidReceiveNotificationResponse:
+              any(named: 'onDidReceiveNotificationResponse'),
+        ),
+      ).thenAnswer((_) async => true);
+      notificationService = NotificationService();
+
+      await NotificationService.init();
+    });
+    test('init success', () async {
+      verify(
+        () => mockPlugin.initialize(
+          any(),
+          onDidReceiveNotificationResponse:
+              any(named: 'onDidReceiveNotificationResponse'),
+        ),
+      ).called(1);
+    });
+
+    test('showNotification success', () async {
+      when(() => mockPlugin.show(any(), any(), any(), any()))
+          .thenAnswer((_) async {});
+      await NotificationService.showNotification(title: 'test', body: 'test');
+      verify(() => mockPlugin.show(any(), any(), any(), any())).called(1);
+    });
+    test('showProgressNotification success', () async {
+      when(() => mockPlugin.show(any(), any(), any(), any()))
+          .thenAnswer((_) async {});
+
+      await NotificationService.showProgressNotification(
+        title: 'test',
+        progress: 50,
+      );
+
+      verify(() => mockPlugin.show(any(), any(), any(), any())).called(1);
+    });
+    test('cancelNotification success', () async {
+      when(() => mockPlugin.cancel(any())).thenAnswer((_) async {});
+
+      await NotificationService.cancelNotification(1);
+      verify(() => mockPlugin.cancel(any())).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/notification_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/map_service_unit_test.dart ##############
+// test/core/services/map_service_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockTileService extends Mock implements TileService {}
+
+void main() {
+  group('map_service_unit_test', () {
+    late MapService mapService;
+    late MockTileService mockTileService;
+
+    setUp(() async {
+      mockTileService = MockTileService();
+
+      mapService = MapService(mockTileService);
+
+      await mapService.init();
+    });
+    test('init success', () async {});
+    test('downloadRegion success', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+
+      await mapService.downloadRegion(
+        regionName: 'test',
+        bounds: bounds,
+        onProgress: (progress) {},
+        onComplete: () {},
+        onError: (e) {},
+      );
+    });
+
+    test('removeTileRegionAndStylePack success', () async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      when(() => mockTileService.getTileRegion(any()))
+          .thenAnswer((_) async => region);
+      when(() => mockTileService.removeTileRegion(any()))
+          .thenAnswer((_) async {});
+
+      await mapService.removeTileRegionAndStylePack('test', 'test');
+      verify(() => mockTileService.removeTileRegion(any())).called(1);
+    });
+    test('removeAllTileRegions success', () async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      when(() => mockTileService.getAllTileRegions())
+          .thenAnswer((_) async => [region]);
+      when(() => mockTileService.getTileRegion(any()))
+          .thenAnswer((_) async => region);
+
+      when(() => mockTileService.removeTileRegion(any()))
+          .thenAnswer((_) async {});
+      await mapService.removeAllTileRegions();
+
+      verify(() => mockTileService.removeTileRegion(any())).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/map_service_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/storage_service_unit_test.dart ##############
+// test/core/services/storage_service_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/shared/models/map_marker.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class MockBox<T> extends Mock implements Box<T> {}
+
+class MockSharedPreferences extends Mock implements SharedPreferences {}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  group('storage_service_unit_test', () {
+    late Storage storage;
+    late MockBox<MapMarker> mockMarkerBox;
+    late MockSharedPreferences mockPrefs;
+    setUp(() async {
+      mockMarkerBox = MockBox<MapMarker>();
+      mockPrefs = MockSharedPreferences();
+      // Register mock Hive and SharedPreferences
+      registerFallbackValue(
+        MapMarker(
+          id: 'test',
+          title: 'test',
+          description: 'test',
+          geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+        ),
+      );
+
+      // when(() => Hive.openBox<MapMarker>(any())).thenAnswer((_) async => mockMarkerBox);
+      when(SharedPreferences.getInstance).thenAnswer((_) async => mockPrefs);
+
+      storage = await Storage.init();
+    });
+    test('saveMarkers success', () async {
+      final markers = [
+        MapMarker(
+          id: '1',
+          title: 'test1',
+          description: 'test1',
+          geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+        ),
+        MapMarker(
+          id: '2',
+          title: 'test2',
+          description: 'test2',
+          geometry: Geometry(type: GeometryType.point, coordinates: [1.0, 1.0]),
+        ),
+      ];
+      when(() => mockMarkerBox.clear()).thenAnswer((_) async => null);
+      when(() => mockMarkerBox.putAll(any())).thenAnswer((_) async {});
+      when(() => mockPrefs.setInt(any(), any())).thenAnswer((_) async => true);
+      await storage.saveMarkers(markers);
+
+      verify(() => mockMarkerBox.clear()).called(1);
+      verify(() => mockMarkerBox.putAll(any())).called(1);
+      verify(() => mockPrefs.setInt(any(), any())).called(1);
+    });
+    test('getMarkers success', () async {
+      final markers = [
+        MapMarker(
+          id: '1',
+          title: 'test1',
+          description: 'test1',
+          geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+        ),
+        MapMarker(
+          id: '2',
+          title: 'test2',
+          description: 'test2',
+          geometry: Geometry(type: GeometryType.point, coordinates: [1.0, 1.0]),
+        ),
+      ];
+      when(() => mockMarkerBox.values).thenReturn(markers);
+
+      final result = await storage.getMarkers();
+      expect(result, markers);
+    });
+    test('saveInt success', () async {
+      when(() => mockPrefs.setInt(any(), any())).thenAnswer((_) async => true);
+      await storage.saveInt('test', 1);
+
+      verify(() => mockPrefs.setInt('test', 1)).called(1);
+    });
+    test('getInt success', () async {
+      when(() => mockPrefs.getInt(any())).thenAnswer((_) async => 1);
+      final result = await storage.getInt('test');
+      expect(result, 1);
+    });
+    test('saveString success', () async {
+      when(() => mockPrefs.setString(any(), any()))
+          .thenAnswer((_) async => true);
+      await storage.saveString('test', 'test');
+
+      verify(() => mockPrefs.setString('test', 'test')).called(1);
+    });
+    test('getString success', () async {
+      when(() => mockPrefs.getString(any())).thenAnswer((_) async => 'test');
+      final result = await storage.getString('test');
+      expect(result, 'test');
+    });
+    test('saveBool success', () async {
+      when(() => mockPrefs.setBool(any(), any())).thenAnswer((_) async => true);
+      await storage.saveBool('test', value: true);
+
+      verify(() => mockPrefs.setBool('test', true)).called(1);
+    });
+    test('getBool success', () async {
+      when(() => mockPrefs.getBool(any())).thenAnswer((_) async => true);
+      final result = await storage.getBool('test');
+      expect(result, true);
+    });
+    test('clearAll success', () async {
+      when(() => mockMarkerBox.clear()).thenAnswer((_) async => null);
+      when(() => mockPrefs.clear()).thenAnswer((_) async => true);
+      await storage.clearAll();
+      verify(() => mockMarkerBox.clear()).called(1);
+      verify(() => mockPrefs.clear()).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services/storage_service_unit_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/core/services ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/integration/core_integration_test.dart ##############
+// test/integration/core_integration_test.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/config/app_config.dart';
+import 'package:mobile/core/services/cache_service.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/core/services/network_service.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+
+void main() {
+  group('core_integration_test', () {
+    test('network, storage, and tile services initialization', () async {
+      final container = ProviderContainer();
+      await container.read(storageProvider.future);
+      final networkService = container.read(networkServiceProvider);
+      final tileService = container.read(tileServiceProvider);
+      final mapService = container.read(mapServiceProvider);
+      final cacheService = container.read(cacheManagerProvider);
+      expect(networkService, isA<NetworkService>());
+      expect(tileService, isA<TileService>());
+      expect(mapService, isA<MapService>());
+      expect(cacheService, isA<CacheService>());
+
+      container.dispose();
+    });
+    test('check app config', () async {
+      expect(AppConfig.mapboxAccessToken, isNotEmpty);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/integration/core_integration_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/integration/map_integration_test.dart ##############
+// test/integration/map_integration_test.dart
+import 'package:dartz/dartz.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mobile/features/map/map_repository.dart';
+import 'package:mobile/shared/models/map_marker.dart';
+
+void main() {
+  group('map_integration_test', () {
+    test('map repository can fetch markers', () async {
+      final container = ProviderContainer();
+      await container.read(storageProvider.future);
+      final mapRepository = container.read(mapRepositoryProvider);
+      final result = await mapRepository.getMarkers();
+      expect(result, isA<Right<MapRepositoryException, List<MapMarker>>>());
+      container.dispose();
+    });
+    test('map service can be initialized', () async {
+      final container = ProviderContainer();
+      await container.read(storageProvider.future);
+      final mapService = container.read(mapServiceProvider);
+      expect(mapService, isA<MapService>());
+      container.dispose();
+    });
+
+    test('tile service can be initialized', () async {
+      final container = ProviderContainer();
+      final tileService = container.read(tileServiceProvider);
+      expect(tileService, isA<TileService>());
+      container.dispose();
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/integration/map_integration_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/integration ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_screen_widget_test.dart ##############
+// test/features/settings/settings_screen_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/features/settings/settings_screen.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockNavigatorObserver extends Mock implements NavigatorObserver {}
+
+void main() {
+  group('settings_screen_widget_test', () {
+    testWidgets('settings screen renders', (WidgetTester tester) async {
+      final mockObserver = MockNavigatorObserver();
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: const SettingsScreen(),
+            navigatorObservers: [mockObserver],
+          ),
+        ),
+      );
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+    //TODO: add widget test for theme change
+    // TODO: Add widget test for clear cache function
+    //  testWidgets('theme change works', (WidgetTester tester) async {
+    //       final mockObserver = MockNavigatorObserver();
+    //   await tester.pumpWidget(
+    //      ProviderScope(
+    //         child: MaterialApp(
+    //           home: const SettingsScreen(),
+    //          navigatorObservers: [mockObserver],
+    //         ),
+    //       ),
+    //     );
+    //      await tester.tap(find.text('Dark Theme'));
+    //       //TODO: add assertion that theme has changed
+    //   });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_screen_widget_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_viewmodel_unit_test.dart ##############
+// test/features/settings/settings_viewmodel_unit_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mobile/features/settings/settings_repository.dart';
+import 'package:mobile/features/settings/settings_viewmodel.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../core/utils/app_utils_unit_test.dart';
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
+
+class MockTileService extends Mock implements TileService {}
+
+class MockStorage extends Mock implements Storage {}
+
+class MockStateController extends Mock implements StateController<ThemeMode> {}
+
+class MockRef extends Mock implements Ref<SettingsState> {}
+
+void main() {
+  group('settings_viewmodel_unit_test', () {
+    late SettingsViewModel settingsViewModel;
+    late MockSettingsRepository mockSettingsRepository;
+    late MockTileService mockTileService;
+    late MockStorage mockStorage;
+    late MockStateController mockThemeModeController;
+    late MockRef mockRef;
+    setUp(() {
+      mockSettingsRepository = MockSettingsRepository();
+      mockTileService = MockTileService();
+      mockStorage = MockStorage();
+      mockThemeModeController = MockStateController();
+      mockRef = MockRef<SettingsState>();
+
+      when(() => mockStorage.saveString(any(), any())).thenAnswer((_) async {});
+      settingsViewModel = SettingsViewModel(
+        mockSettingsRepository,
+        mockTileService,
+        Future.value(mockStorage),
+        mockThemeModeController,
+        mockRef,
+      );
+      registerFallbackValue(SettingsState());
+    });
+    test('changeTheme success', () async {
+      when(() => mockThemeModeController.state = any()).thenAnswer((_) {});
+
+      await settingsViewModel.changeTheme(ThemeMode.dark);
+      verify(() => mockStorage.saveString(any(), any())).called(1);
+      expect(settingsViewModel.state.themeMode, ThemeMode.dark);
+    });
+
+    test('loadRegions success', () async {
+      when(() => mockSettingsRepository.getDownloadedRegions())
+          .thenAnswer((_) async => ['test']);
+      await settingsViewModel.loadRegions();
+      expect(settingsViewModel.state.regions, ['test']);
+    });
+
+    test('loadRegions failure', () async {
+      when(() => mockSettingsRepository.getDownloadedRegions())
+          .thenThrow(Exception('test'));
+      expect(
+        () async => settingsViewModel.loadRegions(),
+        throwsA(isA<SettingsViewModelException>()),
+      );
+    });
+    test('clearData success', () async {
+      when(() => mockSettingsRepository.clearCache()).thenAnswer((_) async {});
+      when(() => mockSettingsRepository.getDownloadedRegions())
+          .thenAnswer((_) async => []);
+      await settingsViewModel.clearData(MockBuildContext());
+      expect(settingsViewModel.state.isLoading, false);
+    });
+    test('clearData failure', () async {
+      when(() => mockSettingsRepository.clearCache())
+          .thenThrow(Exception('test'));
+      expect(
+        () async => settingsViewModel.clearData(MockBuildContext()),
+        throwsA(isA<SettingsViewModelException>()),
+      );
+    });
+    test('deleteRegion success', () async {
+      when(() => mockSettingsRepository.deleteRegion(any()))
+          .thenAnswer((_) async {});
+      when(() => mockSettingsRepository.getDownloadedRegions())
+          .thenAnswer((_) async => []);
+
+      await settingsViewModel.deleteRegion('test');
+
+      verify(() => mockSettingsRepository.deleteRegion(any())).called(1);
+    });
+    test('deleteRegion failure', () async {
+      when(() => mockSettingsRepository.deleteRegion(any()))
+          .thenThrow(Exception('test'));
+      expect(
+        () async => settingsViewModel.deleteRegion('test'),
+        throwsA(isA<SettingsViewModelException>()),
+      );
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_viewmodel_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_repository_unit_test.dart ##############
+// test/features/settings/settings_repository_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/cache_service.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mobile/features/settings/settings_repository.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockCacheService extends Mock implements CacheService {}
+
+class MockTileService extends Mock implements TileService {}
+
+void main() {
+  group('settings_repository_unit_test', () {
+    late SettingsRepository settingsRepository;
+    late MockCacheService mockCacheService;
+    late MockTileService mockTileService;
+
+    setUp(() {
+      mockCacheService = MockCacheService();
+      mockTileService = MockTileService();
+      settingsRepository =
+          SettingsRepository(mockCacheService, mockTileService);
+    });
+
+    test('clearCache success', () async {
+      when(() => mockCacheService.clearCache()).thenAnswer((_) async {});
+
+      await settingsRepository.clearCache();
+      verify(() => mockCacheService.clearCache()).called(1);
+    });
+    test('getDownloadedRegions success', () async {
+      final region = TileRegion(
+        id: '0,0-1,1',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      when(() => mockTileService.tileStore?.allTileRegions())
+          .thenAnswer((_) async => [region]);
+      final result = await settingsRepository.getDownloadedRegions();
+      expect(result, ['test']);
+    });
+    test('getDownloadedRegions no regions', () async {
+      when(() => mockTileService.tileStore?.allTileRegions())
+          .thenAnswer((_) async => null);
+
+      final result = await settingsRepository.getDownloadedRegions();
+      expect(result, []);
+    });
+    test('deleteRegion success', () async {
+      when(() => mockTileService.removeTileRegion(any()))
+          .thenAnswer((_) async {});
+
+      await settingsRepository.deleteRegion('test');
+      verify(() => mockTileService.removeTileRegion(any())).called(1);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings/settings_repository_unit_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/settings ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_repository_unit_test.dart ##############
+// test/features/offline_map/offline_map_repository_unit_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/tile_service.dart';
+import 'package:mobile/features/offline_map/offline_map_repository.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockTileService extends Mock implements TileService {}
+
+void main() {
+  group('offline_map_repository_unit_test', () {
+    late OfflineMapRepository offlineMapRepository;
+    late MockTileService mockTileService;
+    setUp(() {
+      mockTileService = MockTileService();
+      offlineMapRepository = OfflineMapRepository(mockTileService);
+    });
+
+    test('downloadRegion success', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      when(() => mockTileService.downloadTiles(any(), any(), any(), any()))
+          .thenAnswer((_) async {});
+
+      await offlineMapRepository.downloadRegion(
+        regionName: 'test',
+        bounds: bounds,
+        onProgress: (progress) {},
+        onComplete: () {},
+        onError: (e) {},
+      );
+      verify(() => mockTileService.downloadTiles(any(), any(), any(), any()))
+          .called(1);
+    });
+    test('getDownloadedRegions success', () async {
+      final region = TileRegion(
+        id: '0,0-1,1',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      when(() => mockTileService.getAllTileRegions())
+          .thenAnswer((_) async => [region]);
+      final result = await offlineMapRepository.getDownloadedRegions();
+      expect(result, [region]);
+    });
+    test('removeTileRegion success', () async {
+      when(() => mockTileService.removeTileRegion(any()))
+          .thenAnswer((_) async {});
+      await offlineMapRepository.removeTileRegion('test');
+      verify(() => mockTileService.removeTileRegion('test')).called(1);
+    });
+    test('clearOldTiles success', () async {
+      when(() => mockTileService.clearOldTiles()).thenAnswer((_) async {});
+
+      await offlineMapRepository.clearOldTiles();
+      verify(() => mockTileService.clearOldTiles()).called(1);
+    });
+
+    test('getRegionSize', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      final region = TileRegion(
+        id: '0,0-1,1',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+      when(() => mockTileService.getTileRegion(any()))
+          .thenAnswer((_) async => region);
+      final size = await offlineMapRepository.getRegionSize(bounds);
+      expect(size, '10 B');
+    });
+    test('getRegionSize null', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      when(() => mockTileService.getTileRegion(any()))
+          .thenAnswer((_) async => null);
+      final size = await offlineMapRepository.getRegionSize(bounds);
+      expect(size, '0 B');
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_repository_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_viewmodel_unit_test.dart ##############
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/core/utils/app_constants.dart';
+import 'package:mobile/features/offline_map/offline_map_repository.dart';
+import 'package:mobile/features/offline_map/offline_map_viewmodel.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockOfflineMapRepository extends Mock implements OfflineMapRepository {}
+
+class MockMapService extends Mock implements MapService {}
+
+class MockMapboxMap extends Mock implements MapboxMap {}
+
+class MockRef<S> extends Mock implements Ref<S> {}
+
+void main() {
+  group('offline_map_viewmodel_unit_test', () {
+    late OfflineMapViewModel offlineMapViewModel;
+    late MockOfflineMapRepository mockOfflineMapRepository;
+    late MockMapService mockMapService;
+    late MockMapboxMap mockMapboxMap;
+    late MockRef<OfflineMapState> mockRef;
+
+    setUp(() {
+      mockOfflineMapRepository = MockOfflineMapRepository();
+      mockMapService = MockMapService();
+      mockMapboxMap = MockMapboxMap();
+      mockRef = MockRef<OfflineMapState>();
+      offlineMapViewModel = OfflineMapViewModel(
+        mockOfflineMapRepository,
+        mockRef,
+        mockMapService,
+      );
+      registerFallbackValue(OfflineMapState());
+    });
+    test('loadRegions success', () async {
+      when(() => mockOfflineMapRepository.getDownloadedRegions()).thenAnswer(
+        (_) async => [
+          TileRegion(
+            id: 'test',
+            completedResourceSize: 10,
+            completedResourceCount: 10,
+            requiredResourceCount: 10,
+          ),
+        ],
+      );
+      await offlineMapViewModel.loadRegions();
+      expect(offlineMapViewModel.state.isLoading, false);
+      expect(offlineMapViewModel.state.regions.isNotEmpty, true);
+    });
+    test('loadRegions failure', () async {
+      when(() => mockOfflineMapRepository.getDownloadedRegions())
+          .thenThrow(Exception('test'));
+      await offlineMapViewModel.loadRegions();
+
+      expect(offlineMapViewModel.state.isLoading, false);
+      expect(offlineMapViewModel.state.error, isNotEmpty);
+    });
+    test('downloadRegion success', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      when(() => mockMapService.stylePackProgress)
+          .thenReturn(const Stream.empty());
+      when(() => mockMapService.tileRegionProgress)
+          .thenReturn(const Stream.empty());
+      when(
+        () => mockOfflineMapRepository.downloadRegion(
+          regionName: any(named: 'regionName'),
+          bounds: any(named: 'bounds'),
+          onProgress: any(named: 'onProgress'),
+          onComplete: any(named: 'onComplete'),
+          onError: any(named: 'onError'),
+          minZoom: any(named: 'minZoom'),
+          maxZoom: any(named: 'maxZoom'),
+        ),
+      ).thenAnswer((_) async {});
+      await offlineMapViewModel.downloadRegion(
+        bounds: bounds,
+        minZoom: 1,
+        maxZoom: 5,
+        onProgress: (progress) {},
+        onComplete: () {},
+      );
+      expect(
+        offlineMapViewModel.state.downloadStatus,
+        DownloadStatus.completed,
+      );
+    });
+    test('downloadRegion failure', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+
+      when(() => mockMapService.stylePackProgress)
+          .thenReturn(const Stream.empty());
+      when(() => mockMapService.tileRegionProgress)
+          .thenReturn(const Stream.empty());
+      when(
+        () => mockOfflineMapRepository.downloadRegion(
+          regionName: any(named: 'regionName'),
+          bounds: any(named: 'bounds'),
+          onProgress: any(named: 'onProgress'),
+          onComplete: any(named: 'onComplete'),
+          onError: any(named: 'onError'),
+          minZoom: any(named: 'minZoom'),
+          maxZoom: any(named: 'maxZoom'),
+        ),
+      ).thenThrow(Exception('test'));
+
+      await offlineMapViewModel.downloadRegion(
+        bounds: bounds,
+        minZoom: 1,
+        maxZoom: 5,
+        onProgress: (progress) {},
+        onComplete: () {},
+      );
+      expect(offlineMapViewModel.state.downloadStatus, DownloadStatus.idle);
+      expect(offlineMapViewModel.state.error, isNotEmpty);
+    });
+    test('deleteRegion success', () async {
+      when(() => mockOfflineMapRepository.removeTileRegion(any()))
+          .thenAnswer((_) async {});
+      when(() => mockOfflineMapRepository.getDownloadedRegions())
+          .thenAnswer((_) async => []);
+      await offlineMapViewModel.deleteRegion('test');
+      expect(offlineMapViewModel.state.isLoading, false);
+      verify(() => mockOfflineMapRepository.removeTileRegion(any())).called(1);
+    });
+    test('deleteRegion failure', () async {
+      when(() => mockOfflineMapRepository.removeTileRegion(any()))
+          .thenThrow(Exception('test'));
+      await offlineMapViewModel.deleteRegion('test');
+      expect(offlineMapViewModel.state.isLoading, false);
+      expect(offlineMapViewModel.state.error, isNotEmpty);
+    });
+    test('moveToCurrentLocation success', () async {
+      when(() => mockMapboxMap.flyTo(any(), any())).thenAnswer((_) async {});
+      await offlineMapViewModel.moveToCurrentLocation(mockMapboxMap);
+      expect(offlineMapViewModel.state.isLocationLoading, false);
+    });
+    test('clearAllTiles success', () async {
+      when(() => mockOfflineMapRepository.clearOldTiles())
+          .thenAnswer((_) async {});
+
+      await offlineMapViewModel.clearAllTiles();
+      verify(() => mockOfflineMapRepository.clearOldTiles()).called(1);
+    });
+    test('getRegionSize success', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      when(() => mockOfflineMapRepository.getRegionSize(any()))
+          .thenAnswer((_) async => '10 B');
+      final result = await offlineMapViewModel.getRegionSize(bounds);
+      expect(result, '10 B');
+    });
+    test('getRegionSize failure', () async {
+      final bounds = CoordinateBounds(
+        southwest: Point(coordinates: Position(0, 0)),
+        northeast: Point(coordinates: Position(1, 1)),
+        infiniteBounds: true,
+      );
+      when(() => mockOfflineMapRepository.getRegionSize(any()))
+          .thenThrow(Exception('test'));
+      expect(
+        () async => offlineMapViewModel.getRegionSize(bounds),
+        throwsA(isA<OfflineMapViewModelException>()),
+      );
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_viewmodel_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_screen_widget_test.dart ##############
+// test/features/offline_map/offline_map_screen_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/features/offline_map/offline_map_screen.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockNavigatorObserver extends Mock implements NavigatorObserver {}
+
+void main() {
+  group('offline_map_screen_widget_test', () {
+    testWidgets('offline map screen renders', (WidgetTester tester) async {
+      final mockObserver = MockNavigatorObserver();
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: const OfflineMapScreen(),
+            navigatorObservers: [mockObserver],
+          ),
+        ),
+      );
+      expect(find.byType(OfflineMapScreen), findsOneWidget);
+    });
+    // TODO: Add test for download button
+    //TODO: Add test for map button
+    // testWidgets('show download dialog', (WidgetTester tester) async {
+    //    final mockObserver = MockNavigatorObserver();
+    //     await tester.pumpWidget(
+    //       ProviderScope(
+    //         child: MaterialApp(
+    //           home: const OfflineMapScreen(),
+    //           navigatorObservers: [mockObserver],
+    //         ),
+    //       ),
+    //     );
+    //       await tester.tap(find.byIcon(Icons.download));
+
+    //       expect(find.byType(AlertDialog), findsOneWidget);
+    // });
+    // testWidgets('show regions dialog', (WidgetTester tester) async {
+    //  final mockObserver = MockNavigatorObserver();
+    //   await tester.pumpWidget(
+    //     ProviderScope(
+    //       child: MaterialApp(
+    //         home: const OfflineMapScreen(),
+    //         navigatorObservers: [mockObserver],
+    //       ),
+    //     ),
+    //   );
+    //     await tester.tap(find.byIcon(Icons.map));
+    //      expect(find.byType(AlertDialog), findsOneWidget);
+    // });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map/offline_map_screen_widget_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/offline_map ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_screen_widget_test.dart ##############
+// test/features/map/map_screen_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/features/map/map_screen.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockNavigatorObserver extends Mock implements NavigatorObserver {}
+
+void main() {
+  group('map_screen_widget_test', () {
+    testWidgets('map screen renders', (WidgetTester tester) async {
+      final mockObserver = MockNavigatorObserver();
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: const MapScreen(),
+            navigatorObservers: [mockObserver],
+          ),
+        ),
+      );
+      expect(find.byType(MapScreen), findsOneWidget);
+    });
+    //  testWidgets('refresh button works', (WidgetTester tester) async {
+    //       final mockObserver = MockNavigatorObserver();
+    //     await tester.pumpWidget(
+    //       ProviderScope(
+    //         child: MaterialApp(
+    //           home: const MapScreen(),
+    //           navigatorObservers: [mockObserver],
+    //         ),
+    //       ),
+    //     );
+
+    //    await tester.tap(find.byIcon(Icons.refresh));
+    //   //  TODO: Add assertion for the refresh action
+
+    //   });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_screen_widget_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_viewmodel_unit_test.dart ##############
+// test/features/map/map_viewmodel_unit_test.dart
+import 'package:dartz/dartz.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/core/services/map_service.dart';
+import 'package:mobile/features/map/map_repository.dart';
+import 'package:mobile/features/map/map_viewmodel.dart';
+import 'package:mobile/shared/models/map_marker.dart' as map_marker;
+import 'package:mocktail/mocktail.dart';
+
+class MockMapRepository extends Mock implements MapRepository {}
+
+class MockMapService extends Mock implements MapService {}
+
+class MockMapboxMap extends Mock implements MapboxMap {}
+
+class MockRef<S> extends Mock implements Ref<S> {}
+
+void main() {
+  group('map_viewmodel_unit_test', () {
+    late MapViewModel mapViewModel;
+    late MockMapRepository mockMapRepository;
+    late MockMapService mockMapService;
+    late MockMapboxMap mockMapboxMap;
+    late MockRef<MapState> mockRef;
+
+    setUp(() {
+      mockMapRepository = MockMapRepository();
+      mockMapService = MockMapService();
+      mockMapboxMap = MockMapboxMap();
+      mockRef = MockRef<MapState>();
+      mapViewModel = MapViewModel(mockMapRepository, mockMapService, mockRef);
+      registerFallbackValue(MapState());
+
+      mapViewModel.setMap(mockMapboxMap);
+    });
+    test('loadMarkers success', () async {
+      when(() => mockMapRepository.getMarkers()).thenAnswer(
+        (_) async => Right([
+          map_marker.MapMarker(
+            id: 'test',
+            title: 'test',
+            description: 'test',
+            geometry: map_marker.Geometry(
+              type: map_marker.GeometryType.point,
+              coordinates: [0.0, 0.0],
+            ),
+          ),
+        ]),
+      );
+      await mapViewModel.loadMarkers();
+      expect(mapViewModel.state.isLoading, false);
+      expect(mapViewModel.state.markers.isNotEmpty, true);
+    });
+    test('loadMarkers failure', () async {
+      when(() => mockMapRepository.getMarkers()).thenAnswer(
+        (_) async => Left(MapRepositoryException('test error', 'test')),
+      );
+
+      await mapViewModel.loadMarkers();
+      expect(mapViewModel.state.isLoading, false);
+      expect(mapViewModel.state.error, isNotEmpty);
+    });
+    test('clearMarkers', () async {
+      mapViewModel.clearMarkers();
+      expect(mapViewModel.state.markers, isEmpty);
+    });
+    test('moveToFirstMarker success', () async {
+      final markers = [
+        map_marker.MapMarker(
+          id: 'test',
+          title: 'test',
+          description: 'test',
+          geometry: map_marker.Geometry(
+            type: map_marker.GeometryType.point,
+            coordinates: [1.0, 1.0],
+          ),
+        ),
+      ];
+      when(() => mockMapRepository.getMarkers())
+          .thenAnswer((_) async => Right(markers));
+      when(() => mockMapboxMap.flyTo(any(), any())).thenAnswer((_) async {});
+      await mapViewModel.loadMarkers();
+      await mapViewModel.moveToFirstMarker();
+      verify(() => mockMapboxMap.flyTo(any(), any())).called(1);
+    });
+    test('moveToFirstMarker no markers', () async {
+      when(() => mockMapRepository.getMarkers())
+          .thenAnswer((_) async => const Right([]));
+      await mapViewModel.loadMarkers();
+      await mapViewModel.moveToFirstMarker();
+      verifyNever(() => mockMapboxMap.flyTo(any(), any()));
+    });
+    test('moveToFirstMarker invalid geometry', () async {
+      final markers = [
+        map_marker.MapMarker(
+          id: 'test',
+          title: 'test',
+          description: 'test',
+          geometry: map_marker.Geometry(
+            type: map_marker.GeometryType.lineString,
+            coordinates: [1.0, 1.0],
+          ),
+        ),
+      ];
+      when(() => mockMapRepository.getMarkers())
+          .thenAnswer((_) async => Right(markers));
+      await mapViewModel.loadMarkers();
+      await mapViewModel.moveToFirstMarker();
+      verifyNever(() => mockMapboxMap.flyTo(any(), any()));
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_viewmodel_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_repository_unit_test.dart ##############
+// test/features/map/map_repository_unit_test.dart
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/core/services/network_service.dart';
+import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/features/map/map_repository.dart';
+import 'package:mobile/shared/models/map_marker.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockNetworkService extends Mock implements NetworkService {}
+
+class MockStorage extends Mock implements Storage {}
+
+void main() {
+  group('map_repository_unit_test', () {
+    late MapRepository mapRepository;
+    late MockNetworkService mockNetworkService;
+    late MockStorage mockStorage;
+    setUp(() {
+      mockNetworkService = MockNetworkService();
+      mockStorage = MockStorage();
+      mapRepository = MapRepository(mockNetworkService, mockStorage);
+    });
+    test('getMarkers success from api', () async {
+      when(() => mockNetworkService.get(any())).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(),
+          data: {
+            'results': [
+              {
+                'id': 'test',
+                'name': 'test',
+                'description': 'test',
+                'geometry': {
+                  'type': 'Point',
+                  'coordinates': [0.0, 0.0],
+                },
+              }
+            ],
+          },
+          statusCode: 200,
+        ),
+      );
+      when(() => mockStorage.getInt(any())).thenAnswer((_) async => null);
+      when(() => mockStorage.saveMarkers(any())).thenAnswer((_) async {});
+      final result = await mapRepository.getMarkers();
+      expect(result.isRight(), true);
+    });
+
+    test('getMarkers success from cache', () async {
+      final markers = [
+        MapMarker(
+          id: 'test',
+          title: 'test',
+          description: 'test',
+          geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+        ),
+      ];
+      when(() => mockStorage.getInt(any()))
+          .thenAnswer((_) async => DateTime.now().millisecondsSinceEpoch);
+      when(() => mockStorage.getMarkers()).thenAnswer((_) async => markers);
+
+      final result = await mapRepository.getMarkers();
+      expect(result.isRight(), true);
+      result.fold((l) => null, (r) => expect(r, markers));
+    });
+    test('getMarkers failure from api, success from cache', () async {
+      when(() => mockNetworkService.get(any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final markers = [
+        MapMarker(
+          id: 'test',
+          title: 'test',
+          description: 'test',
+          geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+        ),
+      ];
+      when(() => mockStorage.getMarkers()).thenAnswer((_) async => markers);
+      final result = await mapRepository.getMarkers();
+      expect(result.isRight(), true);
+      result.fold((l) => null, (r) => expect(r, markers));
+    });
+    test('getMarkers failure', () async {
+      when(() => mockNetworkService.get(any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+      when(() => mockStorage.getMarkers()).thenAnswer((_) async => []);
+
+      final result = await mapRepository.getMarkers();
+
+      expect(result.isLeft(), true);
+    });
+    test('updateMarker success', () async {
+      final marker = MapMarker(
+        id: 'test',
+        title: 'test',
+        description: 'test',
+        geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+      );
+      when(() => mockNetworkService.put(any(), any())).thenAnswer(
+        (_) async =>
+            Response(requestOptions: RequestOptions(), statusCode: 200),
+      );
+      when(() => mockStorage.getMarkers()).thenAnswer((_) async => [marker]);
+      when(() => mockStorage.saveMarkers(any())).thenAnswer((_) async {});
+
+      await mapRepository.updateMarker(marker);
+      verify(() => mockNetworkService.put(any(), any())).called(1);
+      verify(() => mockStorage.saveMarkers(any())).called(1);
+    });
+    test('updateMarker failure', () async {
+      final marker = MapMarker(
+        id: 'test',
+        title: 'test',
+        description: 'test',
+        geometry: Geometry(type: GeometryType.point, coordinates: [0.0, 0.0]),
+      );
+
+      when(() => mockNetworkService.put(any(), any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+      expect(
+        () async => mapRepository.updateMarker(marker),
+        throwsA(isA<MapRepositoryException>()),
+      );
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map/map_repository_unit_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/features/map ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/offline_banner_unit_test.dart ##############
+// test/shared/widgets/offline_banner_unit_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/shared/widgets/offline_banner.dart';
+
+void main() {
+  group('offline_banner_unit_test', () {
+    testWidgets('offline banner renders offline', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: OfflineBanner(isOffline: true),
+        ),
+      );
+      expect(find.text('Offline Mode'), findsOneWidget);
+      expect(find.byType(Container), findsOneWidget);
+    });
+    testWidgets('offline banner does not render when not offline',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: OfflineBanner(),
+        ),
+      );
+      expect(find.byType(Container), findsNothing);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/offline_banner_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/theme_picker_widget_test.dart ##############
+// test/shared/widgets/theme_picker_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/shared/widgets/theme_picker.dart';
+
+void main() {
+  group('theme_picker_widget_test', () {
+    testWidgets('theme picker renders', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ThemePicker(onThemeChanged: (_) {}),
+        ),
+      );
+      expect(find.text('Light Theme'), findsOneWidget);
+      expect(find.text('Dark Theme'), findsOneWidget);
+      expect(find.byType(Radio<ThemeMode>), findsNWidgets(2));
+    });
+    testWidgets('theme change works', (WidgetTester tester) async {
+      ThemeMode? selectedTheme;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ThemePicker(
+            onThemeChanged: (theme) {
+              selectedTheme = theme;
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Dark Theme'));
+
+      expect(selectedTheme, ThemeMode.dark);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/theme_picker_widget_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/map_controls_unit_test.dart ##############
+// test/shared/widgets/map_controls_unit_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/shared/widgets/map_controls.dart';
+
+void main() {
+  group('map_controls_unit_test', () {
+    testWidgets('map controls render', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MapControls(
+            onZoomIn: () {},
+            onZoomOut: () {},
+            onMoveToCurrentLocation: () {},
+          ),
+        ),
+      );
+      expect(find.byIcon(Icons.add), findsOneWidget);
+      expect(find.byIcon(Icons.remove), findsOneWidget);
+      expect(find.byIcon(Icons.my_location), findsOneWidget);
+    });
+    testWidgets('map controls tap', (WidgetTester tester) async {
+      var zoomIn = false;
+      var zoomOut = false;
+      var location = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MapControls(
+            onZoomIn: () {
+              zoomIn = true;
+            },
+            onZoomOut: () {
+              zoomOut = true;
+            },
+            onMoveToCurrentLocation: () {
+              location = true;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.add));
+      expect(zoomIn, true);
+
+      await tester.tap(find.byIcon(Icons.remove));
+      expect(zoomOut, true);
+
+      await tester.tap(find.byIcon(Icons.my_location));
+      expect(location, true);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/map_controls_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/loading_overlay_widget_test.dart ##############
+// test/shared/widgets/loading_overlay_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/shared/widgets/loading_overlay.dart';
+
+void main() {
+  group('loading_overlay_widget_test', () {
+    testWidgets('loading overlay renders', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: LoadingOverlay(),
+        ),
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+    testWidgets('loading overlay with message', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: LoadingOverlay(message: 'test message'),
+        ),
+      );
+      expect(find.text('test message'), findsOneWidget);
+    });
+    testWidgets('loading overlay with cancel', (WidgetTester tester) async {
+      var isCanceled = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LoadingOverlay(
+            onCancel: () {
+              isCanceled = true;
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Cancel'));
+      expect(isCanceled, true);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/loading_overlay_widget_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/map_widget_unit_test.dart ##############
+// test/shared/widgets/map_widget_unit_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/shared/widgets/map_widget.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockMapboxMap extends Mock implements MapboxMap {}
+
+void main() {
+  group('map_widget_unit_test', () {
+    testWidgets('custom map widget renders', (WidgetTester tester) async {
+      final mockMapboxMap = MockMapboxMap();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CustomMapWidget(
+            cameraOptions: CameraOptions(),
+            onMapCreated: (map) {
+              mockMapboxMap;
+            },
+            styleUri: 'test',
+          ),
+        ),
+      );
+      expect(find.byType(MapWidget), findsOneWidget);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/map_widget_unit_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/custom_error_widget_test.dart ##############
+// test/shared/widgets/custom_error_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/shared/widgets/custom_error_widget.dart';
+
+void main() {
+  group('custom_error_widget_test', () {
+    testWidgets('custom error widget renders', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: CustomErrorWidget(error: 'test error'),
+        ),
+      );
+      expect(find.text('test error'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+    });
+    testWidgets('custom error widget onClose works',
+        (WidgetTester tester) async {
+      var isClosed = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CustomErrorWidget(
+            error: 'test error',
+            onClose: () {
+              isClosed = true;
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.text('Close'));
+      expect(isClosed, true);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/custom_error_widget_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/region_item_widget_test.dart ##############
+// test/features/settings/widgets/region_item_widget_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mobile/shared/widgets/region_item.dart';
+
+void main() {
+  group('region_item_widget_test', () {
+    testWidgets('region item renders', (WidgetTester tester) async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RegionItem(region: region, deleteRegion: (_) {}),
+        ),
+      );
+      expect(find.text('test'), findsOneWidget);
+      expect(find.byIcon(Icons.delete), findsOneWidget);
+    });
+    testWidgets('delete region works', (WidgetTester tester) async {
+      final region = TileRegion(
+        id: 'test',
+        completedResourceSize: 10,
+        completedResourceCount: 10,
+        requiredResourceCount: 10,
+      );
+
+      var isDeleted = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RegionItem(
+            region: region,
+            deleteRegion: (_) {
+              isDeleted = true;
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.byIcon(Icons.delete));
+      expect(isDeleted, true);
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets/region_item_widget_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/shared/widgets ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/memory_leak_performance_test.dart ##############
+// test/performance/memory_leak_performance_test.dart
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('memory_leak_performance_test', () {
+    test('initial test', () {
+      // TODO: Implement test.
+      // For memory leak tests, consider using a memory profiler
+      // which need additional setup and are not included here.
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/memory_leak_performance_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/load_time_performance_test.dart ##############
+// test/performance/load_time_performance_test.dart
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('load_time_performance_test', () {
+    test('initial test', () {
+      // TODO: Implement test.
+      // For load time tests, consider using a performance testing tools
+      // which need additional setup and are not included here.
+      //  Performance test code goes here.
+      // Typically involves timing the loading of certain
+      // parts of the app.
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/load_time_performance_test.dart ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/frame_rate_performance_test.dart ##############
+// test/performance/frame_rate_performance_test.dart
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('frame_rate_performance_test', () {
+    test('initial test', () {
+      // TODO: Implement test.
+      // For frame rate tests, consider using a performance testing tools
+      // which need additional setup and are not included here.
+      // Performance test code goes here.
+      // Typically involves running the app for a period
+      // and checking for frame drops.
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance/frame_rate_performance_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/performance ##############
+
+############## Begin of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/e2e/app_e2e_test.dart ##############
+// test/e2e/app_e2e_test.dart
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('app_e2e_test', () {
+    test('initial test', () {
+      // TODO: Implement test.
+      // For e2e tests, consider using flutter_driver or integration_test
+      // which need additional setup and are not included here.
+    });
+  });
+}
+
+############## End of /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/e2e/app_e2e_test.dart ##############
+
+############## Directory: /Users/edsteine/Documents/Projects/PortfolioProjects/wproject2/test/e2e ##############
 
